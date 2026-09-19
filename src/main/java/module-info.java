@@ -8,4 +8,6 @@ module com.example.javafx {
     opens com.example.controller to javafx.fxml;
 
     exports com.example;
+
+    requires org.fxmisc.richtext;
 }

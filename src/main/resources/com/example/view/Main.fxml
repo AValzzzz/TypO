@@ -6,22 +6,34 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import org.fxmisc.richtext.StyleClassedTextArea?>
 
 
 <AnchorPane fx:controller="com.example.controller.InputController"
             maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity"
             prefHeight="1080.0" prefWidth="1920.0" style="-fx-background-color: #D3D3D3;"
-            xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1">
+            xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1">
    <children>
       <StackPane fx:id="stackPane" AnchorPane.topAnchor="0.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0">
          <children>
-            <Pane fx:id="whitePane" prefHeight="842.0" prefWidth="595.0"
-                  maxHeight="842.0" maxWidth="595.0"
-                  style="-fx-background-color: #FFFFFF; -fx-background-position: center;">
-               <cursor>
-                  <Cursor fx:constant="TEXT" />
-               </cursor>
-            </Pane>
+            <VBox fx:id="pagesContainer" alignment="CENTER" spacing="20.0">
+               <children>
+                  <Pane fx:id="whitePane" prefHeight="842.0" prefWidth="595.0"
+                        maxHeight="842.0" maxWidth="595.0"
+                        style="-fx-background-color: #FFFFFF; -fx-background-position: center;">
+                     <cursor>
+                        <Cursor fx:constant="TEXT" />
+                     </cursor>
+                     <children>
+                        <StyleClassedTextArea fx:id="textEditor" layoutX="0.0" layoutY="0.0"
+                                              prefWidth="595.0" prefHeight="842.0"
+                                              wrapText="true"
+                                              style="-fx-background-color: transparent; -fx-padding: 20; -fx-font-size: 14px;" />
+                     </children>
+                  </Pane>
+               </children>
+            </VBox>
          </children>
       </StackPane>
 
@@ -29,6 +41,7 @@
          <children>
             <Button fx:id="saveButton" text="Save" onAction="#handleSave" />
             <Button fx:id="saveAsButton" text="Save As" onAction="#handleSaveAs" />
+            <Button fx:id="newPageButton" text="New Page" onAction="#handleNewPage" />
             <Button fx:id="helpButton" text="Help" onAction="#handleHelp" />
             <Button fx:id="settingsButton" text="Settings" onAction="#handleSettings" />
          </children>
