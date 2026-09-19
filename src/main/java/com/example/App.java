@@ -2,6 +2,7 @@ package com.example;
 import javafx.application.Application;
 import javafx.scene.Group;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
@@ -16,8 +17,8 @@ public class App extends Application{
         Group root = new Group();
         Scene scene = new Scene(root, Color.BLACK);
 
-        // Image icon = new Image ("icon.png");
-        // stage.getIcons().add(icon);
+        Image icon = new Image (getClass().getResourceAsStream("/com/example/logo.png"));
+        stage.getIcons().add(icon);
         stage.setTitle("TypO");
         stage.setWidth(600);
         stage.setHeight(420);
