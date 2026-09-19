@@ -1,5 +1,10 @@
 package com.example.controller;
 
+import com.example.model.actions.Help;
+import com.example.model.actions.Save;
+import com.example.model.actions.SaveAs;
+import com.example.model.actions.Settings;
+
 import javafx.fxml.FXML;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.Pane;
@@ -62,5 +67,25 @@ public class InputController {
 
         double clampedX = Math.max(-maxTranslateX, Math.min(maxTranslateX, whitePane.getTranslateX()));
         whitePane.setTranslateX(clampedX);
+    }
+
+    @FXML
+    private void handleSave() {
+        new Save().execute();
+    }
+
+    @FXML
+    private void handleSaveAs() {
+        new SaveAs().execute();
+    }
+
+    @FXML
+    private void handleHelp() {
+        new Help().execute();
+    }
+
+    @FXML
+    private void handleSettings() {
+        new Settings().execute();
     }
 }
