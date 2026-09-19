@@ -6,13 +6,19 @@ import java.util.List;
 import org.fxmisc.richtext.StyleClassedTextArea;
 
 import com.example.model.Page;
+import com.example.model.actions.DeletePage;
 import com.example.model.actions.Help;
 import com.example.model.actions.NewPage;
 import com.example.model.actions.Save;
 import com.example.model.actions.SaveAs;
 import com.example.model.actions.Settings;
+import com.example.model.actions.ToggleOrientation;
 
 import javafx.fxml.FXML;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
+import javafx.scene.input.ContextMenuEvent;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
@@ -21,17 +27,19 @@ import javafx.scene.layout.VBox;
 public class InputController {
     @FXML
     private StackPane stackPane;
-    
+
     @FXML
     private VBox pagesContainer;
 
-    @FXML 
+    @FXML
     private Pane whitePane;
 
-    @FXML 
+    @FXML
     private StyleClassedTextArea textEditor;
 
     private final List<Page> pages = new ArrayList<>();
+
+    private ContextMenu activeMenu;
 
     private static final double MIN_SCALE = 0.8;
     private static final double MAX_SCALE = 3.0;
@@ -41,11 +49,13 @@ public class InputController {
 
     @FXML
     public void initialize() {
-        pages.add(new Page(whitePane, textEditor));
+        Page firstPage = new Page(whitePane, textEditor);
+        pages.add(firstPage);
+        attachContextMenu(firstPage);
         stackPane.addEventFilter(ScrollEvent.SCROLL, event -> {
             if (event.isControlDown()) {
                 double delta = event.getDeltaY();
-                double zoomFactor = Math.exp(delta*ZOOM_SENSITIVITY);
+                double zoomFactor = Math.exp(delta * ZOOM_SENSITIVITY);
 
                 double newScaleX = pagesContainer.getScaleX() * zoomFactor;
                 double newScaleY = pagesContainer.getScaleY() * zoomFactor;
@@ -55,7 +65,7 @@ public class InputController {
 
                 pagesContainer.setScaleX(newScaleX);
                 pagesContainer.setScaleY(newScaleY);
-                
+
             } else if (event.isShiftDown()) {
                 double deltaX = event.getDeltaX();
                 pagesContainer.setTranslateX(pagesContainer.getTranslateX() + deltaX * PAN_SENSITIVITY);
@@ -66,8 +76,34 @@ public class InputController {
             clampTranslate();
             event.consume();
         });
+
+        stackPane.addEventFilter(MouseEvent.MOUSE_PRESSED, event -> {
+            if (activeMenu != null && activeMenu.isShowing()) {
+                activeMenu.hide();
+            }
+        });
     }
-    
+
+    private void attachContextMenu(Page page) {
+        ContextMenu menu = new ContextMenu();
+        this.activeMenu = menu;
+        menu.setAutoHide(true);
+
+        MenuItem toggleOrientationItem = new MenuItem("Toggle Orientation (Portrait/Landscape)");
+        toggleOrientationItem.setOnAction(e -> new ToggleOrientation(page).execute());
+
+        MenuItem deletePageItem = new MenuItem("Delete Page");
+        deletePageItem.setOnAction(e -> new DeletePage(page, pagesContainer, pages).execute());
+
+        menu.getItems().addAll(toggleOrientationItem, deletePageItem);
+
+        page.getPane().addEventFilter(ContextMenuEvent.CONTEXT_MENU_REQUESTED, event -> {
+
+            menu.show(page.getPane(), event.getScreenX(), event.getScreenY());
+            event.consume();
+        });
+    }
+
     private void clampTranslate() {
 
         double viewportWidth = stackPane.getWidth();
@@ -99,11 +135,13 @@ public class InputController {
         new SaveAs().execute();
     }
 
-    @FXML 
+    @FXML
     private void handleNewPage() {
         NewPage action = new NewPage(pagesContainer);
         action.execute();
-        pages.add(action.getCreatedPage());
+        Page created = action.getCreatedPage();
+        pages.add(created);
+        attachContextMenu(created);
     }
 
     @FXML

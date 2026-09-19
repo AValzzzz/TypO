@@ -22,6 +22,7 @@ public class NewPage implements AppAction {
     public void execute() {
         Pane pane = new Pane();
         pane.setPrefSize(PAGE_WIDTH, PAGE_HEIGHT);
+        pane.setMinSize(PAGE_WIDTH, PAGE_HEIGHT);
         pane.setMaxSize(PAGE_WIDTH, PAGE_HEIGHT);
         pane.setStyle("-fx-background-color: #FFFFFF;");
 

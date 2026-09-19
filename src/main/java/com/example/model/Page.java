@@ -21,7 +21,7 @@ public class Page {
         return editor;
     }
 
-    // public String getText() {
-    //     return editor.getText();
-    // }
+    public String getText() {
+        return editor.getText();
+    }
 }

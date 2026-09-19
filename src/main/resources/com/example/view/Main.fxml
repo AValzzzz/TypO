@@ -20,11 +20,9 @@
             <VBox fx:id="pagesContainer" alignment="CENTER" spacing="20.0">
                <children>
                   <Pane fx:id="whitePane" prefHeight="842.0" prefWidth="595.0"
+                        minWidth="595.0" minHeight="842.0"
                         maxHeight="842.0" maxWidth="595.0"
                         style="-fx-background-color: #FFFFFF; -fx-background-position: center;">
-                     <cursor>
-                        <Cursor fx:constant="TEXT" />
-                     </cursor>
                      <children>
                         <StyleClassedTextArea fx:id="textEditor" layoutX="0.0" layoutY="0.0"
                                               prefWidth="595.0" prefHeight="842.0"
