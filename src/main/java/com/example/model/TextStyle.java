@@ -64,7 +64,7 @@ public record TextStyle (
                     css.append("-rtfx-underline-color: ").append(toCss(underlineColor)).append(";").append("-rtfx-underline-width: 1;");
             }
             if (highlight != null)
-                css.append("-rtfx-background-colo: ").append(toCss(highlight)).append(";");
+                css.append("-rtfx-background-color: ").append(toCss(highlight)).append(";");
             if (textColor != null)
                 css.append("-fx-fill: ").append(toCss(textColor)).append(";");
             if (fontSize != null) {

@@ -3,16 +3,17 @@ package com.example.controller;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.fxmisc.richtext.StyleClassedTextArea;
-
 import com.example.model.Page;
 import com.example.model.actions.DeletePage;
+import com.example.model.actions.FormatText;
 import com.example.model.actions.Help;
 import com.example.model.actions.NewPage;
 import com.example.model.actions.Save;
 import com.example.model.actions.SaveAs;
 import com.example.model.actions.Settings;
 import com.example.model.actions.ToggleOrientation;
+import com.example.view.RichTextArea;
+import com.example.view.TextFormatMenu;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.ContextMenu;
@@ -35,7 +36,7 @@ public class InputController {
     private Pane whitePane;
 
     @FXML
-    private StyleClassedTextArea textEditor;
+    private RichTextArea textEditor;
 
     private final List<Page> pages = new ArrayList<>();
 
@@ -78,16 +79,15 @@ public class InputController {
         });
 
         stackPane.addEventFilter(MouseEvent.MOUSE_PRESSED, event -> {
-            if (activeMenu != null && activeMenu.isShowing()) {
+            if (activeMenu != null && activeMenu.isShowing())
                 activeMenu.hide();
-            }
         });
     }
 
     private void attachContextMenu(Page page) {
-        ContextMenu menu = new ContextMenu();
-        this.activeMenu = menu;
-        menu.setAutoHide(true);
+        ContextMenu pageMenu = new ContextMenu();
+        this.activeMenu = pageMenu;
+        pageMenu.setAutoHide(true);
 
         MenuItem toggleOrientationItem = new MenuItem("Toggle Orientation (Portrait/Landscape)");
         toggleOrientationItem.setOnAction(e -> new ToggleOrientation(page).execute());
@@ -95,13 +95,25 @@ public class InputController {
         MenuItem deletePageItem = new MenuItem("Delete Page");
         deletePageItem.setOnAction(e -> new DeletePage(page, pagesContainer, pages).execute());
 
-        menu.getItems().addAll(toggleOrientationItem, deletePageItem);
+        pageMenu.getItems().addAll(toggleOrientationItem, deletePageItem);
 
         page.getPane().addEventFilter(ContextMenuEvent.CONTEXT_MENU_REQUESTED, event -> {
-
-            menu.show(page.getPane(), event.getScreenX(), event.getScreenY());
+            ContextMenu menu = page.hasSelection() ? createTextMenu(page) : pageMenu;
+            showMenu(menu, page, event);
             event.consume();
         });
+    }
+
+    private ContextMenu createTextMenu(Page page) {
+        return new TextFormatMenu(page.getEditor(), change-> new FormatText(page, change).execute());
+    }
+
+    private void showMenu(ContextMenu menu, Page page, ContextMenuEvent event) {
+        if (activeMenu != null && activeMenu.isShowing()) 
+            activeMenu.hide();
+        
+        activeMenu = menu;
+        menu.show(page.getPane(), event.getScreenX(), event.getScreenY());
     }
 
     private void clampTranslate() {

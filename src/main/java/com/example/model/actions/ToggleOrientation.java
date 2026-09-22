@@ -1,8 +1,7 @@
 package com.example.model.actions;
 
-import org.fxmisc.richtext.StyleClassedTextArea;
-
 import com.example.model.Page;
+import com.example.view.RichTextArea;
 
 import javafx.scene.layout.Pane;
 
@@ -16,7 +15,7 @@ public class ToggleOrientation implements AppAction {
     @Override
     public void execute() {
         Pane pane = page.getPane();
-        StyleClassedTextArea editor = page.getEditor();
+        RichTextArea editor = page.getEditor();
 
         double currentWidth = pane.getPrefWidth();
         double currentHeight = pane.getPrefHeight();
