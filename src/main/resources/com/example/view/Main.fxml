@@ -7,8 +7,7 @@
 <?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
-<?import org.fxmisc.richtext.StyleClassedTextArea?>
-
+<?import com.example.view.RichTextArea?>
 
 <AnchorPane fx:controller="com.example.controller.InputController"
             maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity"
@@ -24,7 +23,7 @@
                         maxHeight="842.0" maxWidth="595.0"
                         style="-fx-background-color: #FFFFFF; -fx-background-position: center;">
                      <children>
-                        <StyleClassedTextArea fx:id="textEditor" layoutX="0.0" layoutY="0.0"
+                        <RichTextArea fx:id="textEditor" layoutX="0.0" layoutY="0.0"
                                               prefWidth="595.0" prefHeight="842.0"
                                               wrapText="true"
                                               style="-fx-background-color: transparent; -fx-padding: 20; -fx-font-size: 14px;" />

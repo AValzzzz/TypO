@@ -3,11 +3,14 @@ module com.example.javafx {
     requires javafx.fxml;
     requires com.gluonhq.charm.glisten;
     requires com.gluonhq.attach.util;
+    
+    requires org.fxmisc.richtext;
 
     opens com.example to javafx.graphics, javafx.fxml;
     opens com.example.controller to javafx.fxml;
+    
+    opens com.example.view to javafx.fxml;
 
     exports com.example;
-
-    requires org.fxmisc.richtext;
+    exports com.example.view;
 }

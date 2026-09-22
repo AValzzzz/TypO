@@ -1,8 +1,8 @@
 package com.example.model.actions;
 
-import org.fxmisc.richtext.StyleClassedTextArea;
 
 import com.example.model.Page;
+import com.example.view.RichTextArea;
 
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
@@ -26,7 +26,7 @@ public class NewPage implements AppAction {
         pane.setMaxSize(PAGE_WIDTH, PAGE_HEIGHT);
         pane.setStyle("-fx-background-color: #FFFFFF;");
 
-        StyleClassedTextArea editor = new StyleClassedTextArea();
+        RichTextArea editor = new RichTextArea();
         editor.setWrapText(true);
         editor.setPrefSize(PAGE_WIDTH, PAGE_HEIGHT);
         editor.relocate(0, 0);
