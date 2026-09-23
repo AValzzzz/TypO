@@ -12,6 +12,9 @@ import com.example.model.actions.Save;
 import com.example.model.actions.SaveAs;
 import com.example.model.actions.Settings;
 import com.example.model.actions.ToggleOrientation;
+import com.example.model.language.BackslashInputHandler;
+import com.example.model.language.CommandRegistry;
+import com.example.model.language.maths.MathCommands;
 import com.example.view.RichTextArea;
 import com.example.view.TextFormatMenu;
 
@@ -42,6 +45,8 @@ public class InputController {
 
     private ContextMenu activeMenu;
 
+    private final CommandRegistry commandRegistry = new CommandRegistry();
+
     private static final double MIN_SCALE = 0.8;
     private static final double MAX_SCALE = 3.0;
     private static final double ZOOM_SENSITIVITY = 0.002;
@@ -50,9 +55,11 @@ public class InputController {
 
     @FXML
     public void initialize() {
+        MathCommands.registerAll(commandRegistry);
         Page firstPage = new Page(whitePane, textEditor);
         pages.add(firstPage);
         attachContextMenu(firstPage);
+        new BackslashInputHandler(firstPage.getEditor(), commandRegistry);
         stackPane.addEventFilter(ScrollEvent.SCROLL, event -> {
             if (event.isControlDown()) {
                 double delta = event.getDeltaY();
@@ -154,6 +161,7 @@ public class InputController {
         Page created = action.getCreatedPage();
         pages.add(created);
         attachContextMenu(created);
+        new BackslashInputHandler(created.getEditor(), commandRegistry);
     }
 
     @FXML
