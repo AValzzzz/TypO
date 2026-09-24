@@ -18,6 +18,6 @@ public class MatrixCommand implements Command {
     public CommandResult apply(String raw) {
         Matcher m = PATTERN.matcher(raw);
         m.matches();
-        return new CommandResult("("+m.group(1)+")");
+        return CommandResult.ofMathObject(new MathObject(MathObject.Type.MATRIX, m.group(1)));
     }
 }

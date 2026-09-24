@@ -18,6 +18,7 @@ public class FractionCommand implements Command {
     public CommandResult apply(String raw) {
         Matcher m = PATTERN.matcher(raw);
         m.matches();
-        return new CommandResult("("+m.group(1) + "/" + m.group(2) +")");
+        String rawArgs = m.group(1) + "," + m.group(2);
+        return CommandResult.ofMathObject(new MathObject(MathObject.Type.FRACTION, rawArgs));
     }
 }
