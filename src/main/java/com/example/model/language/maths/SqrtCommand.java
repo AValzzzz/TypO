@@ -4,8 +4,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.example.model.language.Command;
-
-import javafx.scene.Node;
+import com.example.model.language.CommandResult;
 
 public class SqrtCommand implements Command {
     private static final Pattern PATTERN = Pattern.compile("^sqrt\\{(.+)}$");
@@ -16,16 +15,9 @@ public class SqrtCommand implements Command {
     }
 
     @Override
-    public Node render(String raw) {
+    public CommandResult apply(String raw) {
         Matcher m = PATTERN.matcher(raw);
         m.matches();
-        return MathNodeFactory.sqrt(m.group(1));
-    }
-
-    @Override
-    public String renderPlaceholder(String raw) {
-        Matcher m = PATTERN.matcher(raw);
-        m.matches();
-        return "\u221A(" + m.group(1) + ")";
+        return new CommandResult("("+ m.group(1) + ")");
     }
 }

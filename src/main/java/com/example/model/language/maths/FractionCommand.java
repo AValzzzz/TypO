@@ -4,8 +4,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.example.model.language.Command;
-
-import javafx.scene.Node;
+import com.example.model.language.CommandResult;
 
 public class FractionCommand implements Command {
     private static final Pattern PATTERN = Pattern.compile("^(\\w+)/(\\w+)$");
@@ -16,16 +15,9 @@ public class FractionCommand implements Command {
     }
 
     @Override
-    public Node render(String raw) {
+    public CommandResult apply(String raw) {
         Matcher m = PATTERN.matcher(raw);
         m.matches();
-        return MathNodeFactory.fraction(m.group(1), m.group(2));
-    }
-
-    @Override
-    public String renderPlaceholder(String raw) {
-        Matcher m = PATTERN.matcher(raw);
-        m.matches();
-        return "(" + m.group(1) + "/" + m.group(2) + ")";
+        return new CommandResult("("+m.group(1) + "/" + m.group(2) +")");
     }
 }

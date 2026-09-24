@@ -12,40 +12,45 @@ public record TextStyle (
     Color underlineColor,
     Color highlight,
     Color textColor,
-    Integer fontSize) {
+    Integer fontSize,
+    Double baselineShift) {
         
-        public static final TextStyle DEFAULT = new TextStyle(false, false, false, false, null, null, null, 12);
+        public static final TextStyle DEFAULT = new TextStyle(false, false, false, false, null, null, null, 12, null);
 
         public TextStyle withBold(boolean v) {
-            return new TextStyle(v, italic, strikethrough, underline, underlineColor, highlight, textColor, fontSize);
+            return new TextStyle(v, italic, strikethrough, underline, underlineColor, highlight, textColor, fontSize, baselineShift);
         }
 
         public TextStyle withItalic(boolean v) {
-            return new TextStyle(bold, v, strikethrough, underline, underlineColor, highlight, textColor, fontSize);
+            return new TextStyle(bold, v, strikethrough, underline, underlineColor, highlight, textColor, fontSize, baselineShift);
         }
 
         public TextStyle withStrikethrough(boolean v) {
-            return new TextStyle(bold, italic, v, underline, underlineColor, highlight, textColor, fontSize);
+            return new TextStyle(bold, italic, v, underline, underlineColor, highlight, textColor, fontSize, baselineShift);
         }
 
         public TextStyle withUnderline(boolean v) {
-            return new TextStyle(bold, italic, strikethrough, v, underlineColor, highlight, textColor, fontSize);
+            return new TextStyle(bold, italic, strikethrough, v, underlineColor, highlight, textColor, fontSize, baselineShift);
         }
 
         public TextStyle withUnderlineColor(Color v) {
-            return new TextStyle(bold, italic, strikethrough, underline, v, highlight, textColor, fontSize);
+            return new TextStyle(bold, italic, strikethrough, underline, v, highlight, textColor, fontSize, baselineShift);
         }
 
         public TextStyle withHighlight(Color v) {
-            return new TextStyle(bold, italic, strikethrough, underline, underlineColor, v, textColor, fontSize);
+            return new TextStyle(bold, italic, strikethrough, underline, underlineColor, v, textColor, fontSize, baselineShift);
         }
 
         public TextStyle withTextColor(Color v) {
-            return new TextStyle(bold, italic, strikethrough, underline, underlineColor, highlight, v, fontSize);
+            return new TextStyle(bold, italic, strikethrough, underline, underlineColor, highlight, v, fontSize, baselineShift);
         }
 
         public TextStyle withFontSize(Integer v) {
-            return new TextStyle(bold, italic, strikethrough, underline, underlineColor, highlight, textColor, v);
+            return new TextStyle(bold, italic, strikethrough, underline, underlineColor, highlight, textColor, v, baselineShift);
+        }
+
+        public TextStyle withBaselineShift(Double v) {
+            return new TextStyle(bold, italic, strikethrough, underline, underlineColor, highlight, textColor, fontSize, v);
         }
 
         public String toCss() {
@@ -67,8 +72,10 @@ public record TextStyle (
                 css.append("-rtfx-background-color: ").append(toCss(highlight)).append(";");
             if (textColor != null)
                 css.append("-fx-fill: ").append(toCss(textColor)).append(";");
-            if (fontSize != null) {
+            if (fontSize != null)
                 css.append("-fx-font-size: ").append(fontSize).append("px;");
+            if (baselineShift != null) {
+                css.append("-fx-translate-y: ").append(baselineShift).append(";");
             }
             return css.toString();
         }

@@ -4,12 +4,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.example.model.language.Command;
-
-import javafx.scene.Node;
+import com.example.model.language.CommandResult;
 
 public class ExponentCommand implements Command {
-    private static final Pattern PATTERN = Pattern.compile("^(\\w+)\\^(\\w+)$");
-    private static final String SUPERSCRIPT_DIGITS = "\u2070\u00b9\u00b2\u00b3\u2074\u2075\u2076\u2077\u2078\u2079";
+    private static final Pattern PATTERN = Pattern.compile("^([\\p{L}\\p{N}]+)\\^(?:\\((.+)\\)|([\\p{L}\\p{N}]+))$");
 
     @Override
     public boolean matches(String raw) {
@@ -17,25 +15,13 @@ public class ExponentCommand implements Command {
     }
 
     @Override
-    public Node render(String raw) {
-        Matcher m = PATTERN.matcher(raw);
-        m.matches();
-        return MathNodeFactory.exponent(m.group(1), m.group(2));
-    }
-
-    @Override
-    public String renderPlaceholder(String raw) {
+    public CommandResult apply(String raw) {
         Matcher m = PATTERN.matcher(raw);
         m.matches();
         String base = m.group(1);
-        String exponent = m.group(2);
-        StringBuilder sb = new StringBuilder(base);
-        for (char c : exponent.toCharArray()) {
-            if (Character.isDigit(c))
-                sb.append(SUPERSCRIPT_DIGITS.charAt(c - '0'));
-            else
-                return base + "^" + exponent;
-        }
-        return sb.toString();
+        String exponent = m.group(2) != null ? m.group(2): m.group(3);
+        String text = base + exponent;
+
+        return new CommandResult(text, base.length(), text.length(), s -> s.withFontSize(9).withBaselineShift(-6.0), null);
     }
 }

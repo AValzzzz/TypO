@@ -10,7 +10,7 @@ import javafx.scene.input.KeyEvent;
 public class BackslashInputHandler {
     private final RichTextArea editor;
     private final CommandRegistry registry;
-    
+
     private boolean buffering = false;
     private int commandStart = -1;
 
@@ -19,7 +19,7 @@ public class BackslashInputHandler {
     private int convertedEnd = -1;
     private String convertedRawText = null;
 
-    public BackslashInputHandler (RichTextArea editor, CommandRegistry registry) {
+    public BackslashInputHandler(RichTextArea editor, CommandRegistry registry) {
         this.editor = editor;
         this.registry = registry;
         editor.addEventFilter(KeyEvent.KEY_TYPED, this::onKeyTyped);
@@ -28,7 +28,8 @@ public class BackslashInputHandler {
 
     private void onKeyTyped(KeyEvent event) {
         String character = event.getCharacter();
-        if (character == null || character.isEmpty()) return;
+        if (character == null || character.isEmpty())
+            return;
 
         char c = character.charAt(0);
 
@@ -57,13 +58,26 @@ public class BackslashInputHandler {
             Optional<Command> match = registry.find(raw);
 
             if (match.isPresent()) {
-                String placeholder = match.get().renderPlaceholder(raw);
-                editor.replaceText(commandStart, caret, placeholder);
+                CommandResult result = match.get().apply(raw);
+                if (result.isMathObject()) {
+                    editor.replaceText(commandStart, caret, "");
+                    editor.insertMathObject(commandStart, result.getMathObject());
+                    convertedEnd = commandStart + 1;
+                } else {
 
-                convertedStart = commandStart;
-                convertedEnd = commandStart + placeholder.length();
-                convertedRawText = "\\" + raw;
-                justConverted = true;
+                    String text = result.getText();
+                    editor.replaceText(commandStart, caret, text);
+
+                    if (result.hasStyle()) {
+                        editor.applyStyle(commandStart + result.getStyleStart(), commandStart + result.getStyleEnd(),
+                                result.getStyleChange());
+                    }
+
+                    convertedStart = commandStart;
+                    convertedEnd = commandStart + text.length();
+                    convertedRawText = "\\" + raw;
+                    justConverted = true;
+                }
             }
 
             resetBuffering();
@@ -72,9 +86,18 @@ public class BackslashInputHandler {
     }
 
     private void onKeyPressed(KeyEvent event) {
-        if(event.getCode() != KeyCode.BACK_SPACE || !justConverted) return;
+        if (event.getCode() == KeyCode.UNDEFINED
+                && event.getText().isEmpty()
+                && !event.isControlDown() && !event.isAltDown() && !event.isMetaDown()) {
+            event.consume();
+            editor.replaceSelection(event.isShiftDown() ? "¨" : "^");
+            return;
+        }
 
-        if(editor.getCaretPosition() == convertedEnd) {
+        if (event.getCode() != KeyCode.BACK_SPACE || !justConverted)
+            return;
+
+        if (editor.getCaretPosition() == convertedEnd) {
             event.consume();
             editor.replaceText(convertedStart, convertedEnd, convertedRawText);
             buffering = true;
