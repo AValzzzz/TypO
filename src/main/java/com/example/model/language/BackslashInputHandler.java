@@ -31,12 +31,18 @@ public class BackslashInputHandler {
         if (character == null || character.isEmpty())
             return;
 
+        if (character.equals(KeyEvent.CHAR_UNDEFINED))
+            character = "^";
+
         char c = character.charAt(0);
 
         if (Character.isISOControl(c)) {
-            resetBuffering();
+            if (c!='\b')
+                resetBuffering();
             return;
         }
+
+        justConverted = false;
 
         int caret = editor.getCaretPosition();
 
@@ -55,13 +61,18 @@ public class BackslashInputHandler {
 
         if (c == ' ' && buffering) {
             String raw = editor.getText(commandStart, caret).substring(1);
+            System.out.println("RAW COMMAND: [" + raw + "]");
             Optional<Command> match = registry.find(raw);
+            System.out.println("MATCHED: " + match.map(m -> m.getClass().getSimpleName()).orElse("NONE")); 
 
             if (match.isPresent()) {
                 CommandResult result = match.get().apply(raw);
                 if (result.isMathObject()) {
                     editor.replaceText(commandStart, caret, "");
                     editor.insertMathObject(commandStart, result.getMathObject());
+                    convertedStart = commandStart;
+                    convertedRawText = "\\" + raw;
+                    justConverted = true;
                     convertedEnd = commandStart + 1;
                 } else {
 
@@ -90,6 +101,7 @@ public class BackslashInputHandler {
                 && event.getText().isEmpty()
                 && !event.isControlDown() && !event.isAltDown() && !event.isMetaDown()) {
             event.consume();
+            System.out.println("caret=" + editor.getCaretPosition() + " convertedEnd=" + convertedEnd + " justConverted=" + justConverted);
             editor.replaceSelection(event.isShiftDown() ? "¨" : "^");
             return;
         }

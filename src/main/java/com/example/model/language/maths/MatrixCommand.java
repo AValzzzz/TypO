@@ -7,7 +7,7 @@ import com.example.model.language.Command;
 import com.example.model.language.CommandResult;
 
 public class MatrixCommand implements Command {
-    private static final Pattern PATTERN = Pattern.compile("^matrix\\{(.+)}$");
+    private static final Pattern PATTERN = Pattern.compile("^matrix\\((.+)\\)$");
 
     @Override
     public boolean matches(String raw) {

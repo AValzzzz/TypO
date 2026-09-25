@@ -7,7 +7,7 @@ import com.example.model.language.Command;
 import com.example.model.language.CommandResult;
 
 public class SqrtCommand implements Command {
-    private static final Pattern PATTERN = Pattern.compile("^sqrt\\{(.+)}$");
+    private static final Pattern PATTERN = Pattern.compile("^sqrt\\((.+)\\)$");
 
     @Override
     public boolean matches(String raw) {
