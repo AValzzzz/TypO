@@ -40,6 +40,7 @@ public class TextFormatMenu extends ContextMenu {
             toggleItem("Italique", TextStyle::italic, TextStyle::withItalic),
             toggleItem("Barré", TextStyle::strikethrough, TextStyle::withStrikethrough),
             underlineToggle(),
+            underlineStyleToggle(),
             underlineColorItem(),
             highlightToggle(),
             highlightColorItem());
@@ -89,10 +90,26 @@ public class TextFormatMenu extends ContextMenu {
             hide();
         });
 
+        keepMenuOpenWhilePickerActive(picker);
+
         HBox row = new HBox(8, new Label("Couleur"), picker);
         row.setAlignment(Pos.CENTER_LEFT);
         
         return new CustomMenuItem(row, false);
+    }
+
+    private void keepMenuOpenWhilePickerActive(ColorPicker picker) {
+        picker.showingProperty().addListener((obs,wasShowing,isShowing)-> {
+            if (isShowing) {
+                setAutoHide(false);
+            } else {
+                setAutoHide(true);
+            }
+        });
+    }
+
+    private MenuItem underlineStyleToggle() {
+        return toggleItem("Soulignement en pointillés", TextStyle::underlineDotted, TextStyle::withUnderlineDotted);
     }
 
     private MenuItem toggleItem(String label, Function<TextStyle, Boolean> getter, BiFunction<TextStyle, Boolean, TextStyle> setter) {

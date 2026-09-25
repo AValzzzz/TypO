@@ -42,21 +42,33 @@ public class RichTextArea extends GenericStyledArea<Void, Either<String, MathObj
             TextExt text = new TextExt(str);
             text.setStyle(seg.getStyle().toCss());
             return text;
-        },
-        RichTextArea::buildMathNode);
+        }, mathObject -> buildMathNode(mathObject, seg.getStyle()));
     }
 
-    private static Node buildMathNode(MathObject obj) {
+    private static Node buildMathNode(MathObject obj, TextStyle style) {
         if (obj == MathObject.EMPTY || obj.getType() == null) return new Label("");
+        String[] parts;
         switch(obj.getType()) {
             case FRACTION: {
-                String[] parts = obj.getRaw().split(",", 2);
-                return MathNodeFactory.fraction(parts[0], parts[1]);
+                parts = obj.getRaw().split(",", 2);
+                return MathNodeFactory.fraction(parts[0], parts[1], style);
             }
             case SQRT:
-                return MathNodeFactory.sqrt(obj.getRaw());
+                return MathNodeFactory.sqrt(obj.getRaw(), style);
             case MATRIX:
-                return MathNodeFactory.matrix(obj.getRaw());
+                return MathNodeFactory.matrix(obj.getRaw(), style);
+            case SUM:
+                parts = obj.getRaw().split("\\|", -1);
+                return MathNodeFactory.bigOperator("\u03A3", parts[0], parts[1], parts[2], style);
+            case INTEGRAL:
+                parts = obj.getRaw().split("\\|", -1);
+                return MathNodeFactory.bigOperator("\u222B", parts[0], parts[1], parts[2], style);
+            case PRODUCT:
+                parts = obj.getRaw().split("\\|", -1);
+                return MathNodeFactory.bigOperator("\u03A0", parts[0], parts[1], parts[2], style);
+            case LIMIT:
+                parts = obj.getRaw().split("\\|", -1);
+                return MathNodeFactory.limit(parts[0], parts[1], style);
             default:
                 return new Label("?");
         }

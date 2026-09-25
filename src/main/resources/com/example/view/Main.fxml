@@ -8,6 +8,7 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import com.example.view.RichTextArea?>
+<?import javafx.scene.control.ScrollBar?>
 
 <AnchorPane fx:controller="com.example.controller.InputController"
             maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity"
@@ -33,6 +34,13 @@
             </VBox>
          </children>
       </StackPane>
+<ScrollBar fx:id="vScrollBar" orientation="VERTICAL"
+           AnchorPane.topAnchor="0.0" AnchorPane.bottomAnchor="14.0" AnchorPane.rightAnchor="0.0"
+           prefWidth="14.0" />
+
+<ScrollBar fx:id="hScrollBar" orientation="HORIZONTAL"
+           AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="14.0" AnchorPane.bottomAnchor="0.0"
+           prefHeight="14.0" />
 
       <HBox spacing="10.0" AnchorPane.topAnchor="15.0" AnchorPane.leftAnchor="15.0">
          <children>
