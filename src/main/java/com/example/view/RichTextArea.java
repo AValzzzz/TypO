@@ -22,22 +22,38 @@ import com.example.model.language.maths.MathNodeFactory;
 import com.example.model.language.maths.MathObject;
 import com.example.model.language.maths.MathObjectSegmentOps;
 
+import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.IndexRange;
 import javafx.scene.control.Label;
+import javafx.scene.layout.Region;
+import javafx.scene.text.TextFlow;
 
-public class RichTextArea extends GenericStyledArea<Void, Either<String, MathObject>, TextStyle> {
-    private static final TextOps<Either<String, MathObject>, TextStyle> SEGMENT_OPS = SegmentOps.<TextStyle>styledTextOps()._or(new MathObjectSegmentOps(),(s1,s2) -> Optional.empty());
-    
+public class RichTextArea extends GenericStyledArea<Boolean, Either<String, MathObject>, TextStyle> {
+    private static final TextOps<Either<String, MathObject>, TextStyle> SEGMENT_OPS = SegmentOps
+            .<TextStyle>styledTextOps()._or(new MathObjectSegmentOps(), (s1, s2) -> Optional.empty());
+
     public RichTextArea() {
-        super(null,
-                (paragraph, style) -> {},
+        super(Boolean.FALSE,
+                RichTextArea::applyParagraphStyle,
                 TextStyle.DEFAULT,
                 SEGMENT_OPS,
                 RichTextArea::createNode);
     }
 
-    private static Node createNode (StyledSegment<Either<String, MathObject>, TextStyle> seg) {
+    private static void applyParagraphStyle(TextFlow flow, Boolean codeBlock) {
+        if (Boolean.TRUE.equals(codeBlock)) {
+            flow.setStyle("-fx-background-color: #1e1e1e;");
+            flow.setPadding(new Insets(2, 8, 2, 8));
+            flow.setMaxWidth(Double.MAX_VALUE);
+            flow.setMinWidth(Region.USE_COMPUTED_SIZE);
+        } else {
+            flow.setStyle("");
+            flow.setPadding(Insets.EMPTY);
+        }
+    }
+
+    private static Node createNode(StyledSegment<Either<String, MathObject>, TextStyle> seg) {
         return seg.getSegment().unify(str -> {
             TextExt text = new TextExt(str);
             text.setStyle(seg.getStyle().toCss());
@@ -46,16 +62,17 @@ public class RichTextArea extends GenericStyledArea<Void, Either<String, MathObj
     }
 
     private static Node buildMathNode(MathObject obj, TextStyle style) {
-        if (obj == MathObject.EMPTY || obj.getType() == null) return new Label("");
+        if (obj == MathObject.EMPTY || obj.getType() == null)
+            return new Label("");
         String[] parts;
-        switch(obj.getType()) {
+        switch (obj.getType()) {
             case EXPONENT:
                 parts = obj.getRaw().split(",", 2);
                 return MathNodeFactory.exponent(parts[0], parts[1], style);
             case SUBSCRIPT:
                 parts = obj.getRaw().split(",", 2);
                 return MathNodeFactory.subscript(parts[0], parts[1], style);
-            case FRACTION: 
+            case FRACTION:
                 parts = obj.getRaw().split(",", 2);
                 return MathNodeFactory.fraction(parts[0], parts[1], style);
             case SQRT:
@@ -94,7 +111,8 @@ public class RichTextArea extends GenericStyledArea<Void, Either<String, MathObj
 
     public void updateSelectionStyle(UnaryOperator<TextStyle> change) {
         IndexRange sel = getSelection();
-        if (sel.getLength() == 0) return;
+        if (sel.getLength() == 0)
+            return;
         applyStyle(sel.getStart(), sel.getEnd(), change);
     }
 
@@ -113,6 +131,7 @@ public class RichTextArea extends GenericStyledArea<Void, Either<String, MathObj
     }
 
     public void insertMathObject(int position, MathObject obj) {
-        replace(position, position, ReadOnlyStyledDocument.fromSegment(Either.right(obj), null, TextStyle.DEFAULT, SEGMENT_OPS));
+        replace(position, position,
+                ReadOnlyStyledDocument.fromSegment(Either.right(obj), null, TextStyle.DEFAULT, SEGMENT_OPS));
     }
 }

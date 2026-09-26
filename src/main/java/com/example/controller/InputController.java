@@ -3,6 +3,7 @@ package com.example.controller;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.example.model.CodeBlockStyler;
 import com.example.model.Page;
 import com.example.model.actions.DeletePage;
 import com.example.model.actions.FormatText;
@@ -69,6 +70,7 @@ public class InputController {
         pages.add(firstPage);
         attachContextMenu(firstPage);
         new BackslashInputHandler(firstPage.getEditor(), commandRegistry);
+        new CodeBlockStyler(firstPage.getEditor());
         stackPane.addEventFilter(ScrollEvent.SCROLL, event -> {
             if (event.isControlDown()) {
                 double delta = event.getDeltaY();
@@ -214,6 +216,7 @@ public class InputController {
         pages.add(created);
         attachContextMenu(created);
         new BackslashInputHandler(created.getEditor(), commandRegistry);
+        new CodeBlockStyler(created.getEditor());
         clampTranslate();
     }
 
