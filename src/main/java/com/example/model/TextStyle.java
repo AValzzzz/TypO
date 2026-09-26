@@ -14,59 +14,65 @@ public record TextStyle(
         Color highlight,
         Color textColor,
         Integer fontSize,
-        Double baselineShift) {
+        Double baselineShift,
+        boolean codeBlock) {
 
     public static final TextStyle DEFAULT = new TextStyle(false, false, false, false, null, false, null, null, 12,
-            null);
+            null, false);
 
     public TextStyle withBold(boolean v) {
         return new TextStyle(v, italic, strikethrough, underline, underlineColor, underlineDotted, highlight, textColor,
-                fontSize, baselineShift);
+                fontSize, baselineShift, codeBlock);
     }
 
     public TextStyle withItalic(boolean v) {
         return new TextStyle(bold, v, strikethrough, underline, underlineColor, underlineDotted, highlight, textColor,
-                fontSize, baselineShift);
+                fontSize, baselineShift, codeBlock);
     }
 
     public TextStyle withStrikethrough(boolean v) {
         return new TextStyle(bold, italic, v, underline, underlineColor, underlineDotted, highlight, textColor,
-                fontSize, baselineShift);
+                fontSize, baselineShift, codeBlock);
     }
 
     public TextStyle withUnderline(boolean v) {
         return new TextStyle(bold, italic, strikethrough, v, underlineColor, underlineDotted, highlight, textColor,
-                fontSize, baselineShift);
+                fontSize, baselineShift, codeBlock);
     }
 
     public TextStyle withUnderlineColor(Color v) {
         return new TextStyle(bold, italic, strikethrough, underline, v, underlineDotted, highlight, textColor, fontSize,
-                baselineShift);
+                baselineShift, codeBlock);
     }
 
     public TextStyle withUnderlineDotted(boolean v) {
         return new TextStyle(bold, italic, strikethrough, underline, underlineColor, v, highlight, textColor, fontSize,
-                baselineShift);
+                baselineShift, codeBlock);
     }
 
     public TextStyle withHighlight(Color v) {
         return new TextStyle(bold, italic, strikethrough, underline, underlineColor, underlineDotted, v, textColor,
-                fontSize, baselineShift);
+                fontSize, baselineShift, codeBlock);
     }
 
     public TextStyle withTextColor(Color v) {
         return new TextStyle(bold, italic, strikethrough, underline, underlineColor, underlineDotted, highlight, v,
-                fontSize, baselineShift);
+                fontSize, baselineShift, codeBlock);
     }
 
     public TextStyle withFontSize(Integer v) {
         return new TextStyle(bold, italic, strikethrough, underline, underlineColor, underlineDotted, highlight,
-                textColor, v, baselineShift);
+                textColor, v, baselineShift, codeBlock);
     }
 
     public TextStyle withBaselineShift(Double v) {
         return new TextStyle(bold, italic, strikethrough, underline, underlineColor, underlineDotted, highlight,
-                textColor, fontSize, v);
+                textColor, fontSize, v, codeBlock);
+    }
+
+    public TextStyle withCodeBlock(boolean v) {
+        return new TextStyle(bold, italic, strikethrough, underline, underlineColor, underlineDotted, highlight,
+                textColor, fontSize, baselineShift, v);
     }
 
     public String toCss() {
@@ -88,6 +94,14 @@ public record TextStyle(
         }
         if (highlight != null)
             css.append("-rtfx-background-color: ").append(toCss(highlight)).append(";");
+        if (codeBlock) {
+            css.append("-fx-font-family: 'Consolas, Monaco, monospace';");
+            css.append("-rtfx-background-color: ").append(toCss(Color.rgb(30, 30, 30))).append(";");
+            css.append("-rtfx-background-insets: -2 -4 -2 -4;");
+            css.append("-rtfx-background-radius: 3;");
+            if (textColor == null)
+                css.append("-fx-fill: ").append(toCss(Color.rgb(246, 246, 246))).append(";");
+        }
         if (textColor != null)
             css.append("-fx-fill: ").append(toCss(textColor)).append(";");
         if (fontSize != null)
