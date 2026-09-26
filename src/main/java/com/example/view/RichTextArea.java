@@ -49,10 +49,15 @@ public class RichTextArea extends GenericStyledArea<Void, Either<String, MathObj
         if (obj == MathObject.EMPTY || obj.getType() == null) return new Label("");
         String[] parts;
         switch(obj.getType()) {
-            case FRACTION: {
+            case EXPONENT:
+                parts = obj.getRaw().split(",", 2);
+                return MathNodeFactory.exponent(parts[0], parts[1], style);
+            case SUBSCRIPT:
+                parts = obj.getRaw().split(",", 2);
+                return MathNodeFactory.subscript(parts[0], parts[1], style);
+            case FRACTION: 
                 parts = obj.getRaw().split(",", 2);
                 return MathNodeFactory.fraction(parts[0], parts[1], style);
-            }
             case SQRT:
                 return MathNodeFactory.sqrt(obj.getRaw(), style);
             case MATRIX:

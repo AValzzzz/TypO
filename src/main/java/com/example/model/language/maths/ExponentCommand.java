@@ -21,13 +21,6 @@ public class ExponentCommand implements Command {
         m.matches();
         String base = m.group(1);
         String exponent = m.group(2) != null ? m.group(2) : m.group(3);
-        String text = base + exponent;
-
-        return new CommandResult(text, base.length(), text.length(), s -> {
-            int baseSize = s.fontSize() != null ? s.fontSize() : 12;
-            int expSize = Math.max(6, (int) Math.round(baseSize * 0.65));
-            double shift = -baseSize * 0.35;
-            return s.withFontSize(expSize).withBaselineShift(shift);
-        }, null);
+        return CommandResult.ofMathObject(new MathObject(MathObject.Type.EXPONENT, base + "," + exponent));
     }
 }

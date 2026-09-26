@@ -51,23 +51,29 @@ public class MathNodeFactory {
         return box;
     }
 
-    public static Node exponent (String base, String exponent) {
-        Label baseLabel = new Label(base);
-        Label expLabel = new Label(exponent);
-        expLabel.setStyle("-fx-font-size:10px;");
-        expLabel.setTranslateY(-6);
+    public static Node exponent (String base, String exponent, TextStyle style) {
+        int baseSize = (style != null && style.fontSize() != null) ? style.fontSize() : 12;
+        double expSize = Math.max(6, baseSize * 0.65);
+
+        Label baseLabel = styledLabel(base, style);
+        Label expLabel = styledLabel(exponent, style);
+        expLabel.setStyle("-fx-font-size: " + expSize + "px;");
+        expLabel.setTranslateY(-baseSize * 0.35);
 
         HBox box = new HBox(baseLabel, expLabel);
         box.setAlignment(Pos.BOTTOM_LEFT);
         return box;
     }
 
-    public static Node subscript(String base, String sub) {
-        Label baseLabel = new Label(base);
-        Label subLabel = new Label(sub);
+    public static Node subscript(String base, String sub, TextStyle style) {
+        int baseSize = (style != null && style.fontSize() != null) ? style.fontSize() : 12;
+        double expSize = Math.max(6, baseSize * 0.65);
 
-        subLabel.setStyle("-fx-font-size: 10px;");
-        subLabel.setTranslateY(4);
+        Label baseLabel = styledLabel(base, style);
+        Label subLabel = styledLabel(sub, style);
+
+        subLabel.setStyle("-fx-font-size: "+expSize+"px;");
+        subLabel.setTranslateY(baseSize * 0.5);
 
         HBox box = new HBox(baseLabel, subLabel);
         box.setAlignment(Pos.TOP_LEFT);
@@ -172,7 +178,9 @@ public class MathNodeFactory {
         c.getOpacity());
     }
 
-    private static Label bigSymbolLabel(String symbol, TextStyle style, double sizePx) {
+    private static Label bigSymbolLabel(String symbol, TextStyle style) {
+        int baseSize = (style != null && style.fontSize() != null) ? style.fontSize() : 12;
+        double sizePx = baseSize*2.2;
         Label label = styledLabel(symbol, style);
         label.setStyle(label.getStyle() + "-fx-font-size: " + sizePx + "px;");
         return label;
@@ -180,8 +188,10 @@ public class MathNodeFactory {
 
     private static Label smallLabel(String text, TextStyle style) {
         if (text == null || text.isEmpty()) return null;
+        int baseSize = (style != null && style.fontSize() != null) ? style.fontSize() : 12;
+        double sizePx = Math.max(6, baseSize*0.55);
         Label label = styledLabel(text, style);
-        label.setStyle(label.getStyle() + "-fx-font-size: 10px;");
+        label.setStyle(label.getStyle() + "-fx-font-size: "+ sizePx +"px;");
         return label;
     }
 
@@ -194,7 +204,7 @@ public class MathNodeFactory {
         Label upperLabel = smallLabel(upper, style);
         if (upperLabel != null) stack.getChildren().add(upperLabel);
 
-        stack.getChildren().add(bigSymbolLabel(symbol,style,26));
+        stack.getChildren().add(bigSymbolLabel(symbol,style));
 
         Label lowerLabel = smallLabel(lower, style);
         if(lowerLabel != null) stack.getChildren().add(lowerLabel);
@@ -203,8 +213,11 @@ public class MathNodeFactory {
 
         HBox box = new HBox(4,stack,valueLabel);
         box.setAlignment(Pos.CENTER);
-        box.setTranslateY(10);
-        if (hasBounds) box.setTranslateY(20);
+        
+        int baseSize = (style!= null && style.fontSize() != null)?style.fontSize():12;
+
+        box.setTranslateY(baseSize * 0.4);
+        if (hasBounds) box.setTranslateY(baseSize*0.4);
         return box;
     }
 
@@ -217,12 +230,14 @@ public class MathNodeFactory {
         Label conditionLabel = smallLabel(condition, style);
         if (conditionLabel != null) stack.getChildren().add(conditionLabel);
 
+
         Label valueLabel = styledLabel(value, style);
-        valueLabel.setTranslateY(-6);
+        int baseSize = (style!= null && style.fontSize() != null)?style.fontSize():12;
+        valueLabel.setTranslateY(-baseSize*0.5);
 
         HBox box = new HBox(4, stack, valueLabel);
         box.setAlignment(Pos.CENTER);
-        box.setTranslateY(10);
+        box.setTranslateY(baseSize*0.8);
         return box;
     }
 }
