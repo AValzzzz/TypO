@@ -216,8 +216,8 @@ public class MathNodeFactory {
         
         int baseSize = (style!= null && style.fontSize() != null)?style.fontSize():12;
 
-        box.setTranslateY(baseSize * 0.4);
-        if (hasBounds) box.setTranslateY(baseSize*0.4);
+        box.setTranslateY(baseSize);
+        if (hasBounds) box.setTranslateY(baseSize*1.5);
         return box;
     }
 
@@ -233,11 +233,10 @@ public class MathNodeFactory {
 
         Label valueLabel = styledLabel(value, style);
         int baseSize = (style!= null && style.fontSize() != null)?style.fontSize():12;
-        valueLabel.setTranslateY(-baseSize*0.5);
+        valueLabel.setTranslateY(-baseSize*0.15);
 
         HBox box = new HBox(4, stack, valueLabel);
         box.setAlignment(Pos.CENTER);
-        box.setTranslateY(baseSize*0.8);
         return box;
     }
 }
