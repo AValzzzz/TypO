@@ -5,14 +5,17 @@ import java.util.List;
 
 import com.example.model.CodeBlockStyler;
 import com.example.model.Page;
+import com.example.model.TextStyle;
 import com.example.model.actions.DeletePage;
 import com.example.model.actions.FormatText;
 import com.example.model.actions.Help;
 import com.example.model.actions.NewPage;
+import com.example.model.actions.OpenFile;
 import com.example.model.actions.Save;
 import com.example.model.actions.SaveAs;
 import com.example.model.actions.Settings;
 import com.example.model.actions.ToggleOrientation;
+import com.example.model.io.PageContent;
 import com.example.model.language.BackslashInputHandler;
 import com.example.model.language.CommandRegistry;
 import com.example.model.language.maths.MathCommands;
@@ -205,11 +208,49 @@ public class InputController {
 
     @FXML
     private void handleSaveAs() {
-        new SaveAs().execute();
+        new SaveAs(pages, stackPane.getScene().getWindow()).execute();
     }
 
     @FXML
-    private void handleNewPage() {
+    private void handleOpenFile() {
+        new OpenFile(stackPane.getScene().getWindow(), this::loadDocument).execute();
+    }
+
+    private void loadDocument(List<PageContent> loadedPages) {
+        pagesContainer.getChildren().clear();
+        pages.clear();
+
+        for (PageContent content : loadedPages) {
+            Page page = createPage();
+            populate(page, content);
+            if (content.landscape != (page.getPane().getWidth() > page.getPane().getHeight())) {
+                new ToggleOrientation(page).execute();
+            }
+        }
+        clampTranslate();
+    }
+
+    private void populate(Page page, PageContent content) {
+        RichTextArea editor = page.getEditor();
+        editor.clear();
+
+        for (int i = 0; i < content.paragraphs.size(); i++) {
+            PageContent.ParagraphContent paragraph = content.paragraphs.get(i);
+            for (PageContent.RunContent run : paragraph.runs) {
+                if (run.isMath()) {
+                    editor.appendMathObject(run.math, run.style);
+                } else {
+                    editor.appendStyledText(run.text, run.style);
+                }
+            }
+            editor.setParagraphStyle(editor.getParagraphs().size() - 1, paragraph.codeBlock);
+            if (i < content.paragraphs.size() - 1) {
+                editor.appendStyledText("\n", TextStyle.DEFAULT);
+            }
+        }
+    }
+
+    private Page createPage() {
         NewPage action = new NewPage(pagesContainer);
         action.execute();
         Page created = action.getCreatedPage();
@@ -217,6 +258,12 @@ public class InputController {
         attachContextMenu(created);
         new BackslashInputHandler(created.getEditor(), commandRegistry);
         new CodeBlockStyler(created.getEditor());
+        return created;
+    }
+
+    @FXML
+    private void handleNewPage() {
+        createPage();
         clampTranslate();
     }
 

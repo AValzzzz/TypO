@@ -131,7 +131,20 @@ public class RichTextArea extends GenericStyledArea<Boolean, Either<String, Math
     }
 
     public void insertMathObject(int position, MathObject obj) {
+        insertMathObject(position, obj, TextStyle.DEFAULT);
+    }
+
+    public void insertMathObject(int position, MathObject obj, TextStyle style) {
         replace(position, position,
-                ReadOnlyStyledDocument.fromSegment(Either.right(obj), null, TextStyle.DEFAULT, SEGMENT_OPS));
+                ReadOnlyStyledDocument.fromSegment(Either.right(obj), Boolean.FALSE, style, SEGMENT_OPS));
+    }
+
+    public void appendStyledText(String text, TextStyle style) {
+        int end = getLength();
+        replace(end, end, ReadOnlyStyledDocument.fromString(text, Boolean.FALSE, style, SEGMENT_OPS));
+    }
+
+    public void appendMathObject(MathObject obj, TextStyle style) {
+        insertMathObject(getLength(), obj, style);
     }
 }
