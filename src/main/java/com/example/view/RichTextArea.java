@@ -97,6 +97,8 @@ public class RichTextArea extends GenericStyledArea<CodeTheme, Either<String, Ma
             case LIMIT:
                 parts = obj.getRaw().split("\\|", -1);
                 return MathNodeFactory.limit(parts[0], parts[1], style);
+            case IMAGE:
+                return MathNodeFactory.image(obj.getRaw(), style);
             default:
                 return new Label("?");
         }

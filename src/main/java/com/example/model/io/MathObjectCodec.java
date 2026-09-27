@@ -61,6 +61,8 @@ public class MathObjectCodec {
                 parts = split(obj.getRaw(), "\\|", 2);
                 return "lim(" + parts[0] + ") " + parts[1];
             }
+            case IMAGE:
+                return "[image]";
             default:
                 return obj.getRaw();
         }

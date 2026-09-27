@@ -26,6 +26,7 @@ import org.openxmlformats.schemas.wordprocessingml.x2006.main.STShd;
 import com.example.model.TextStyle;
 import com.example.model.io.PageContent.ParagraphContent;
 import com.example.model.io.PageContent.RunContent;
+import com.example.model.language.maths.MathObject;
 
 public final class DocxDocumentWriter {
 
@@ -93,9 +94,45 @@ public final class DocxDocumentWriter {
     }
 
     private void writeMathRun(XWPFParagraph p, RunContent run) {
+        if (run.math.getType() == MathObject.Type.IMAGE) {
+            writeImageRun(p, run);
+            return;
+        }
         XWPFRun visible = p.createRun();
         visible.setText(MathObjectCodec.approximate(run.math));
         applyStyle(visible, run.style, false);
+
+        XWPFRun hidden = p.createRun();
+        hidden.setText(MathObjectCodec.encode(run.math));
+        setHidden(hidden, true);
+        hidden.setFontSize(1);
+    }
+
+    private void writeImageRun(XWPFParagraph p, RunContent run) {
+        String raw = run.math.getRaw();
+        int sep = raw.indexOf('|');
+        String format = raw.substring(0, sep);
+        String base64 = raw.substring(sep + 1);
+        byte[] bytes = java.util.Base64.getDecoder().decode(base64);
+
+        int pictureType = (format.equals("jpg") || format.equals("jpeg"))
+                ? org.apache.poi.xwpf.usermodel.Document.PICTURE_TYPE_JPEG
+                : org.apache.poi.xwpf.usermodel.Document.PICTURE_TYPE_PNG;
+
+        XWPFRun visible = p.createRun();
+        try {
+            java.awt.image.BufferedImage bimg = javax.imageio.ImageIO.read(new java.io.ByteArrayInputStream(bytes));
+            int width = Math.min(bimg.getWidth(), 400);
+            int height = (int) ((double) width / bimg.getWidth() * bimg.getHeight());
+            int widthEmu = org.apache.poi.util.Units.pixelToEMU(width);
+            int heightEmu = org.apache.poi.util.Units.pixelToEMU(height);
+
+            try (java.io.ByteArrayInputStream is = new java.io.ByteArrayInputStream(bytes)) {
+                visible.addPicture(is, pictureType, "image." + format, widthEmu, heightEmu);
+            }
+        } catch (Exception e) {
+            visible.setText("[image]");
+        }
 
         XWPFRun hidden = p.createRun();
         hidden.setText(MathObjectCodec.encode(run.math));

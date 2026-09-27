@@ -1,5 +1,7 @@
 package com.example.model.language.maths;
 
+import java.io.ByteArrayInputStream;
+import java.util.Base64;
 import java.util.Locale;
 
 import com.example.model.TextStyle;
@@ -8,6 +10,8 @@ import javafx.application.Platform;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
@@ -238,5 +242,26 @@ public class MathNodeFactory {
         HBox box = new HBox(4, stack, valueLabel);
         box.setAlignment(Pos.CENTER);
         return box;
+    }
+
+    public static Node image(String raw, TextStyle style) {
+        try {
+            int sep = raw.indexOf('|');
+            String base64 = raw.substring(sep + 1);
+            byte[] bytes = Base64.getDecoder().decode(base64);
+
+            Image img = new Image(new ByteArrayInputStream(bytes));
+            ImageView view = new ImageView(img);
+            view.setPreserveRatio(true);
+
+            double maxWidth = 400;
+            if (img.getWidth() > maxWidth) {
+                view.setFitWidth(maxWidth);
+            }
+
+            return view;
+        } catch (Exception e) {
+            return new Label("[image]");
+        }
     }
 }

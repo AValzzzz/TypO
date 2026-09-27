@@ -9,6 +9,7 @@ import com.example.model.TextStyle;
 import com.example.model.actions.DeletePage;
 import com.example.model.actions.FormatText;
 import com.example.model.actions.Help;
+import com.example.model.actions.ImportImage;
 import com.example.model.actions.NewPage;
 import com.example.model.actions.OpenFile;
 import com.example.model.actions.Save;
@@ -36,6 +37,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.stage.Window;
 
 public class InputController {
     @FXML
@@ -148,7 +150,13 @@ public class InputController {
             clampTranslate();
         });
 
-        pageMenu.getItems().addAll(toggleOrientationItem, deletePageItem);
+        MenuItem importImageItem = new MenuItem("Importer une image");
+        importImageItem.setOnAction(e -> {
+            Window owner = page.getPane().getScene().getWindow();
+            new ImportImage(page, owner).execute();
+        });
+
+        pageMenu.getItems().addAll(toggleOrientationItem, deletePageItem, importImageItem);
 
         page.getPane().addEventFilter(ContextMenuEvent.CONTEXT_MENU_REQUESTED, event -> {
             ContextMenu menu = page.hasSelection() ? createTextMenu(page) : pageMenu;

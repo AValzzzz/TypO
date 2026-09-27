@@ -3,7 +3,7 @@ package com.example.model.language.maths;
 import java.util.Objects;
 
 public class MathObject {
-    public enum Type {FRACTION, EXPONENT, SUBSCRIPT, SQRT, MATRIX, SUM, INTEGRAL, PRODUCT, LIMIT}
+    public enum Type {FRACTION, EXPONENT, SUBSCRIPT, SQRT, MATRIX, SUM, INTEGRAL, PRODUCT, LIMIT, IMAGE}
     
     private final Type type;
     private final String raw;
