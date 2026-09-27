@@ -19,19 +19,23 @@ import com.example.model.io.PageContent;
 import com.example.model.language.BackslashInputHandler;
 import com.example.model.language.CommandRegistry;
 import com.example.model.language.maths.MathCommands;
+import com.example.model.settings.AppSettings;
 import com.example.view.RichTextArea;
 import com.example.view.TextFormatMenu;
 
 import javafx.fxml.FXML;
+import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.ScrollBar;
 import javafx.scene.input.ContextMenuEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 
 public class InputController {
     @FXML
@@ -51,6 +55,9 @@ public class InputController {
 
     @FXML
     private ScrollBar vScrollBar;
+
+    @FXML
+    private AnchorPane rootPane;
 
     private boolean updatingScrollbars = false;
 
@@ -74,6 +81,11 @@ public class InputController {
         attachContextMenu(firstPage);
         new BackslashInputHandler(firstPage.getEditor(), commandRegistry);
         new CodeBlockStyler(firstPage.getEditor());
+        AppSettings.getInstance().backgroundColorProperty().addListener((obs, o, n) -> applyBackgroundColor(n));
+        applyBackgroundColor(AppSettings.getInstance().backgroundColorProperty().get());
+
+        AppSettings.getInstance().selectionColorProperty().addListener((obs, o, n) -> applySelectionColorToAllPages());
+        applySelectionColorToAllPages();
         stackPane.addEventFilter(ScrollEvent.SCROLL, event -> {
             if (event.isControlDown()) {
                 double delta = event.getDeltaY();
@@ -243,7 +255,9 @@ public class InputController {
                     editor.appendStyledText(run.text, run.style);
                 }
             }
-            editor.setParagraphStyle(editor.getParagraphs().size() - 1, paragraph.codeBlock);
+            editor.setParagraphStyle(
+                    editor.getParagraphs().size() - 1,
+                    paragraph.codeBlock ? AppSettings.getInstance().codeThemeProperty().get() : null);
             if (i < content.paragraphs.size() - 1) {
                 editor.appendStyledText("\n", TextStyle.DEFAULT);
             }
@@ -261,6 +275,32 @@ public class InputController {
         return created;
     }
 
+    private void applyBackgroundColor(Color color) {
+        String hex = String.format("#%02X%02X%02X",
+                (int) Math.round(color.getRed() * 255),
+                (int) Math.round(color.getGreen() * 255),
+                (int) Math.round(color.getBlue() * 255));
+        rootPane.setStyle("-fx-background-color: " + hex + ";");
+    }
+
+    private void applySelectionColorToAllPages() {
+        for (Page p : pages)
+            applySelectionColor(p.getEditor());
+    }
+
+    private void applySelectionColor(RichTextArea editor) {
+        Color color = AppSettings.getInstance().selectionColorProperty().get();
+        String rgba = String.format(java.util.Locale.ROOT, "rgba(%d,%d,%d,%.3f)",
+                (int) Math.round(color.getRed() * 255),
+                (int) Math.round(color.getGreen() * 255),
+                (int) Math.round(color.getBlue() * 255),
+                color.getOpacity());
+        String css = ".styled-text-area .selection { -fx-fill: " + rgba + "; }";
+        String base64 = java.util.Base64.getEncoder()
+                .encodeToString(css.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        editor.getStylesheets().add("data:text/css;base64," + base64);
+    }
+
     @FXML
     private void handleNewPage() {
         createPage();
@@ -273,7 +313,8 @@ public class InputController {
     }
 
     @FXML
-    private void handleSettings() {
-        new Settings().execute();
+    private void handleSettings(javafx.event.ActionEvent event) {
+        Node source = (Node) event.getSource();
+        new Settings(source).execute();
     }
 }

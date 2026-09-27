@@ -21,36 +21,42 @@ import com.example.model.TextStyle;
 import com.example.model.language.maths.MathNodeFactory;
 import com.example.model.language.maths.MathObject;
 import com.example.model.language.maths.MathObjectSegmentOps;
+import com.example.model.settings.CodeTheme;
 
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.IndexRange;
 import javafx.scene.control.Label;
-import javafx.scene.layout.Region;
+import javafx.scene.paint.Color;
 import javafx.scene.text.TextFlow;
 
-public class RichTextArea extends GenericStyledArea<Boolean, Either<String, MathObject>, TextStyle> {
+public class RichTextArea extends GenericStyledArea<CodeTheme, Either<String, MathObject>, TextStyle> {
     private static final TextOps<Either<String, MathObject>, TextStyle> SEGMENT_OPS = SegmentOps
             .<TextStyle>styledTextOps()._or(new MathObjectSegmentOps(), (s1, s2) -> Optional.empty());
 
     public RichTextArea() {
-        super(Boolean.FALSE,
+        super(null,
                 RichTextArea::applyParagraphStyle,
                 TextStyle.DEFAULT,
                 SEGMENT_OPS,
                 RichTextArea::createNode);
     }
 
-    private static void applyParagraphStyle(TextFlow flow, Boolean codeBlock) {
-        if (Boolean.TRUE.equals(codeBlock)) {
-            flow.setStyle("-fx-background-color: #1e1e1e;");
+    private static void applyParagraphStyle(TextFlow flow, CodeTheme theme) {
+        if (theme != null) {
+            flow.setStyle("-fx-background-color: " + toRgbStatic(theme.getBackground()) + ";");
             flow.setPadding(new Insets(2, 8, 2, 8));
             flow.setMaxWidth(Double.MAX_VALUE);
-            flow.setMinWidth(Region.USE_COMPUTED_SIZE);
         } else {
             flow.setStyle("");
             flow.setPadding(Insets.EMPTY);
         }
+    }
+
+    private static String toRgbStatic(Color c) {
+        return String.format(java.util.Locale.ROOT, "rgba(%d,%d,%d,%.3f)",
+                Math.round(c.getRed() * 255), Math.round(c.getGreen() * 255), Math.round(c.getBlue() * 255),
+                c.getOpacity());
     }
 
     private static Node createNode(StyledSegment<Either<String, MathObject>, TextStyle> seg) {
@@ -136,12 +142,12 @@ public class RichTextArea extends GenericStyledArea<Boolean, Either<String, Math
 
     public void insertMathObject(int position, MathObject obj, TextStyle style) {
         replace(position, position,
-                ReadOnlyStyledDocument.fromSegment(Either.right(obj), Boolean.FALSE, style, SEGMENT_OPS));
+                ReadOnlyStyledDocument.fromSegment(Either.right(obj), null, style, SEGMENT_OPS));
     }
 
     public void appendStyledText(String text, TextStyle style) {
         int end = getLength();
-        replace(end, end, ReadOnlyStyledDocument.fromString(text, Boolean.FALSE, style, SEGMENT_OPS));
+        replace(end, end, ReadOnlyStyledDocument.fromString(text, null, style, SEGMENT_OPS));
     }
 
     public void appendMathObject(MathObject obj, TextStyle style) {

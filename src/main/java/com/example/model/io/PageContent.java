@@ -25,25 +25,25 @@ public class PageContent {
         PageContent content = new PageContent(landscape);
         RichTextArea editor = page.getEditor();
 
-        for(Paragraph<Boolean, Either<String, MathObject>, TextStyle> paragraph : editor.getParagraphs()) {
-            ParagraphContent pc = new ParagraphContent(Boolean.TRUE.equals(paragraph.getParagraphStyle()));
-            for(StyledSegment<Either<String, MathObject>, TextStyle> seg : paragraph.getStyledSegments()) {
+        for (Paragraph<com.example.model.settings.CodeTheme, Either<String, MathObject>, TextStyle> paragraph : editor
+                .getParagraphs()) {
+            ParagraphContent pc = new ParagraphContent(paragraph.getParagraphStyle() != null);
+            for (StyledSegment<Either<String, MathObject>, TextStyle> seg : paragraph.getStyledSegments()) {
                 TextStyle style = seg.getStyle();
                 seg.getSegment().unify(
-                    text-> {
-                        pc.runs.add(RunContent.text(text,style));
-                        return null;
-                    },
-                    math -> {
-                        pc.runs.add(RunContent.math(math,style));
-                        return null;
-                    });
+                        text -> {
+                            pc.runs.add(RunContent.text(text, style));
+                            return null;
+                        },
+                        math -> {
+                            pc.runs.add(RunContent.math(math, style));
+                            return null;
+                        });
             }
             content.paragraphs.add(pc);
         }
         return content;
     }
-
 
     public static final class ParagraphContent {
         public final boolean codeBlock;
@@ -54,23 +54,20 @@ public class PageContent {
         }
     }
 
-
     public static final class RunContent {
         public final String text;
         public final MathObject math;
         public final TextStyle style;
 
-        private RunContent (String text, MathObject math, TextStyle style) {
+        private RunContent(String text, MathObject math, TextStyle style) {
             this.text = text;
             this.math = math;
             this.style = style;
         }
 
-
-        public static RunContent text (String text, TextStyle style) {
+        public static RunContent text(String text, TextStyle style) {
             return new RunContent(text, null, style);
         }
-
 
         public static RunContent math(MathObject math, TextStyle style) {
             return new RunContent(null, math, style);
