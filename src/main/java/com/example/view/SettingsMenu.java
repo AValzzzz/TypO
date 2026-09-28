@@ -4,6 +4,7 @@ import com.example.model.settings.AppSettings;
 import com.example.model.settings.CodeTheme;
 
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.ColorPicker;
 import javafx.scene.control.ContextMenu;
@@ -44,7 +45,7 @@ public class SettingsMenu extends ContextMenu {
         picker.showingProperty().addListener((obs, wasShowing, isShowing) -> setAutoHide(!isShowing));
     }
 
-    private CustomMenuItem row(String label, javafx.scene.Node control) {
+    private CustomMenuItem row(String label, Node control) {
         HBox box = new HBox(8, new Label(label), control);
         box.setAlignment(Pos.CENTER_LEFT);
         return new CustomMenuItem(box, false);

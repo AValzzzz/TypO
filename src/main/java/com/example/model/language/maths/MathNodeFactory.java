@@ -2,9 +2,9 @@ package com.example.model.language.maths;
 
 import java.io.ByteArrayInputStream;
 import java.util.Base64;
-import java.util.Locale;
 
 import com.example.model.TextStyle;
+import com.example.model.io.ColorUtil;
 
 import javafx.application.Platform;
 import javafx.geometry.Pos;
@@ -29,7 +29,7 @@ public class MathNodeFactory {
         if (style != null) {
             label.setStyle(style.toCss());
             if (style.textColor() != null) 
-                label.setStyle(label.getStyle() + "-fx-text-fill: " + toRgb(style.textColor()));
+                label.setStyle(label.getStyle() + "-fx-text-fill: " + ColorUtil.toCssRgba(style.textColor())+";");
         } 
         return label;
     }
@@ -47,7 +47,7 @@ public class MathNodeFactory {
 
         Region bar = new Region();
         bar.setPrefHeight(1);
-        bar.setStyle("-fx-background-color: " + toRgb(barColor(style)) + ";");
+        bar.setStyle("-fx-background-color: " + ColorUtil.toCssRgba(barColor(style)) + ";");
 
         VBox box = new VBox(num, bar, den);
         box.setAlignment(Pos.CENTER);
@@ -94,7 +94,7 @@ public class MathNodeFactory {
         radical.setFill(null);
 
         Region bar = new Region();
-        bar.setStyle("-fx-background-color: " + toRgb(barColor(style)) + ";");
+        bar.setStyle("-fx-background-color: " + ColorUtil.toCssRgba(barColor(style)) + ";");
         bar.setPrefHeight(1.5);
         bar.setMaxHeight(1.5);
         bar.prefWidthProperty().bind(inner.widthProperty());
@@ -172,14 +172,6 @@ public class MathNodeFactory {
         Path path = (Path) bracketNode;
         ((LineTo) path.getProperties().get("bottomCorner")).setY(height);
         ((LineTo) path.getProperties().get("end")).setY(height);
-    }
-
-    private static String toRgb(Color c) {
-        return String.format(Locale.ROOT, "rgba(%d,%d,%d,%.3f)",
-            Math.round(c.getRed() * 255),
-            Math.round(c.getGreen() * 255),
-            Math.round(c.getBlue() * 255),
-        c.getOpacity());
     }
 
     private static Label bigSymbolLabel(String symbol, TextStyle style) {

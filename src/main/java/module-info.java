@@ -15,6 +15,7 @@ module com.example.javafx {
 
     requires org.apache.pdfbox;
     requires javafx.base;
+    requires org.apache.poi.poi;
 
     opens com.example to javafx.graphics, javafx.fxml;
     opens com.example.controller to javafx.fxml;

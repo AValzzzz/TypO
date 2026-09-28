@@ -1,13 +1,16 @@
 package com.example.model.io;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 
+import org.apache.poi.util.Units;
 import org.apache.poi.xwpf.usermodel.Document;
 import org.apache.poi.xwpf.usermodel.UnderlinePatterns;
 import org.apache.poi.xwpf.usermodel.VerticalAlign;
@@ -103,10 +106,32 @@ public final class DocxDocumentWriter {
         visible.setText(MathObjectCodec.approximate(run.math));
         applyStyle(visible, run.style, false);
 
-        XWPFRun hidden = p.createRun();
-        hidden.setText(MathObjectCodec.encode(run.math));
-        setHidden(hidden, true);
-        hidden.setFontSize(1);
+        addHiddenRun(p, MathObjectCodec.encode(run.math));
+        // XWPFRun hidden = p.createRun();
+        // hidden.setText(MathObjectCodec.encode(run.math));
+        // setHidden(hidden, true);
+        // hidden.setFontSize(1);
+    }
+
+    private void writeFloatingImageParagraph(XWPFDocument doc, PageContent.FloatingImageContent img) {
+        XWPFParagraph p = doc.createParagraph();
+
+        int pictureType = (img.format.equals("jpg") || img.format.equals("jpeg"))
+                ? Document.PICTURE_TYPE_JPEG
+                : Document.PICTURE_TYPE_PNG;
+
+        byte[] bytes = Base64.getDecoder().decode(img.base64);
+        XWPFRun visible = p.createRun();
+        try (ByteArrayInputStream is = new ByteArrayInputStream(bytes)) {
+            int widthEmu = Units.pixelToEMU((int) img.width);
+            int heightEmu = Units.pixelToEMU((int) img.height);
+            visible.addPicture(is, pictureType, "image." + img.format, widthEmu, heightEmu);
+        } catch (Exception e) {
+            visible.setText("[image]");
+        }
+
+        addHiddenRun(p, FloatingImageCodec.encode(img.x, img.y, img.width, img.height));
+        addHiddenRun(p, MathObjectCodec.encode(new MathObject(MathObject.Type.IMAGE, img.format + "|" + img.base64)));
     }
 
     private void applyStyle(XWPFRun run, TextStyle style, boolean codeBlockParagraph) {
@@ -132,13 +157,12 @@ public final class DocxDocumentWriter {
         boolean mono = style.codeBlock() || codeBlockParagraph;
         if (mono) {
             run.setFontFamily(CODE_FONT);
-            if (style.textColor() == null) {
-                run.setColor(CODE_BLOCK_FG);
-            }
         }
 
         if (style.textColor() != null) {
             run.setColor(ColorUtil.toHex(style.textColor()));
+        } else if (mono) {
+            run.setColor(CODE_BLOCK_FG);
         }
         if (style.fontSize() != null) {
             run.setFontSize(style.fontSize());
@@ -158,26 +182,26 @@ public final class DocxDocumentWriter {
     }
 
     private void setRunShading(XWPFRun run, String hex) {
-        CTRPr rpr = run.getCTR().isSetRPr() ? run.getCTR().getRPr() : run.getCTR().addNewRPr();
-        CTShd shd = rpr.addNewShd();
+        CTShd shd = rPr(run).addNewShd();
         shd.setVal(STShd.CLEAR);
         shd.setColor("auto");
         shd.setFill(hex);
     }
 
-    private void setHidden(XWPFRun run, boolean hidden) {
-        CTRPr rpr = run.getCTR().isSetRPr() ? run.getCTR().getRPr() : run.getCTR().addNewRPr();
-        if (hidden) {
-            if (rpr.sizeOfVanishArray() == 0) {
-                rpr.addNewVanish();
-            }
-        } else {
-            while (rpr.sizeOfVanishArray() > 0) {
-                rpr.removeVanish(0);
-            }
-        }
+
+    private static CTRPr rPr(XWPFRun run) {
+        return run.getCTR().isSetRPr() ? run.getCTR().getRPr() : run.getCTR().addNewRPr();
     }
 
+    private static void addHiddenRun(XWPFParagraph p, String text) {
+        XWPFRun run = p.createRun();
+        run.setText(text);
+        CTRPr rpr = rPr(run);
+        if (rpr.sizeOfVanishArray() == 0)
+            rpr.addNewVanish();
+        run.setFontSize(1);
+    }
+    
     private boolean isHidden(XWPFRun run) {
         return run.getCTR().isSetRPr() && run.getCTR().getRPr().sizeOfVanishArray() > 0;
     }
@@ -298,34 +322,29 @@ public final class DocxDocumentWriter {
         }
 
         String shadingHex = runShadingHex(run);
-        if (shadingHex != null && !CODE_BLOCK_BG.equalsIgnoreCase(shadingHex)) {
+        if (shadingHex != null && !CODE_BLOCK_BG.equalsIgnoreCase(shadingHex))
             style = style.withHighlight(ColorUtil.fromHex(shadingHex));
-        }
 
         String color = run.getColor();
-        if (color != null && !(codeBlock && CODE_BLOCK_FG.equalsIgnoreCase(color))) {
+        if (color != null && !(codeBlock && CODE_BLOCK_FG.equalsIgnoreCase(color)))
             style = style.withTextColor(ColorUtil.fromHex(color));
-        }
 
         Double fontSize = run.getFontSizeAsDouble();
-        if (fontSize != null) {
+        if (fontSize != null)
             style = style.withFontSize((int) Math.round(fontSize));
-        }
 
         STVerticalAlignRun.Enum align = run.getVerticalAlignment();
-        if (align == STVerticalAlignRun.SUPERSCRIPT) {
+        if (align == STVerticalAlignRun.SUPERSCRIPT)
             style = style.withBaselineShift(4.0);
-        } else if (align == STVerticalAlignRun.SUBSCRIPT) {
+        else if (align == STVerticalAlignRun.SUBSCRIPT)
             style = style.withBaselineShift(-4.0);
-        }
 
         return style;
     }
 
     private String hexColorToString(Object val) {
-        if (val == null) {
+        if (val == null)
             return null;
-        }
         if (val instanceof byte[] bytes) {
             StringBuilder sb = new StringBuilder(bytes.length * 2);
             for (byte b : bytes) {
@@ -337,46 +356,14 @@ public final class DocxDocumentWriter {
     }
 
     private String paragraphShadingHex(XWPFParagraph p) {
-        if (p.getCTP().isSetPPr() && p.getCTP().getPPr().isSetShd()) {
+        if (p.getCTP().isSetPPr() && p.getCTP().getPPr().isSetShd())
             return hexColorToString(p.getCTP().getPPr().getShd().getFill());
-        }
         return null;
     }
 
     private String runShadingHex(XWPFRun run) {
-        if (run.getCTR().isSetRPr() && run.getCTR().getRPr().sizeOfShdArray() > 0) {
+        if (run.getCTR().isSetRPr() && run.getCTR().getRPr().sizeOfShdArray() > 0)
             return hexColorToString(run.getCTR().getRPr().getShdArray(0).getFill());
-        }
         return null;
-    }
-
-    private void writeFloatingImageParagraph(XWPFDocument doc, PageContent.FloatingImageContent img) {
-        XWPFParagraph p = doc.createParagraph();
-
-        int pictureType = (img.format.equals("jpg") || img.format.equals("jpeg"))
-                ? Document.PICTURE_TYPE_JPEG
-                : Document.PICTURE_TYPE_PNG;
-
-        byte[] bytes = java.util.Base64.getDecoder().decode(img.base64);
-        XWPFRun visible = p.createRun();
-        try (java.io.ByteArrayInputStream is = new java.io.ByteArrayInputStream(bytes)) {
-            int widthEmu = org.apache.poi.util.Units.pixelToEMU((int) img.width);
-            int heightEmu = org.apache.poi.util.Units.pixelToEMU((int) img.height);
-            visible.addPicture(is, pictureType, "image." + img.format, widthEmu, heightEmu);
-        } catch (Exception e) {
-            visible.setText("[image]");
-        }
-
-        XWPFRun posRun = p.createRun();
-        posRun.setText(FloatingImageCodec.encode(img.x, img.y, img.width, img.height));
-        setHidden(posRun, true);
-        posRun.setFontSize(1);
-
-        XWPFRun dataRun = p.createRun();
-        dataRun.setText(MathObjectCodec.encode(
-                new MathObject(
-                        MathObject.Type.IMAGE, img.format + "|" + img.base64)));
-        setHidden(dataRun, true);
-        dataRun.setFontSize(1);
     }
 }

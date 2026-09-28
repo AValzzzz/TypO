@@ -1,7 +1,6 @@
 package com.example.model;
 
-import java.util.Locale;
-
+import com.example.model.io.ColorUtil;
 import com.example.model.settings.AppSettings;
 import com.example.model.settings.CodeTheme;
 
@@ -100,37 +99,29 @@ public record TextStyle(
             css.append("-fx-strikethrough: true;");
         if (underline) {
             Color uColor = underlineColor != null ? underlineColor : Color.BLACK;
-            css.append("-rtfx-underline-color: ").append(toCss(uColor)).append(";")
+            css.append("-rtfx-underline-color: ").append(ColorUtil.toCssRgba(uColor)).append(";")
                     .append("-rtfx-underline-width: 1;");
             if (underlineDotted) {
                 css.append("-rtfx-underline-dash-array: 1 2;");
             }
         }
         if (highlight != null)
-            css.append("-rtfx-background-color: ").append(toCss(highlight)).append(";");
+            css.append("-rtfx-background-color: ").append(ColorUtil.toCssRgba(highlight)).append(";");
         if (codeTheme != null) {
             css.append("-fx-font-family: 'Consolas, Monaco, monospace';");
-            css.append("-rtfx-background-color: ").append(toCss(codeTheme.getBackground())).append(";");
+            css.append("-rtfx-background-color: ").append(ColorUtil.toCssRgba(codeTheme.getBackground())).append(";");
             css.append("-rtfx-background-insets: -2 -4 -2 -4;");
             css.append("-rtfx-background-radius: 3;");
             if (textColor == null)
-                css.append("-fx-fill: ").append(toCss(codeTheme.getTextColor())).append(";");
+                css.append("-fx-fill: ").append(ColorUtil.toCssRgba(codeTheme.getTextColor())).append(";");
         }
         if (textColor != null)
-            css.append("-fx-fill: ").append(toCss(textColor)).append(";");
+            css.append("-fx-fill: ").append(ColorUtil.toCssRgba(textColor)).append(";");
         if (fontSize != null)
             css.append("-fx-font-size: ").append(fontSize).append("px;");
         if (baselineShift != null) {
             css.append("-fx-translate-y: ").append(baselineShift).append(";");
         }
         return css.toString();
-    }
-
-    private static String toCss(Color c) {
-        return String.format(Locale.ROOT, "rgba(%d, %d, %d, %.3f)",
-                Math.round(c.getRed() * 255),
-                Math.round(c.getGreen() * 255),
-                Math.round(c.getBlue() * 255),
-                c.getOpacity());
     }
 }

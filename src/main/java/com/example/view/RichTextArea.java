@@ -18,6 +18,7 @@ import org.fxmisc.richtext.model.StyleSpansBuilder;
 import org.reactfx.util.Either;
 
 import com.example.model.TextStyle;
+import com.example.model.io.ColorUtil;
 import com.example.model.language.maths.MathNodeFactory;
 import com.example.model.language.maths.MathObject;
 import com.example.model.language.maths.MathObjectSegmentOps;
@@ -27,7 +28,6 @@ import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.IndexRange;
 import javafx.scene.control.Label;
-import javafx.scene.paint.Color;
 import javafx.scene.text.TextFlow;
 
 public class RichTextArea extends GenericStyledArea<CodeTheme, Either<String, MathObject>, TextStyle> {
@@ -44,19 +44,13 @@ public class RichTextArea extends GenericStyledArea<CodeTheme, Either<String, Ma
 
     private static void applyParagraphStyle(TextFlow flow, CodeTheme theme) {
         if (theme != null) {
-            flow.setStyle("-fx-background-color: " + toRgbStatic(theme.getBackground()) + ";");
+            flow.setStyle("-fx-background-color: " + ColorUtil.toCssRgba(theme.getBackground()) + ";");
             flow.setPadding(new Insets(2, 8, 2, 8));
             flow.setMaxWidth(Double.MAX_VALUE);
         } else {
             flow.setStyle("");
             flow.setPadding(Insets.EMPTY);
         }
-    }
-
-    private static String toRgbStatic(Color c) {
-        return String.format(java.util.Locale.ROOT, "rgba(%d,%d,%d,%.3f)",
-                Math.round(c.getRed() * 255), Math.round(c.getGreen() * 255), Math.round(c.getBlue() * 255),
-                c.getOpacity());
     }
 
     private static Node createNode(StyledSegment<Either<String, MathObject>, TextStyle> seg) {
@@ -70,38 +64,33 @@ public class RichTextArea extends GenericStyledArea<CodeTheme, Either<String, Ma
     private static Node buildMathNode(MathObject obj, TextStyle style) {
         if (obj == MathObject.EMPTY || obj.getType() == null)
             return new Label("");
-        String[] parts;
-        switch (obj.getType()) {
-            case EXPONENT:
-                parts = obj.getRaw().split(",", 2);
-                return MathNodeFactory.exponent(parts[0], parts[1], style);
-            case SUBSCRIPT:
-                parts = obj.getRaw().split(",", 2);
-                return MathNodeFactory.subscript(parts[0], parts[1], style);
-            case FRACTION:
-                parts = obj.getRaw().split(",", 2);
-                return MathNodeFactory.fraction(parts[0], parts[1], style);
-            case SQRT:
-                return MathNodeFactory.sqrt(obj.getRaw(), style);
-            case MATRIX:
-                return MathNodeFactory.matrix(obj.getRaw(), style);
-            case SUM:
-                parts = obj.getRaw().split("\\|", -1);
-                return MathNodeFactory.bigOperator("\u03A3", parts[0], parts[1], parts[2], style);
-            case INTEGRAL:
-                parts = obj.getRaw().split("\\|", -1);
-                return MathNodeFactory.bigOperator("\u222B", parts[0], parts[1], parts[2], style);
-            case PRODUCT:
-                parts = obj.getRaw().split("\\|", -1);
-                return MathNodeFactory.bigOperator("\u03A0", parts[0], parts[1], parts[2], style);
-            case LIMIT:
-                parts = obj.getRaw().split("\\|", -1);
-                return MathNodeFactory.limit(parts[0], parts[1], style);
-            case IMAGE:
-                return MathNodeFactory.image(obj.getRaw(), style);
-            default:
-                return new Label("?");
-        }
+
+        String raw = obj.getRaw();
+        return switch (obj.getType()) {
+            case EXPONENT -> {
+                String[] p = raw.split(",", 2);
+                yield MathNodeFactory.exponent(p[0], p[1], style);
+            }
+            case SUBSCRIPT -> {
+                String[] p = raw.split(",", 2);
+                yield MathNodeFactory.subscript(p[0], p[1], style);
+            }
+            case FRACTION -> {
+                String[] p = raw.split(",", 2);
+                yield MathNodeFactory.fraction(p[0], p[1], style);
+            }
+            case SQRT -> MathNodeFactory.sqrt(raw, style);
+            case MATRIX -> MathNodeFactory.matrix(raw, style);
+            case SUM, INTEGRAL, PRODUCT -> {
+                String[] p = raw.split("\\|", -1);
+                yield MathNodeFactory.bigOperator(obj.getType().symbol(), p[0], p[1], p[2], style);
+            }
+            case LIMIT -> {
+                String[] p = raw.split("\\|", -1);
+                yield MathNodeFactory.limit(p[0], p[1], style);
+            }
+            case IMAGE -> MathNodeFactory.image(raw, style);
+        };
     }
 
     public boolean hasSelection() {
