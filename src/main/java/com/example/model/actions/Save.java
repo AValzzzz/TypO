@@ -1,9 +1,46 @@
 package com.example.model.actions;
 
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.example.model.Page;
+import com.example.model.io.DocumentSession;
+import com.example.model.io.DocxDocumentWriter;
+import com.example.model.io.PageContent;
+
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
+import javafx.stage.Window;
+
 public class Save implements AppAction {
+    private final List<Page> pages;
+    private final Window owner;
+    private final DocumentSession session;
+
+    public Save(List<Page> pages, Window owner, DocumentSession session) {
+        this.pages = pages;
+        this.owner = owner;
+        this.session = session;
+    }
+
     @Override
     public void execute() {
-        System.out.println("Save triggered");
-        // TODO: actual save logic
+        Path target = session.getCurrentFile();
+        if(target == null) {
+            new SaveAs(pages, owner, session).execute();
+            return;
+        }
+
+        try {
+            List<PageContent> content = new ArrayList<>();
+            for (Page page : pages) {
+                content.add(PageContent.capture(page));
+            }
+            new DocxDocumentWriter().write(content, target);
+        } catch (IOException e) {
+            new Alert(AlertType.ERROR, "Échec de l'enregistrement : " + e.getMessage()).showAndWait();
+        }
     }
 }

@@ -30,40 +30,32 @@ public class MathObjectCodec {
         if (obj == null || obj.getType() == null) {
             return "";
         }
-        String[] parts;
-        switch (obj.getType()) {
-            case FRACTION:
-                parts = split(obj.getRaw(), ",", 2);
-                return "(" + parts[0] + "/" + parts[1] + ")";
-            case EXPONENT:
-                parts = split(obj.getRaw(), ",", 2);
-                return parts[0] + "^(" + parts[1] + ")";
-            case SUBSCRIPT:
-                parts = split(obj.getRaw(), ",", 2);
-                return parts[0] + "_(" + parts[1] + ")";
-            case SQRT:
-                return "\u221A(" + obj.getRaw() + ")";
-            case MATRIX:
-                return "[" + obj.getRaw().replace(";", " ; ") + "]";
-            case SUM: {
-                parts = split(obj.getRaw(), "\\|", 3);
-                return "\u03A3(" + parts[0] + "\u2192" + parts[1] + ") " + parts[2];
+        String raw = obj.getRaw();
+        return switch (obj.getType()) {
+            case FRACTION -> {
+                String[] p = split(raw, ",", 2);
+                yield "(" + p[0] + "/" + p[1] + ")";
             }
-            case INTEGRAL: {
-                parts = split(obj.getRaw(), "\\|", 3);
-                return "\u222B(" + parts[0] + "\u2192" + parts[1] + ") " + parts[2];
+            case EXPONENT -> {
+                String[] p = split(raw, ",", 2);
+                yield p[0] + "^(" + p[1] + ")";
             }
-            case PRODUCT: {
-                parts = split(obj.getRaw(), "\\|", 3);
-                return "\u03A0(" + parts[0] + "\u2192" + parts[1] + ") " + parts[2];
+            case SUBSCRIPT -> {
+                String[] p = split(raw, ",", 2);
+                yield p[0] + "_(" + p[1] + ")";
             }
-            case LIMIT: {
-                parts = split(obj.getRaw(), "\\|", 2);
-                return "lim(" + parts[0] + ") " + parts[1];
+            case SQRT -> "\u221A(" + raw + ")";
+            case MATRIX -> "[" + raw.replace(";", " ; ") + "]";
+            case SUM, INTEGRAL, PRODUCT -> {
+                String[] p = split(raw, "\\|", 3);
+                yield obj.getType().symbol() + "(" + p[0] + "\u2192" + p[1] + ") " + p[2];
             }
-            default:
-                return obj.getRaw();
-        }
+            case LIMIT -> {
+                String[] p = split(raw, "\\|", 2);
+                yield "lim(" + p[0] + ") " + p[1];
+            }
+            case IMAGE -> "[image]";
+        };
     }
 
     private static String[] split(String raw, String delimiterRegex, int expected) {

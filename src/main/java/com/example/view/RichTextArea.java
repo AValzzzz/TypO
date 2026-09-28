@@ -18,35 +18,35 @@ import org.fxmisc.richtext.model.StyleSpansBuilder;
 import org.reactfx.util.Either;
 
 import com.example.model.TextStyle;
+import com.example.model.io.ColorUtil;
 import com.example.model.language.maths.MathNodeFactory;
 import com.example.model.language.maths.MathObject;
 import com.example.model.language.maths.MathObjectSegmentOps;
+import com.example.model.settings.CodeTheme;
 
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.IndexRange;
 import javafx.scene.control.Label;
-import javafx.scene.layout.Region;
 import javafx.scene.text.TextFlow;
 
-public class RichTextArea extends GenericStyledArea<Boolean, Either<String, MathObject>, TextStyle> {
+public class RichTextArea extends GenericStyledArea<CodeTheme, Either<String, MathObject>, TextStyle> {
     private static final TextOps<Either<String, MathObject>, TextStyle> SEGMENT_OPS = SegmentOps
             .<TextStyle>styledTextOps()._or(new MathObjectSegmentOps(), (s1, s2) -> Optional.empty());
 
     public RichTextArea() {
-        super(Boolean.FALSE,
+        super(null,
                 RichTextArea::applyParagraphStyle,
                 TextStyle.DEFAULT,
                 SEGMENT_OPS,
                 RichTextArea::createNode);
     }
 
-    private static void applyParagraphStyle(TextFlow flow, Boolean codeBlock) {
-        if (Boolean.TRUE.equals(codeBlock)) {
-            flow.setStyle("-fx-background-color: #1e1e1e;");
+    private static void applyParagraphStyle(TextFlow flow, CodeTheme theme) {
+        if (theme != null) {
+            flow.setStyle("-fx-background-color: " + ColorUtil.toCssRgba(theme.getBackground()) + ";");
             flow.setPadding(new Insets(2, 8, 2, 8));
             flow.setMaxWidth(Double.MAX_VALUE);
-            flow.setMinWidth(Region.USE_COMPUTED_SIZE);
         } else {
             flow.setStyle("");
             flow.setPadding(Insets.EMPTY);
@@ -64,36 +64,33 @@ public class RichTextArea extends GenericStyledArea<Boolean, Either<String, Math
     private static Node buildMathNode(MathObject obj, TextStyle style) {
         if (obj == MathObject.EMPTY || obj.getType() == null)
             return new Label("");
-        String[] parts;
-        switch (obj.getType()) {
-            case EXPONENT:
-                parts = obj.getRaw().split(",", 2);
-                return MathNodeFactory.exponent(parts[0], parts[1], style);
-            case SUBSCRIPT:
-                parts = obj.getRaw().split(",", 2);
-                return MathNodeFactory.subscript(parts[0], parts[1], style);
-            case FRACTION:
-                parts = obj.getRaw().split(",", 2);
-                return MathNodeFactory.fraction(parts[0], parts[1], style);
-            case SQRT:
-                return MathNodeFactory.sqrt(obj.getRaw(), style);
-            case MATRIX:
-                return MathNodeFactory.matrix(obj.getRaw(), style);
-            case SUM:
-                parts = obj.getRaw().split("\\|", -1);
-                return MathNodeFactory.bigOperator("\u03A3", parts[0], parts[1], parts[2], style);
-            case INTEGRAL:
-                parts = obj.getRaw().split("\\|", -1);
-                return MathNodeFactory.bigOperator("\u222B", parts[0], parts[1], parts[2], style);
-            case PRODUCT:
-                parts = obj.getRaw().split("\\|", -1);
-                return MathNodeFactory.bigOperator("\u03A0", parts[0], parts[1], parts[2], style);
-            case LIMIT:
-                parts = obj.getRaw().split("\\|", -1);
-                return MathNodeFactory.limit(parts[0], parts[1], style);
-            default:
-                return new Label("?");
-        }
+
+        String raw = obj.getRaw();
+        return switch (obj.getType()) {
+            case EXPONENT -> {
+                String[] p = raw.split(",", 2);
+                yield MathNodeFactory.exponent(p[0], p[1], style);
+            }
+            case SUBSCRIPT -> {
+                String[] p = raw.split(",", 2);
+                yield MathNodeFactory.subscript(p[0], p[1], style);
+            }
+            case FRACTION -> {
+                String[] p = raw.split(",", 2);
+                yield MathNodeFactory.fraction(p[0], p[1], style);
+            }
+            case SQRT -> MathNodeFactory.sqrt(raw, style);
+            case MATRIX -> MathNodeFactory.matrix(raw, style);
+            case SUM, INTEGRAL, PRODUCT -> {
+                String[] p = raw.split("\\|", -1);
+                yield MathNodeFactory.bigOperator(obj.getType().symbol(), p[0], p[1], p[2], style);
+            }
+            case LIMIT -> {
+                String[] p = raw.split("\\|", -1);
+                yield MathNodeFactory.limit(p[0], p[1], style);
+            }
+            case IMAGE -> MathNodeFactory.image(raw, style);
+        };
     }
 
     public boolean hasSelection() {
@@ -136,12 +133,12 @@ public class RichTextArea extends GenericStyledArea<Boolean, Either<String, Math
 
     public void insertMathObject(int position, MathObject obj, TextStyle style) {
         replace(position, position,
-                ReadOnlyStyledDocument.fromSegment(Either.right(obj), Boolean.FALSE, style, SEGMENT_OPS));
+                ReadOnlyStyledDocument.fromSegment(Either.right(obj), null, style, SEGMENT_OPS));
     }
 
     public void appendStyledText(String text, TextStyle style) {
         int end = getLength();
-        replace(end, end, ReadOnlyStyledDocument.fromString(text, Boolean.FALSE, style, SEGMENT_OPS));
+        replace(end, end, ReadOnlyStyledDocument.fromString(text, null, style, SEGMENT_OPS));
     }
 
     public void appendMathObject(MathObject obj, TextStyle style) {

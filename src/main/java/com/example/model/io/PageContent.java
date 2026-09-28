@@ -10,11 +10,14 @@ import org.reactfx.util.Either;
 import com.example.model.Page;
 import com.example.model.TextStyle;
 import com.example.model.language.maths.MathObject;
+import com.example.model.settings.CodeTheme;
+import com.example.view.ImageOverlay;
 import com.example.view.RichTextArea;
 
 public class PageContent {
     public final boolean landscape;
     public final List<ParagraphContent> paragraphs = new ArrayList<>();
+    public final List<FloatingImageContent> images = new ArrayList<>();
 
     public PageContent(boolean landscape) {
         this.landscape = landscape;
@@ -25,25 +28,32 @@ public class PageContent {
         PageContent content = new PageContent(landscape);
         RichTextArea editor = page.getEditor();
 
-        for(Paragraph<Boolean, Either<String, MathObject>, TextStyle> paragraph : editor.getParagraphs()) {
-            ParagraphContent pc = new ParagraphContent(Boolean.TRUE.equals(paragraph.getParagraphStyle()));
-            for(StyledSegment<Either<String, MathObject>, TextStyle> seg : paragraph.getStyledSegments()) {
+        for (Paragraph<CodeTheme, Either<String, MathObject>, TextStyle> paragraph : editor
+                .getParagraphs()) {
+            ParagraphContent pc = new ParagraphContent(paragraph.getParagraphStyle() != null);
+            for (StyledSegment<Either<String, MathObject>, TextStyle> seg : paragraph.getStyledSegments()) {
                 TextStyle style = seg.getStyle();
                 seg.getSegment().unify(
-                    text-> {
-                        pc.runs.add(RunContent.text(text,style));
-                        return null;
-                    },
-                    math -> {
-                        pc.runs.add(RunContent.math(math,style));
-                        return null;
-                    });
+                        text -> {
+                            pc.runs.add(RunContent.text(text, style));
+                            return null;
+                        },
+                        math -> {
+                            pc.runs.add(RunContent.math(math, style));
+                            return null;
+                        });
             }
             content.paragraphs.add(pc);
         }
+
+        for (ImageOverlay overlay : page.getImageOverlays()) {
+            content.images.add(new FloatingImageContent(
+                    overlay.getImageX(), overlay.getImageY(),
+                    overlay.getImageWidth(), overlay.getImageHeight(),
+                    overlay.getFormat(), overlay.getBase64()));
+        }
         return content;
     }
-
 
     public static final class ParagraphContent {
         public final boolean codeBlock;
@@ -54,23 +64,20 @@ public class PageContent {
         }
     }
 
-
     public static final class RunContent {
         public final String text;
         public final MathObject math;
         public final TextStyle style;
 
-        private RunContent (String text, MathObject math, TextStyle style) {
+        private RunContent(String text, MathObject math, TextStyle style) {
             this.text = text;
             this.math = math;
             this.style = style;
         }
 
-
-        public static RunContent text (String text, TextStyle style) {
+        public static RunContent text(String text, TextStyle style) {
             return new RunContent(text, null, style);
         }
-
 
         public static RunContent math(MathObject math, TextStyle style) {
             return new RunContent(null, math, style);
@@ -78,6 +85,21 @@ public class PageContent {
 
         public boolean isMath() {
             return math != null;
+        }
+    }
+
+    public static final class FloatingImageContent {
+        public final double x, y, width, height;
+        public final String format;
+        public final String base64;
+
+        public FloatingImageContent(double x, double y, double width, double height, String format, String base64) {
+            this.x = x;
+            this.y = y;
+            this.width = width;
+            this.height = height;
+            this.format = format;
+            this.base64 = base64;
         }
     }
 }

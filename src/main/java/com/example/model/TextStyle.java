@@ -1,6 +1,8 @@
 package com.example.model;
 
-import java.util.Locale;
+import com.example.model.io.ColorUtil;
+import com.example.model.settings.AppSettings;
+import com.example.model.settings.CodeTheme;
 
 import javafx.scene.paint.Color;
 
@@ -14,65 +16,76 @@ public record TextStyle(
         Color highlight,
         Color textColor,
         Integer fontSize,
-        Double baselineShift,
-        boolean codeBlock) {
+        Double baselineShift, CodeTheme codeTheme) {
 
     public static final TextStyle DEFAULT = new TextStyle(false, false, false, false, null, false, null, null, 12,
-            null, false);
+            null, null);
 
     public TextStyle withBold(boolean v) {
         return new TextStyle(v, italic, strikethrough, underline, underlineColor, underlineDotted, highlight, textColor,
-                fontSize, baselineShift, codeBlock);
+                fontSize, baselineShift, codeTheme);
     }
 
     public TextStyle withItalic(boolean v) {
         return new TextStyle(bold, v, strikethrough, underline, underlineColor, underlineDotted, highlight, textColor,
-                fontSize, baselineShift, codeBlock);
+                fontSize, baselineShift, codeTheme);
     }
 
     public TextStyle withStrikethrough(boolean v) {
         return new TextStyle(bold, italic, v, underline, underlineColor, underlineDotted, highlight, textColor,
-                fontSize, baselineShift, codeBlock);
+                fontSize, baselineShift, codeTheme);
     }
 
     public TextStyle withUnderline(boolean v) {
         return new TextStyle(bold, italic, strikethrough, v, underlineColor, underlineDotted, highlight, textColor,
-                fontSize, baselineShift, codeBlock);
+                fontSize, baselineShift, codeTheme);
     }
 
     public TextStyle withUnderlineColor(Color v) {
         return new TextStyle(bold, italic, strikethrough, underline, v, underlineDotted, highlight, textColor, fontSize,
-                baselineShift, codeBlock);
+                baselineShift, codeTheme);
     }
 
     public TextStyle withUnderlineDotted(boolean v) {
         return new TextStyle(bold, italic, strikethrough, underline, underlineColor, v, highlight, textColor, fontSize,
-                baselineShift, codeBlock);
+                baselineShift, codeTheme);
     }
 
     public TextStyle withHighlight(Color v) {
         return new TextStyle(bold, italic, strikethrough, underline, underlineColor, underlineDotted, v, textColor,
-                fontSize, baselineShift, codeBlock);
+                fontSize, baselineShift, codeTheme);
     }
 
     public TextStyle withTextColor(Color v) {
         return new TextStyle(bold, italic, strikethrough, underline, underlineColor, underlineDotted, highlight, v,
-                fontSize, baselineShift, codeBlock);
+                fontSize, baselineShift, codeTheme);
     }
 
     public TextStyle withFontSize(Integer v) {
         return new TextStyle(bold, italic, strikethrough, underline, underlineColor, underlineDotted, highlight,
-                textColor, v, baselineShift, codeBlock);
+                textColor, v, baselineShift, codeTheme);
     }
 
     public TextStyle withBaselineShift(Double v) {
         return new TextStyle(bold, italic, strikethrough, underline, underlineColor, underlineDotted, highlight,
-                textColor, fontSize, v, codeBlock);
+                textColor, fontSize, v, codeTheme);
+    }
+
+    public TextStyle withCodeTheme(CodeTheme v) {
+        return new TextStyle(bold, italic, strikethrough, underline, underlineColor, underlineDotted, highlight,
+                textColor, fontSize, baselineShift, v);
+    }
+
+    public boolean codeBlock() {
+        return codeTheme != null;
     }
 
     public TextStyle withCodeBlock(boolean v) {
-        return new TextStyle(bold, italic, strikethrough, underline, underlineColor, underlineDotted, highlight,
-                textColor, fontSize, baselineShift, v);
+        if (v) {
+            CodeTheme current = AppSettings.getInstance().codeThemeProperty().get();
+            return withCodeTheme(current);
+        }
+        return withCodeTheme(null);
     }
 
     public String toCss() {
@@ -86,37 +99,29 @@ public record TextStyle(
             css.append("-fx-strikethrough: true;");
         if (underline) {
             Color uColor = underlineColor != null ? underlineColor : Color.BLACK;
-            css.append("-rtfx-underline-color: ").append(toCss(uColor)).append(";")
+            css.append("-rtfx-underline-color: ").append(ColorUtil.toCssRgba(uColor)).append(";")
                     .append("-rtfx-underline-width: 1;");
             if (underlineDotted) {
                 css.append("-rtfx-underline-dash-array: 1 2;");
             }
         }
         if (highlight != null)
-            css.append("-rtfx-background-color: ").append(toCss(highlight)).append(";");
-        if (codeBlock) {
+            css.append("-rtfx-background-color: ").append(ColorUtil.toCssRgba(highlight)).append(";");
+        if (codeTheme != null) {
             css.append("-fx-font-family: 'Consolas, Monaco, monospace';");
-            css.append("-rtfx-background-color: ").append(toCss(Color.rgb(30, 30, 30))).append(";");
+            css.append("-rtfx-background-color: ").append(ColorUtil.toCssRgba(codeTheme.getBackground())).append(";");
             css.append("-rtfx-background-insets: -2 -4 -2 -4;");
             css.append("-rtfx-background-radius: 3;");
             if (textColor == null)
-                css.append("-fx-fill: ").append(toCss(Color.rgb(246, 246, 246))).append(";");
+                css.append("-fx-fill: ").append(ColorUtil.toCssRgba(codeTheme.getTextColor())).append(";");
         }
         if (textColor != null)
-            css.append("-fx-fill: ").append(toCss(textColor)).append(";");
+            css.append("-fx-fill: ").append(ColorUtil.toCssRgba(textColor)).append(";");
         if (fontSize != null)
             css.append("-fx-font-size: ").append(fontSize).append("px;");
         if (baselineShift != null) {
             css.append("-fx-translate-y: ").append(baselineShift).append(";");
         }
         return css.toString();
-    }
-
-    private static String toCss(Color c) {
-        return String.format(Locale.ROOT, "rgba(%d, %d, %d, %.3f)",
-                Math.round(c.getRed() * 255),
-                Math.round(c.getGreen() * 255),
-                Math.round(c.getBlue() * 255),
-                c.getOpacity());
     }
 }

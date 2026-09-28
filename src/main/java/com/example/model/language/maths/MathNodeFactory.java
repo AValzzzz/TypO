@@ -1,13 +1,17 @@
 package com.example.model.language.maths;
 
-import java.util.Locale;
+import java.io.ByteArrayInputStream;
+import java.util.Base64;
 
 import com.example.model.TextStyle;
+import com.example.model.io.ColorUtil;
 
 import javafx.application.Platform;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
@@ -25,7 +29,7 @@ public class MathNodeFactory {
         if (style != null) {
             label.setStyle(style.toCss());
             if (style.textColor() != null) 
-                label.setStyle(label.getStyle() + "-fx-text-fill: " + toRgb(style.textColor()));
+                label.setStyle(label.getStyle() + "-fx-text-fill: " + ColorUtil.toCssRgba(style.textColor())+";");
         } 
         return label;
     }
@@ -43,7 +47,7 @@ public class MathNodeFactory {
 
         Region bar = new Region();
         bar.setPrefHeight(1);
-        bar.setStyle("-fx-background-color: " + toRgb(barColor(style)) + ";");
+        bar.setStyle("-fx-background-color: " + ColorUtil.toCssRgba(barColor(style)) + ";");
 
         VBox box = new VBox(num, bar, den);
         box.setAlignment(Pos.CENTER);
@@ -90,7 +94,7 @@ public class MathNodeFactory {
         radical.setFill(null);
 
         Region bar = new Region();
-        bar.setStyle("-fx-background-color: " + toRgb(barColor(style)) + ";");
+        bar.setStyle("-fx-background-color: " + ColorUtil.toCssRgba(barColor(style)) + ";");
         bar.setPrefHeight(1.5);
         bar.setMaxHeight(1.5);
         bar.prefWidthProperty().bind(inner.widthProperty());
@@ -170,14 +174,6 @@ public class MathNodeFactory {
         ((LineTo) path.getProperties().get("end")).setY(height);
     }
 
-    private static String toRgb(Color c) {
-        return String.format(Locale.ROOT, "rgba(%d,%d,%d,%.3f)",
-            Math.round(c.getRed() * 255),
-            Math.round(c.getGreen() * 255),
-            Math.round(c.getBlue() * 255),
-        c.getOpacity());
-    }
-
     private static Label bigSymbolLabel(String symbol, TextStyle style) {
         int baseSize = (style != null && style.fontSize() != null) ? style.fontSize() : 12;
         double sizePx = baseSize*2.2;
@@ -238,5 +234,26 @@ public class MathNodeFactory {
         HBox box = new HBox(4, stack, valueLabel);
         box.setAlignment(Pos.CENTER);
         return box;
+    }
+
+    public static Node image(String raw, TextStyle style) {
+        try {
+            int sep = raw.indexOf('|');
+            String base64 = raw.substring(sep + 1);
+            byte[] bytes = Base64.getDecoder().decode(base64);
+
+            Image img = new Image(new ByteArrayInputStream(bytes));
+            ImageView view = new ImageView(img);
+            view.setPreserveRatio(true);
+
+            double maxWidth = 400;
+            if (img.getWidth() > maxWidth) {
+                view.setFitWidth(maxWidth);
+            }
+
+            return view;
+        } catch (Exception e) {
+            return new Label("[image]");
+        }
     }
 }
