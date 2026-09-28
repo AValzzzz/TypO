@@ -14,6 +14,7 @@ import com.example.model.actions.DeletePage;
 import com.example.model.actions.FormatText;
 import com.example.model.actions.Help;
 import com.example.model.actions.ImportImage;
+import com.example.model.actions.InsertShape;
 import com.example.model.actions.NewPage;
 import com.example.model.actions.OpenFile;
 import com.example.model.actions.Save;
@@ -26,8 +27,10 @@ import com.example.model.io.PageContent;
 import com.example.model.language.BackslashInputHandler;
 import com.example.model.language.CommandRegistry;
 import com.example.model.language.maths.MathCommands;
+import com.example.model.language.shapes.ShapeCommand;
 import com.example.model.settings.AppSettings;
 import com.example.view.RichTextArea;
+import com.example.view.ShapeOverlay;
 import com.example.view.TextFormatMenu;
 
 import javafx.event.ActionEvent;
@@ -89,6 +92,7 @@ public class InputController {
     @FXML
     public void initialize() {
         MathCommands.registerAll(commandRegistry);
+        commandRegistry.register(new ShapeCommand());
         Page firstPage = new Page(whitePane, textEditor);
         setupPage(firstPage);
         AppSettings.getInstance().backgroundColorProperty().addListener((obs, o, n) -> applyBackgroundColor(n));
@@ -172,11 +176,12 @@ public class InputController {
 
         pageMenu.getItems().addAll(toggleOrientationItem, deletePageItem, importImageItem);
 
-        page.getPane().addEventFilter(ContextMenuEvent.CONTEXT_MENU_REQUESTED, event -> {
+        page.getPane().addEventHandler(ContextMenuEvent.CONTEXT_MENU_REQUESTED, event -> {
             ContextMenu menu = page.hasSelection() ? createTextMenu(page) : pageMenu;
             showMenu(menu, page, event);
             event.consume();
         });
+
     }
 
     private ContextMenu createTextMenu(Page page) {
@@ -261,6 +266,14 @@ public class InputController {
                 Image image = new Image(new ByteArrayInputStream(bytes));
                 page.addImageOverlay(image, img.x, img.y, img.width, img.height, img.format, img.base64);
             }
+            for (PageContent.FloatingShapeContent s : content.shapes) {
+                ShapeOverlay o = page.addShapeOverlay(s.type, s.x, s.y, s.width, s.height);
+                o.setFillColor(Color.web("#" + s.fillHex));
+                o.setFillOpacity(s.fillOpacity);
+                o.setStrokeColor(Color.web("#" + s.strokeHex));
+                o.setStrokeOpacity(s.strokeOpacity);
+                o.setStrokeWidth(s.strokeWidth);
+            }
             if (content.landscape != (page.getPane().getWidth() > page.getPane().getHeight())) {
                 new ToggleOrientation(page).execute();
             }
@@ -318,7 +331,7 @@ public class InputController {
     private void setupPage(Page page) {
         pages.add(page);
         attachContextMenu(page);
-        new BackslashInputHandler(page.getEditor(), commandRegistry);
+        new BackslashInputHandler(page.getEditor(), commandRegistry, type -> new InsertShape(page, type).execute());
         new CodeBlockStyler(page.getEditor());
     }
 

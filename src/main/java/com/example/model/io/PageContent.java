@@ -10,14 +10,17 @@ import org.reactfx.util.Either;
 import com.example.model.Page;
 import com.example.model.TextStyle;
 import com.example.model.language.maths.MathObject;
+import com.example.model.language.shapes.ShapeType;
 import com.example.model.settings.CodeTheme;
 import com.example.view.ImageOverlay;
 import com.example.view.RichTextArea;
+import com.example.view.ShapeOverlay;
 
 public class PageContent {
     public final boolean landscape;
     public final List<ParagraphContent> paragraphs = new ArrayList<>();
     public final List<FloatingImageContent> images = new ArrayList<>();
+    public final List<FloatingShapeContent> shapes = new ArrayList<>();
 
     public PageContent(boolean landscape) {
         this.landscape = landscape;
@@ -51,6 +54,13 @@ public class PageContent {
                     overlay.getImageX(), overlay.getImageY(),
                     overlay.getImageWidth(), overlay.getImageHeight(),
                     overlay.getFormat(), overlay.getBase64()));
+        }
+
+        for (ShapeOverlay s : page.getShapeOverlays()) {
+            content.shapes.add(new FloatingShapeContent(
+                    s.getShapeType(), s.getShapeX(), s.getShapeY(), s.getShapeWidth(), s.getShapeHeight(),
+                    ColorUtil.toHex(s.getFillColor()), s.getFillOpacity(),
+                    ColorUtil.toHex(s.getStrokeColor()), s.getStrokeOpacity(), s.getStrokeWidth()));
         }
         return content;
     }
@@ -100,6 +110,27 @@ public class PageContent {
             this.height = height;
             this.format = format;
             this.base64 = base64;
+        }
+    }
+
+    public static final class FloatingShapeContent {
+        public final ShapeType type;
+        public final double x, y, width, height;
+        public final String fillHex, strokeHex;
+        public final double fillOpacity, strokeOpacity, strokeWidth;
+
+        public FloatingShapeContent(ShapeType type, double x, double y, double width, double height,
+                String fillHex, double fillOpacity, String strokeHex, double strokeOpacity, double strokeWidth) {
+            this.type = type;
+            this.x = x;
+            this.y = y;
+            this.width = width;
+            this.height = height;
+            this.fillHex = fillHex;
+            this.fillOpacity = fillOpacity;
+            this.strokeHex = strokeHex;
+            this.strokeOpacity = strokeOpacity;
+            this.strokeWidth = strokeWidth;
         }
     }
 }

@@ -1,7 +1,9 @@
 package com.example.model.language;
 
 import java.util.Optional;
+import java.util.function.Consumer;
 
+import com.example.model.language.shapes.ShapeType;
 import com.example.view.RichTextArea;
 
 import javafx.scene.input.KeyCode;
@@ -10,6 +12,7 @@ import javafx.scene.input.KeyEvent;
 public class BackslashInputHandler {
     private final RichTextArea editor;
     private final CommandRegistry registry;
+    private final Consumer<ShapeType> shapeSpawner;
 
     private boolean buffering = false;
     private int commandStart = -1;
@@ -20,8 +23,13 @@ public class BackslashInputHandler {
     private String convertedRawText = null;
 
     public BackslashInputHandler(RichTextArea editor, CommandRegistry registry) {
+        this(editor, registry, null);
+    }
+
+    public BackslashInputHandler(RichTextArea editor, CommandRegistry registry, Consumer<ShapeType> shapeSpawner) {
         this.editor = editor;
         this.registry = registry;
+        this.shapeSpawner = shapeSpawner;
         editor.addEventFilter(KeyEvent.KEY_TYPED, this::onKeyTyped);
         editor.addEventFilter(KeyEvent.KEY_PRESSED, this::onKeyPressed);
     }
@@ -37,7 +45,7 @@ public class BackslashInputHandler {
         char c = character.charAt(0);
 
         if (Character.isISOControl(c)) {
-            if (c!='\b')
+            if (c != '\b')
                 resetBuffering();
             return;
         }
@@ -63,11 +71,17 @@ public class BackslashInputHandler {
             String raw = editor.getText(commandStart, caret).substring(1);
             System.out.println("RAW COMMAND: [" + raw + "]");
             Optional<Command> match = registry.find(raw);
-            System.out.println("MATCHED: " + match.map(m -> m.getClass().getSimpleName()).orElse("NONE")); 
+            System.out.println("MATCHED: " + match.map(m -> m.getClass().getSimpleName()).orElse("NONE"));
 
             if (match.isPresent()) {
                 CommandResult result = match.get().apply(raw);
-                if (result.isMathObject()) {
+                if (result.isShape()) {
+                    event.consume();
+                    editor.replaceText(commandStart, caret, "");
+                    if (shapeSpawner != null)
+                        shapeSpawner.accept(result.getShape());
+                    justConverted = false;
+                } else if (result.isMathObject()) {
                     editor.replaceText(commandStart, caret, "");
                     editor.insertMathObject(commandStart, result.getMathObject());
                     convertedStart = commandStart;
@@ -101,7 +115,8 @@ public class BackslashInputHandler {
                 && event.getText().isEmpty()
                 && !event.isControlDown() && !event.isAltDown() && !event.isMetaDown()) {
             event.consume();
-            System.out.println("caret=" + editor.getCaretPosition() + " convertedEnd=" + convertedEnd + " justConverted=" + justConverted);
+            System.out.println("caret=" + editor.getCaretPosition() + " convertedEnd=" + convertedEnd
+                    + " justConverted=" + justConverted);
             editor.replaceSelection(event.isShiftDown() ? "¨" : "^");
             return;
         }

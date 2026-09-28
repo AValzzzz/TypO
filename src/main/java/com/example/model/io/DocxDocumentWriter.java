@@ -74,6 +74,10 @@ public final class DocxDocumentWriter {
             writeFloatingImageParagraph(doc, img);
         }
 
+        for (PageContent.FloatingShapeContent shape : page.shapes) {
+            writeFloatingShapeParagraph(doc, shape);
+        }
+
         CTSectPr sectPr;
         if (lastPage) {
             CTBody body = doc.getDocument().getBody();
@@ -107,10 +111,6 @@ public final class DocxDocumentWriter {
         applyStyle(visible, run.style, false);
 
         addHiddenRun(p, MathObjectCodec.encode(run.math));
-        // XWPFRun hidden = p.createRun();
-        // hidden.setText(MathObjectCodec.encode(run.math));
-        // setHidden(hidden, true);
-        // hidden.setFontSize(1);
     }
 
     private void writeFloatingImageParagraph(XWPFDocument doc, PageContent.FloatingImageContent img) {
@@ -132,6 +132,21 @@ public final class DocxDocumentWriter {
 
         addHiddenRun(p, FloatingImageCodec.encode(img.x, img.y, img.width, img.height));
         addHiddenRun(p, MathObjectCodec.encode(new MathObject(MathObject.Type.IMAGE, img.format + "|" + img.base64)));
+    }
+
+    private void writeFloatingShapeParagraph(XWPFDocument doc, PageContent.FloatingShapeContent shape) {
+        XWPFParagraph p = doc.createParagraph();
+        p.createRun();
+        addHiddenRun(p, FloatingShapeCodec.encode(shape));
+    }
+
+    private PageContent.FloatingShapeContent tryReadFloatingShape(XWPFParagraph paragraph) {
+        for (XWPFRun run : paragraph.getRuns()) {
+            String text = run.text();
+            if (isHidden(run) && FloatingShapeCodec.isToken(text))
+                return FloatingShapeCodec.decode(text);
+        }
+        return null;
     }
 
     private void applyStyle(XWPFRun run, TextStyle style, boolean codeBlockParagraph) {
@@ -188,7 +203,6 @@ public final class DocxDocumentWriter {
         shd.setFill(hex);
     }
 
-
     private static CTRPr rPr(XWPFRun run) {
         return run.getCTR().isSetRPr() ? run.getCTR().getRPr() : run.getCTR().addNewRPr();
     }
@@ -201,7 +215,7 @@ public final class DocxDocumentWriter {
             rpr.addNewVanish();
         run.setFontSize(1);
     }
-    
+
     private boolean isHidden(XWPFRun run) {
         return run.getCTR().isSetRPr() && run.getCTR().getRPr().sizeOfVanishArray() > 0;
     }
@@ -213,6 +227,7 @@ public final class DocxDocumentWriter {
 
             List<ParagraphContent> current = new ArrayList<>();
             List<PageContent.FloatingImageContent> currentImages = new ArrayList<>();
+            List<PageContent.FloatingShapeContent> currentShapes = new ArrayList<>();
 
             for (XWPFParagraph paragraph : doc.getParagraphs()) {
                 CTSectPr sectPr = (paragraph.getCTP().isSetPPr() && paragraph.getCTP().getPPr().isSetSectPr())
@@ -220,20 +235,24 @@ public final class DocxDocumentWriter {
                         : null;
 
                 PageContent.FloatingImageContent floatingImage = tryReadFloatingImage(paragraph);
+                PageContent.FloatingShapeContent floatingShape = floatingImage == null ? tryReadFloatingShape(paragraph)
+                        : null;
                 boolean boundaryOnly = sectPr != null && paragraph.getRuns().isEmpty();
-
-                if (floatingImage != null) {
+                if (floatingImage != null)
                     currentImages.add(floatingImage);
-                } else if (!boundaryOnly) {
+                else if (floatingShape != null)
+                    currentShapes.add(floatingShape);
+                else if (!boundaryOnly)
                     current.add(readParagraph(paragraph));
-                }
 
                 if (sectPr != null) {
                     PageContent pc = finish(current, sectPr);
                     pc.images.addAll(currentImages);
+                    pc.shapes.addAll(currentShapes);
                     pages.add(pc);
                     current = new ArrayList<>();
                     currentImages = new ArrayList<>();
+                    currentShapes = new ArrayList<>();
                 }
             }
 
@@ -242,6 +261,7 @@ public final class DocxDocumentWriter {
             if (!current.isEmpty() || !currentImages.isEmpty() || pages.isEmpty()) {
                 PageContent pc = finish(current, bodySectPr);
                 pc.images.addAll(currentImages);
+                pc.shapes.addAll(currentShapes);
                 pages.add(pc);
             }
         }

@@ -2,6 +2,7 @@ package com.example.model.language;
 
 import com.example.model.TextStyle;
 import com.example.model.language.maths.MathObject;
+import com.example.model.language.shapes.ShapeType;
 
 import java.util.function.UnaryOperator;
 
@@ -11,6 +12,7 @@ public class CommandResult {
     private final int styleEnd;
     private final UnaryOperator<TextStyle> styleChange;
     private MathObject mathObject;
+    private ShapeType shape;
 
     public CommandResult(String text) {
         this(text, 0, 0, null, null);
@@ -27,6 +29,12 @@ public class CommandResult {
     public static CommandResult ofMathObject(MathObject obj) {
         CommandResult r = new CommandResult("");
         r.mathObject = obj;
+        return r;
+    }
+
+    public static CommandResult ofShape(ShapeType type) {
+        CommandResult r = new CommandResult("");
+        r.shape = type;
         return r;
     }
 
@@ -50,6 +58,13 @@ public class CommandResult {
 
     public MathObject getMathObject() {
         return mathObject;
+    }
+
+    public boolean isShape() {
+        return shape != null;
+    }
+    public ShapeType getShape() {
+        return shape;
     }
 
     public UnaryOperator<TextStyle> getStyleChange() {
