@@ -1,6 +1,8 @@
 target/
 *.class
 
+dependency-reduced-pom.xml
+
 *.log
 *.tmp
 
