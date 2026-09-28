@@ -1,7 +1,11 @@
 package com.example.controller;
 
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
+
+import java.io.ByteArrayInputStream;
+import java.nio.file.Path;
 
 import com.example.model.CodeBlockStyler;
 import com.example.model.Page;
@@ -16,6 +20,7 @@ import com.example.model.actions.Save;
 import com.example.model.actions.SaveAs;
 import com.example.model.actions.Settings;
 import com.example.model.actions.ToggleOrientation;
+import com.example.model.io.DocumentSession;
 import com.example.model.io.PageContent;
 import com.example.model.language.BackslashInputHandler;
 import com.example.model.language.CommandRegistry;
@@ -29,7 +34,12 @@ import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.ScrollBar;
+import javafx.scene.image.Image;
 import javafx.scene.input.ContextMenuEvent;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCodeCombination;
+import javafx.scene.input.KeyCombination;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.AnchorPane;
@@ -64,10 +74,9 @@ public class InputController {
     private boolean updatingScrollbars = false;
 
     private final List<Page> pages = new ArrayList<>();
-
     private ContextMenu activeMenu;
-
     private final CommandRegistry commandRegistry = new CommandRegistry();
+    private final DocumentSession session = new DocumentSession();
 
     private static final double MIN_SCALE = 0.8;
     private static final double MAX_SCALE = 3.0;
@@ -134,6 +143,19 @@ public class InputController {
             if (activeMenu != null && activeMenu.isShowing())
                 activeMenu.hide();
         });
+
+        KeyCombination saveShortcut = new KeyCodeCombination(KeyCode.S, KeyCombination.SHORTCUT_DOWN);
+        rootPane.sceneProperty().addListener((obs, oldScene, scene) -> {
+            if (scene != null) {
+                scene.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
+                    if (saveShortcut.match(event)) {
+                        handleSave();
+                        event.consume();
+                    }
+                });
+            }
+        });
+
     }
 
     private void attachContextMenu(Page page) {
@@ -223,12 +245,12 @@ public class InputController {
 
     @FXML
     private void handleSave() {
-        new Save().execute();
+        new Save(pages, stackPane.getScene().getWindow(), session).execute();
     }
 
     @FXML
     private void handleSaveAs() {
-        new SaveAs(pages, stackPane.getScene().getWindow()).execute();
+        new SaveAs(pages, stackPane.getScene().getWindow(), session).execute();
     }
 
     @FXML
@@ -236,13 +258,19 @@ public class InputController {
         new OpenFile(stackPane.getScene().getWindow(), this::loadDocument).execute();
     }
 
-    private void loadDocument(List<PageContent> loadedPages) {
+    private void loadDocument(List<PageContent> loadedPages, Path source) {
+        session.setCurrentFile(source);
         pagesContainer.getChildren().clear();
         pages.clear();
 
         for (PageContent content : loadedPages) {
             Page page = createPage();
             populate(page, content);
+            for (PageContent.FloatingImageContent img : content.images) {
+                byte[] bytes = Base64.getDecoder().decode(img.base64);
+                Image image = new Image(new ByteArrayInputStream(bytes));
+                page.addImageOverlay(image, img.x, img.y, img.width, img.height, img.format, img.base64);
+            }
             if (content.landscape != (page.getPane().getWidth() > page.getPane().getHeight())) {
                 new ToggleOrientation(page).execute();
             }

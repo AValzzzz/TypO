@@ -2,6 +2,7 @@ package com.example.model;
 
 import java.util.Locale;
 
+import com.example.model.settings.AppSettings;
 import com.example.model.settings.CodeTheme;
 
 import javafx.scene.paint.Color;
@@ -82,7 +83,7 @@ public record TextStyle(
 
     public TextStyle withCodeBlock(boolean v) {
         if (v) {
-            CodeTheme current = com.example.model.settings.AppSettings.getInstance().codeThemeProperty().get();
+            CodeTheme current = AppSettings.getInstance().codeThemeProperty().get();
             return withCodeTheme(current);
         }
         return withCodeTheme(null);

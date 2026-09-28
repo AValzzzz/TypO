@@ -1,14 +1,14 @@
 package com.example.model.actions;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Base64;
 
 import com.example.model.Page;
-import com.example.model.language.maths.MathObject;
-import com.example.view.RichTextArea;
 
+import javafx.scene.image.Image;
 import javafx.stage.FileChooser;
 import javafx.stage.Window;
 
@@ -39,9 +39,14 @@ public class ImportImage implements AppAction {
             String format = extensionOf(file.getName());
             String base64 = Base64.getEncoder().encodeToString(bytes);
 
-            RichTextArea editor = page.getEditor();
-            int caret = editor.getCaretPosition();
-            editor.insertMathObject(caret, new MathObject(MathObject.Type.IMAGE, format + "|" + base64));
+            Image image = new Image(new ByteArrayInputStream(bytes));
+            double width = Math.min(image.getWidth(), 250);
+            double height = width / (image.getWidth() / image.getHeight());
+
+            double startX = (page.getPane().getWidth() - width) / 2;
+            double startY = (page.getPane().getHeight() - height) / 2;
+
+            page.addImageOverlay(image, startX, startY, width, height, format, base64);
         } catch (IOException e) {
             e.printStackTrace();
         }

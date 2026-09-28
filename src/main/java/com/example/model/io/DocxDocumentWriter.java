@@ -8,6 +8,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.poi.xwpf.usermodel.Document;
 import org.apache.poi.xwpf.usermodel.UnderlinePatterns;
 import org.apache.poi.xwpf.usermodel.VerticalAlign;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
@@ -30,8 +31,8 @@ import com.example.model.language.maths.MathObject;
 
 public final class DocxDocumentWriter {
 
-    private static final long PAGE_LONG = 15840; // 11in in twips
-    private static final long PAGE_SHORT = 12240; // 8.5in in twips
+    private static final long PAGE_LONG = 15840;
+    private static final long PAGE_SHORT = 12240;
     private static final String CODE_BLOCK_BG = "1E1E1E";
     private static final String CODE_BLOCK_FG = "F6F6F6";
     private static final String CODE_FONT = "Consolas";
@@ -66,6 +67,10 @@ public final class DocxDocumentWriter {
             }
         }
 
+        for (PageContent.FloatingImageContent img : page.images) {
+            writeFloatingImageParagraph(doc, img);
+        }
+
         CTSectPr sectPr;
         if (lastPage) {
             CTBody body = doc.getDocument().getBody();
@@ -94,45 +99,9 @@ public final class DocxDocumentWriter {
     }
 
     private void writeMathRun(XWPFParagraph p, RunContent run) {
-        if (run.math.getType() == MathObject.Type.IMAGE) {
-            writeImageRun(p, run);
-            return;
-        }
         XWPFRun visible = p.createRun();
         visible.setText(MathObjectCodec.approximate(run.math));
         applyStyle(visible, run.style, false);
-
-        XWPFRun hidden = p.createRun();
-        hidden.setText(MathObjectCodec.encode(run.math));
-        setHidden(hidden, true);
-        hidden.setFontSize(1);
-    }
-
-    private void writeImageRun(XWPFParagraph p, RunContent run) {
-        String raw = run.math.getRaw();
-        int sep = raw.indexOf('|');
-        String format = raw.substring(0, sep);
-        String base64 = raw.substring(sep + 1);
-        byte[] bytes = java.util.Base64.getDecoder().decode(base64);
-
-        int pictureType = (format.equals("jpg") || format.equals("jpeg"))
-                ? org.apache.poi.xwpf.usermodel.Document.PICTURE_TYPE_JPEG
-                : org.apache.poi.xwpf.usermodel.Document.PICTURE_TYPE_PNG;
-
-        XWPFRun visible = p.createRun();
-        try {
-            java.awt.image.BufferedImage bimg = javax.imageio.ImageIO.read(new java.io.ByteArrayInputStream(bytes));
-            int width = Math.min(bimg.getWidth(), 400);
-            int height = (int) ((double) width / bimg.getWidth() * bimg.getHeight());
-            int widthEmu = org.apache.poi.util.Units.pixelToEMU(width);
-            int heightEmu = org.apache.poi.util.Units.pixelToEMU(height);
-
-            try (java.io.ByteArrayInputStream is = new java.io.ByteArrayInputStream(bytes)) {
-                visible.addPicture(is, pictureType, "image." + format, widthEmu, heightEmu);
-            }
-        } catch (Exception e) {
-            visible.setText("[image]");
-        }
 
         XWPFRun hidden = p.createRun();
         hidden.setText(MathObjectCodec.encode(run.math));
@@ -219,30 +188,64 @@ public final class DocxDocumentWriter {
                 XWPFDocument doc = new XWPFDocument(in)) {
 
             List<ParagraphContent> current = new ArrayList<>();
+            List<PageContent.FloatingImageContent> currentImages = new ArrayList<>();
 
             for (XWPFParagraph paragraph : doc.getParagraphs()) {
                 CTSectPr sectPr = (paragraph.getCTP().isSetPPr() && paragraph.getCTP().getPPr().isSetSectPr())
                         ? paragraph.getCTP().getPPr().getSectPr()
                         : null;
 
+                PageContent.FloatingImageContent floatingImage = tryReadFloatingImage(paragraph);
                 boolean boundaryOnly = sectPr != null && paragraph.getRuns().isEmpty();
-                if (!boundaryOnly) {
+
+                if (floatingImage != null) {
+                    currentImages.add(floatingImage);
+                } else if (!boundaryOnly) {
                     current.add(readParagraph(paragraph));
                 }
 
                 if (sectPr != null) {
-                    pages.add(finish(current, sectPr));
+                    PageContent pc = finish(current, sectPr);
+                    pc.images.addAll(currentImages);
+                    pages.add(pc);
                     current = new ArrayList<>();
+                    currentImages = new ArrayList<>();
                 }
             }
 
             CTBody body = doc.getDocument().getBody();
             CTSectPr bodySectPr = body.isSetSectPr() ? body.getSectPr() : null;
-            if (!current.isEmpty() || pages.isEmpty()) {
-                pages.add(finish(current, bodySectPr));
+            if (!current.isEmpty() || !currentImages.isEmpty() || pages.isEmpty()) {
+                PageContent pc = finish(current, bodySectPr);
+                pc.images.addAll(currentImages);
+                pages.add(pc);
             }
         }
         return pages;
+    }
+
+    private PageContent.FloatingImageContent tryReadFloatingImage(XWPFParagraph paragraph) {
+        String posToken = null;
+        String dataToken = null;
+        for (XWPFRun run : paragraph.getRuns()) {
+            String text = run.text();
+            if (isHidden(run) && FloatingImageCodec.isToken(text))
+                posToken = text;
+            else if (isHidden(run) && MathObjectCodec.isToken(text))
+                dataToken = text;
+        }
+        if (posToken == null || dataToken == null)
+            return null;
+
+        double[] pos = FloatingImageCodec.decode(posToken);
+        MathObject obj = MathObjectCodec.decode(dataToken);
+        if (obj.getType() != MathObject.Type.IMAGE)
+            return null;
+
+        String raw = obj.getRaw();
+        int sep = raw.indexOf('|');
+        return new PageContent.FloatingImageContent(pos[0], pos[1], pos[2], pos[3],
+                raw.substring(0, sep), raw.substring(sep + 1));
     }
 
     private PageContent finish(List<ParagraphContent> paragraphs, CTSectPr sectPr) {
@@ -345,5 +348,35 @@ public final class DocxDocumentWriter {
             return hexColorToString(run.getCTR().getRPr().getShdArray(0).getFill());
         }
         return null;
+    }
+
+    private void writeFloatingImageParagraph(XWPFDocument doc, PageContent.FloatingImageContent img) {
+        XWPFParagraph p = doc.createParagraph();
+
+        int pictureType = (img.format.equals("jpg") || img.format.equals("jpeg"))
+                ? Document.PICTURE_TYPE_JPEG
+                : Document.PICTURE_TYPE_PNG;
+
+        byte[] bytes = java.util.Base64.getDecoder().decode(img.base64);
+        XWPFRun visible = p.createRun();
+        try (java.io.ByteArrayInputStream is = new java.io.ByteArrayInputStream(bytes)) {
+            int widthEmu = org.apache.poi.util.Units.pixelToEMU((int) img.width);
+            int heightEmu = org.apache.poi.util.Units.pixelToEMU((int) img.height);
+            visible.addPicture(is, pictureType, "image." + img.format, widthEmu, heightEmu);
+        } catch (Exception e) {
+            visible.setText("[image]");
+        }
+
+        XWPFRun posRun = p.createRun();
+        posRun.setText(FloatingImageCodec.encode(img.x, img.y, img.width, img.height));
+        setHidden(posRun, true);
+        posRun.setFontSize(1);
+
+        XWPFRun dataRun = p.createRun();
+        dataRun.setText(MathObjectCodec.encode(
+                new MathObject(
+                        MathObject.Type.IMAGE, img.format + "|" + img.base64)));
+        setHidden(dataRun, true);
+        dataRun.setFontSize(1);
     }
 }

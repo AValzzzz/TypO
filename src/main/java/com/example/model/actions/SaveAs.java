@@ -7,10 +7,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.example.model.Page;
+import com.example.model.io.DocumentSession;
 import com.example.model.io.DocxDocumentWriter;
 import com.example.model.io.PageContent;
 import com.example.model.io.PdfDocumentWriter;
 import com.example.model.io.PdfDocumentWriter.PageSnapshot;
+import com.example.view.ImageOverlay;
 
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.SnapshotParameters;
@@ -30,10 +32,12 @@ public class SaveAs implements AppAction {
 
     private final List<Page> pages;
     private final Window owner;
+    private final DocumentSession session;
 
-    public SaveAs(List<Page> pages, Window owner) {
+    public SaveAs(List<Page> pages, Window owner, DocumentSession session) {
         this.pages = pages;
         this.owner = owner;
+        this.session = session;
     }
 
     @Override
@@ -58,6 +62,7 @@ public class SaveAs implements AppAction {
                 new PdfDocumentWriter().write(captureSnapshots(), target);
             } else {
                 new DocxDocumentWriter().write(captureContent(), target);
+                session.setCurrentFile(target);
             }
         } catch (IOException e) {
             new Alert(AlertType.ERROR, "Échec de l'enregistrement : " + e.getMessage()).showAndWait();
@@ -78,12 +83,20 @@ public class SaveAs implements AppAction {
             Pane pane = page.getPane();
             boolean landscape = pane.getWidth() > pane.getHeight();
 
-            SnapshotParameters params = new SnapshotParameters();
-            params.setTransform(new Scale(PDF_RENDER_SCALE, PDF_RENDER_SCALE));
-            params.setFill(Color.WHITE);
+            for (ImageOverlay overlay : page.getImageOverlays())
+                overlay.setHandleSuppressed(true);
 
-            WritableImage fxImage = pane.snapshot(params, null);
-            snapshots.add(new PageSnapshot(SwingFXUtils.fromFXImage(fxImage, null), landscape));
+            try {
+                SnapshotParameters params = new SnapshotParameters();
+                params.setTransform(new Scale(PDF_RENDER_SCALE, PDF_RENDER_SCALE));
+                params.setFill(Color.WHITE);
+
+                WritableImage fxImage = pane.snapshot(params, null);
+                snapshots.add(new PageSnapshot(SwingFXUtils.fromFXImage(fxImage, null), landscape));
+            } finally {
+                for (ImageOverlay overlay : page.getImageOverlays())
+                    overlay.setHandleSuppressed(false);
+            }
         }
         return snapshots;
     }

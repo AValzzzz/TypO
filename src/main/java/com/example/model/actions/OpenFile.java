@@ -2,8 +2,9 @@ package com.example.model.actions;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
 import com.example.model.io.DocxDocumentWriter;
 import com.example.model.io.PageContent;
@@ -17,9 +18,9 @@ import javafx.stage.Window;
 public class OpenFile implements AppAction {
 
     private final Window owner;
-    private final Consumer<List<PageContent>> onLoaded;
+    private final BiConsumer<List<PageContent>, Path> onLoaded;
 
-    public OpenFile(Window owner, Consumer<List<PageContent>> onLoaded) {
+    public OpenFile(Window owner, BiConsumer<List<PageContent>, Path> onLoaded) {
         this.owner = owner;
         this.onLoaded = onLoaded;
     }
@@ -37,7 +38,7 @@ public class OpenFile implements AppAction {
 
         try {
             List<PageContent> pages = new DocxDocumentWriter().read(file.toPath());
-            onLoaded.accept(pages);
+            onLoaded.accept(pages, file.toPath());
         } catch (IOException e) {
             new Alert(AlertType.ERROR, "Échec de l'ouverture : " + e.getMessage()).showAndWait();
         }
