@@ -273,6 +273,7 @@ public class InputController {
                 o.setStrokeColor(Color.web("#" + s.strokeHex));
                 o.setStrokeOpacity(s.strokeOpacity);
                 o.setStrokeWidth(s.strokeWidth);
+                o.setRotation(s.rotation);
             }
             if (content.landscape != (page.getPane().getWidth() > page.getPane().getHeight())) {
                 new ToggleOrientation(page).execute();

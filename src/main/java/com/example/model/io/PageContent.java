@@ -60,7 +60,7 @@ public class PageContent {
             content.shapes.add(new FloatingShapeContent(
                     s.getShapeType(), s.getShapeX(), s.getShapeY(), s.getShapeWidth(), s.getShapeHeight(),
                     ColorUtil.toHex(s.getFillColor()), s.getFillOpacity(),
-                    ColorUtil.toHex(s.getStrokeColor()), s.getStrokeOpacity(), s.getStrokeWidth()));
+                    ColorUtil.toHex(s.getStrokeColor()), s.getStrokeOpacity(), s.getStrokeWidth(), s.getShapeRotation()));
         }
         return content;
     }
@@ -117,10 +117,10 @@ public class PageContent {
         public final ShapeType type;
         public final double x, y, width, height;
         public final String fillHex, strokeHex;
-        public final double fillOpacity, strokeOpacity, strokeWidth;
+        public final double fillOpacity, strokeOpacity, strokeWidth, rotation;
 
         public FloatingShapeContent(ShapeType type, double x, double y, double width, double height,
-                String fillHex, double fillOpacity, String strokeHex, double strokeOpacity, double strokeWidth) {
+                String fillHex, double fillOpacity, String strokeHex, double strokeOpacity, double strokeWidth, double rotation) {
             this.type = type;
             this.x = x;
             this.y = y;
@@ -131,6 +131,7 @@ public class PageContent {
             this.strokeHex = strokeHex;
             this.strokeOpacity = strokeOpacity;
             this.strokeWidth = strokeWidth;
+            this.rotation = rotation;
         }
     }
 }
