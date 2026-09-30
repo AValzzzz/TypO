@@ -13,19 +13,25 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Ellipse;
+import javafx.scene.shape.Line;
 import javafx.scene.shape.Polygon;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.Shape;
 
 public class ShapeOverlay extends Group {
     private static final double MIN_SIZE = 10;
+    private static final double ROTATE_HANDLE_OFFSET = 30;
+    private static final double ROTATE_SNAP_DEGREE = 15;
 
     private final ShapeType type;
     private final Shape shape;
     private final Region resizeHandle;
+    private final Region rotateHandle;
+    private final Line rotateLine;
     private static ContextMenu openMenu;
-    
+
     private double width, height;
+    private double rotation = 0;
     private Color fillColor = Color.CORNFLOWERBLUE;
     private Color strokeColor = Color.BLACK;
     private double fillOpacity = 0.4;
@@ -35,6 +41,7 @@ public class ShapeOverlay extends Group {
     private Runnable onDelete;
     private boolean selected = false;
     private boolean resizing = false;
+    private boolean rotating = false;
     private boolean handleSuppressed = false;
 
     private double pressParentX, pressParentY, pressLayoutX, pressLayoutY;
@@ -59,7 +66,19 @@ public class ShapeOverlay extends Group {
         resizeHandle.setCursor(Cursor.SE_RESIZE);
         resizeHandle.setVisible(false);
 
-        getChildren().addAll(shape, resizeHandle);
+        rotateHandle = new Region();
+        rotateHandle.setPrefSize(12, 12);
+        rotateHandle.setStyle("-fx-background-color: #33cc66; -fx-border-color: white; "
+                + "-fx-border-width: 1; -fx-background-radius: 6; -fx-border-radius: 6;");
+        rotateHandle.setCursor(Cursor.HAND);
+        rotateHandle.setVisible(false);
+
+        rotateLine = new Line();
+        rotateLine.setStroke(Color.web("#33cc66"));
+        rotateLine.setMouseTransparent(true);
+        rotateLine.setVisible(false);
+
+        getChildren().addAll(shape, rotateLine, resizeHandle, rotateHandle);
         setLayoutX(x);
         setLayoutY(y);
         applySize(width, height);
@@ -69,6 +88,7 @@ public class ShapeOverlay extends Group {
         setFocusTraversable(true);
         installDragHandlers();
         installResizeHandlers();
+        installRotateHandlers();
 
         sceneProperty().addListener((obs, oldScene, newScene) -> {
             if (oldScene != null)
@@ -110,6 +130,17 @@ public class ShapeOverlay extends Group {
         }
         resizeHandle.setLayoutX(w - resizeHandle.getPrefWidth() / 2);
         resizeHandle.setLayoutY(h - resizeHandle.getPrefWidth() / 2);
+        layoutRotateHandle();
+    }
+
+    private void layoutRotateHandle() {
+        double cx = width / 2;
+        rotateHandle.setLayoutX(cx - rotateHandle.getPrefWidth() / 2);
+        rotateHandle.setLayoutY(-ROTATE_HANDLE_OFFSET - rotateHandle.getPrefHeight() / 2);
+        rotateLine.setStartX(cx);
+        rotateLine.setStartY(0);
+        rotateLine.setEndX(cx);
+        rotateLine.setEndY(-ROTATE_HANDLE_OFFSET);
     }
 
     private static Color withOpacity(Color c, double opacity) {
@@ -172,12 +203,21 @@ public class ShapeOverlay extends Group {
         return strokeWidth;
     }
 
+    public void setRotation(double degrees) {
+        this.rotation = ((degrees % 360) + 360) % 360;
+        shape.setRotate(this.rotation);
+    }
+
+    public double getShapeRotation() {
+        return rotation;
+    }
+
     public void setSelected(boolean value) {
         this.selected = value;
         updateHandleVisibility();
     }
 
-    public boolean isSelected(boolean value) {
+    public boolean isSelected() {
         return selected;
     }
 
@@ -201,7 +241,10 @@ public class ShapeOverlay extends Group {
     }
 
     private void updateHandleVisibility() {
-        resizeHandle.setVisible(!handleSuppressed && (isHover() || resizing));
+        boolean show = !handleSuppressed && (selected || resizing || rotating);
+        resizeHandle.setVisible(show);
+        rotateHandle.setVisible(show);
+        rotateLine.setVisible(show);
     }
 
     public void setHandleSuppressed(boolean suppressed) {
@@ -266,6 +309,33 @@ public class ShapeOverlay extends Group {
         });
         resizeHandle.setOnMouseReleased(e -> {
             resizing = false;
+            updateHandleVisibility();
+            e.consume();
+        });
+    }
+
+    private void installRotateHandlers() {
+        rotateHandle.setOnMousePressed(e -> {
+            rotating = true;
+            updateHandleVisibility();
+            e.consume();
+        });
+
+        rotateHandle.setOnMouseDragged(e -> {
+            Point2D center = localToScene(width / 2, height / 2);
+            double dx = e.getSceneX() - center.getX();
+            double dy = e.getSceneY() - center.getY();
+
+            double angle = Math.toDegrees(Math.atan2(dx, -dy));
+            if (e.isControlDown()) {
+                angle = Math.round(angle / ROTATE_SNAP_DEGREE) * ROTATE_SNAP_DEGREE;
+            }
+            setRotation(angle);
+            e.consume();
+        });
+
+        rotateHandle.setOnMouseReleased(e -> {
+            rotating = false;
             updateHandleVisibility();
             e.consume();
         });

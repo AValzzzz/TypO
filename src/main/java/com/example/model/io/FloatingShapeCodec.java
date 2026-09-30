@@ -12,7 +12,8 @@ public final class FloatingShapeCodec {
 
     public static String encode(FloatingShapeContent s) {
         return START + s.type.name() + "," + s.x + "," + s.y + "," + s.width + "," + s.height + "," + s.fillHex + ","
-                + s.fillOpacity + "," + s.strokeHex + "," + s.strokeOpacity + "," + s.strokeWidth + END;
+                + s.fillOpacity + "," + s.strokeHex + "," + s.strokeOpacity + "," + s.strokeWidth + ","
+                + s.rotation + END;
     }
 
     public static boolean isToken(String text) {
@@ -21,11 +22,13 @@ public final class FloatingShapeCodec {
 
     public static FloatingShapeContent decode(String token) {
         String[] p = token.substring(START.length(), token.length() - END.length()).split(",");
+        double rotation = p.length > 10 ? Double.parseDouble(p[10]) : 0.0;
         return new FloatingShapeContent(ShapeType.valueOf(p[0]),
                 Double.parseDouble(p[1]), Double.parseDouble(p[2]),
                 Double.parseDouble(p[3]), Double.parseDouble(p[4]),
                 p[5], Double.parseDouble(p[6]),
                 p[7], Double.parseDouble(p[8]),
-                Double.parseDouble(p[9]));
+                Double.parseDouble(p[9]),
+                rotation);
     }
 }
