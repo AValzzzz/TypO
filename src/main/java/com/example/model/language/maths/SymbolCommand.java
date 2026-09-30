@@ -19,6 +19,7 @@ public class SymbolCommand implements Command {
         SYMBOLS.put("phi", "\u03C6");
         SYMBOLS.put("psi", "\u03C8");
         SYMBOLS.put("delta", "\u03B4");
+
         SYMBOLS.put("<=", "\u2264");
         SYMBOLS.put(">=", "\u2265");
         SYMBOLS.put("~=", "\u2248");
@@ -31,6 +32,14 @@ public class SymbolCommand implements Command {
         SYMBOLS.put("->", "\u2192");
         SYMBOLS.put("=>", "\u21D2");
         SYMBOLS.put("<=>", "\u21D4");
+        
+        SYMBOLS.put("NN", "\u2115"); 
+        SYMBOLS.put("ZZ", "\u2124"); 
+        SYMBOLS.put("QQ", "\u211A"); 
+        SYMBOLS.put("RR", "\u211D"); 
+        SYMBOLS.put("CC", "\u2102"); 
+        SYMBOLS.put("PP", "\u2119"); 
+        SYMBOLS.put("HH", "\u210D"); 
     }
 
     @Override
