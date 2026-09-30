@@ -12,6 +12,7 @@ import com.example.model.TextStyle;
 import com.example.model.language.maths.MathObject;
 import com.example.model.language.shapes.ShapeType;
 import com.example.model.settings.CodeTheme;
+import com.example.view.ArrowOverlay;
 import com.example.view.ImageOverlay;
 import com.example.view.RichTextArea;
 import com.example.view.ShapeOverlay;
@@ -21,6 +22,7 @@ public class PageContent {
     public final List<ParagraphContent> paragraphs = new ArrayList<>();
     public final List<FloatingImageContent> images = new ArrayList<>();
     public final List<FloatingShapeContent> shapes = new ArrayList<>();
+    public final List<FloatingArrowContent> arrows = new ArrayList<>();
 
     public PageContent(boolean landscape) {
         this.landscape = landscape;
@@ -62,6 +64,13 @@ public class PageContent {
                     ColorUtil.toHex(s.getFillColor()), s.getFillOpacity(),
                     ColorUtil.toHex(s.getStrokeColor()), s.getStrokeOpacity(), s.getStrokeWidth(),
                     s.getShapeRotation()));
+        }
+
+        for (ArrowOverlay a : page.getArrowOverlays()) {
+            content.arrows.add(new FloatingArrowContent(
+                    a.getStartX(), a.getStartY(), a.getEndX(), a.getEndY(),
+                    a.getControlX(), a.getControlY(),
+                    ColorUtil.toHex(a.getStrokeColor()), a.getStrokeOpacity(), a.getStrokeWidth()));
         }
         return content;
     }
@@ -137,6 +146,25 @@ public class PageContent {
             this.strokeOpacity = strokeOpacity;
             this.strokeWidth = strokeWidth;
             this.rotation = rotation;
+        }
+    }
+
+    public static final class FloatingArrowContent {
+        public final double startX, startY, endX, endY, controlX, controlY;
+        public final String strokeHex;
+        public final double strokeOpacity, strokeWidth;
+
+        public FloatingArrowContent(double startX, double startY, double endX, double endY,
+                double controlX, double controlY, String strokeHex, double strokeOpacity, double strokeWidth) {
+            this.startX = startX;
+            this.startY = startY;
+            this.endX = endX;
+            this.endY = endY;
+            this.controlX = controlX;
+            this.controlY = controlY;
+            this.strokeHex = strokeHex;
+            this.strokeOpacity = strokeOpacity;
+            this.strokeWidth = strokeWidth;
         }
     }
 }

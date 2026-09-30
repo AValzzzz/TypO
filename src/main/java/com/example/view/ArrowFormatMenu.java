@@ -8,27 +8,22 @@ import javafx.scene.control.ContextMenu;
 import javafx.scene.control.CustomMenuItem;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
-import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.Slider;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 
-public class ShapeFormatMenu extends ContextMenu {
-    public ShapeFormatMenu(ShapeOverlay shape) {
+public class ArrowFormatMenu extends ContextMenu {
+    public ArrowFormatMenu(ArrowOverlay arrow) {
         getItems().addAll(
-            colorRow("Couleur du fond", shape.getFillColor(), shape::setFillColor),
-            sliderRow("Opacité du fond", 0, 100, shape.getFillOpacity() * 100, v-> shape.setFillOpacity(v/100)),
-            new SeparatorMenuItem(),
-            colorRow("Couleur de la bordure", shape.getStrokeColor(), shape::setStrokeColor),
-            sliderRow("Opacité de la bordure", 0, 100, shape.getStrokeOpacity() * 100, v-> shape.setStrokeOpacity(v/100)),
-            sliderRow("Épaisseur de la bordure", 0, 30, shape.getStrokeWidth(), shape::setStrokeWidth),
-            new SeparatorMenuItem());
+                colorRow("Couleur", arrow.getStrokeColor(), arrow::setStrokeColor),
+                sliderRow("Opacité", 0, 100, arrow.getStrokeOpacity() * 100, v -> arrow.setStrokeOpacity(v / 100)),
+                sliderRow("Épaisseur", 1, 20, arrow.getStrokeWidth(), arrow::setStrokeWidth));
     }
 
     private MenuItem colorRow(String label, Color current, Consumer<Color> onChange) {
         ColorPicker picker = new ColorPicker(current);
-        picker.setOnAction(e-> onChange.accept(picker.getValue()));
-        picker.showingProperty().addListener((obs, was, is)->setAutoHide(!is));
+        picker.setOnAction(e -> onChange.accept(picker.getValue()));
+        picker.showingProperty().addListener((obs, was, is) -> setAutoHide(!is));
 
         HBox row = new HBox(8, new Label(label), picker);
         row.setAlignment(Pos.CENTER_LEFT);

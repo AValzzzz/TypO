@@ -78,6 +78,10 @@ public final class DocxDocumentWriter {
             writeFloatingShapeParagraph(doc, shape);
         }
 
+        for (PageContent.FloatingArrowContent arrow : page.arrows) {
+            writeFloatingArrowParagraph(doc, arrow);
+        }
+
         CTSectPr sectPr;
         if (lastPage) {
             CTBody body = doc.getDocument().getBody();
@@ -145,6 +149,21 @@ public final class DocxDocumentWriter {
             String text = run.text();
             if (isHidden(run) && FloatingShapeCodec.isToken(text))
                 return FloatingShapeCodec.decode(text);
+        }
+        return null;
+    }
+
+    private void writeFloatingArrowParagraph(XWPFDocument doc, PageContent.FloatingArrowContent arrow) {
+        XWPFParagraph p = doc.createParagraph();
+        p.createRun();
+        addHiddenRun(p, FloatingArrowCodec.encode(arrow));
+    }
+
+    private PageContent.FloatingArrowContent tryReadFloatingArrow(XWPFParagraph paragraph) {
+        for (XWPFRun run : paragraph.getRuns()) {
+            String text = run.text();
+            if (isHidden(run) && FloatingArrowCodec.isToken(text))
+                return FloatingArrowCodec.decode(text);
         }
         return null;
     }
@@ -228,6 +247,7 @@ public final class DocxDocumentWriter {
             List<ParagraphContent> current = new ArrayList<>();
             List<PageContent.FloatingImageContent> currentImages = new ArrayList<>();
             List<PageContent.FloatingShapeContent> currentShapes = new ArrayList<>();
+            List<PageContent.FloatingArrowContent> currentArrows = new ArrayList<>();
 
             for (XWPFParagraph paragraph : doc.getParagraphs()) {
                 CTSectPr sectPr = (paragraph.getCTP().isSetPPr() && paragraph.getCTP().getPPr().isSetSectPr())
@@ -237,11 +257,17 @@ public final class DocxDocumentWriter {
                 PageContent.FloatingImageContent floatingImage = tryReadFloatingImage(paragraph);
                 PageContent.FloatingShapeContent floatingShape = floatingImage == null ? tryReadFloatingShape(paragraph)
                         : null;
+                PageContent.FloatingArrowContent floatingArrow = (floatingImage == null && floatingShape == null)
+                        ? tryReadFloatingArrow(paragraph)
+                        : null;
                 boolean boundaryOnly = sectPr != null && paragraph.getRuns().isEmpty();
+
                 if (floatingImage != null)
                     currentImages.add(floatingImage);
                 else if (floatingShape != null)
                     currentShapes.add(floatingShape);
+                else if (floatingArrow != null)
+                    currentArrows.add(floatingArrow);
                 else if (!boundaryOnly)
                     current.add(readParagraph(paragraph));
 
@@ -249,10 +275,12 @@ public final class DocxDocumentWriter {
                     PageContent pc = finish(current, sectPr);
                     pc.images.addAll(currentImages);
                     pc.shapes.addAll(currentShapes);
+                    pc.arrows.addAll(currentArrows);
                     pages.add(pc);
                     current = new ArrayList<>();
                     currentImages = new ArrayList<>();
                     currentShapes = new ArrayList<>();
+                    currentArrows = new ArrayList<>();
                 }
             }
 

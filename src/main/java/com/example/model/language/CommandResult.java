@@ -13,12 +13,14 @@ public class CommandResult {
     private final UnaryOperator<TextStyle> styleChange;
     private MathObject mathObject;
     private ShapeType shape;
+    private boolean arrow = false;
 
     public CommandResult(String text) {
         this(text, 0, 0, null, null);
     }
 
-    public CommandResult (String text, int styleStart, int styleEnd, UnaryOperator<TextStyle> styleChange, MathObject mathObject) {
+    public CommandResult(String text, int styleStart, int styleEnd, UnaryOperator<TextStyle> styleChange,
+            MathObject mathObject) {
         this.text = text;
         this.styleStart = styleStart;
         this.styleEnd = styleEnd;
@@ -38,6 +40,16 @@ public class CommandResult {
         return r;
     }
 
+    public static CommandResult ofArrow() {
+        CommandResult r = new CommandResult("");
+        r.arrow = true;
+        return r;
+    }
+
+    public boolean isArrow() {
+        return arrow;
+    }
+
     public String getText() {
         return text;
     }
@@ -54,7 +66,9 @@ public class CommandResult {
         return styleEnd;
     }
 
-    public boolean isMathObject() {return mathObject != null;}
+    public boolean isMathObject() {
+        return mathObject != null;
+    }
 
     public MathObject getMathObject() {
         return mathObject;
@@ -63,6 +77,7 @@ public class CommandResult {
     public boolean isShape() {
         return shape != null;
     }
+
     public ShapeType getShape() {
         return shape;
     }

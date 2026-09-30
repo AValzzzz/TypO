@@ -14,6 +14,7 @@ import com.example.model.actions.DeletePage;
 import com.example.model.actions.FormatText;
 import com.example.model.actions.Help;
 import com.example.model.actions.ImportImage;
+import com.example.model.actions.InsertArrow;
 import com.example.model.actions.InsertShape;
 import com.example.model.actions.NewPage;
 import com.example.model.actions.OpenFile;
@@ -27,8 +28,10 @@ import com.example.model.io.PageContent;
 import com.example.model.language.BackslashInputHandler;
 import com.example.model.language.CommandRegistry;
 import com.example.model.language.maths.MathCommands;
+import com.example.model.language.shapes.ArrowCommand;
 import com.example.model.language.shapes.ShapeCommand;
 import com.example.model.settings.AppSettings;
+import com.example.view.ArrowOverlay;
 import com.example.view.ImageOverlay;
 import com.example.view.RichTextArea;
 import com.example.view.ShapeOverlay;
@@ -94,6 +97,7 @@ public class InputController {
     public void initialize() {
         MathCommands.registerAll(commandRegistry);
         commandRegistry.register(new ShapeCommand());
+        commandRegistry.register(new ArrowCommand());
         Page firstPage = new Page(whitePane, textEditor);
         setupPage(firstPage);
         AppSettings.getInstance().backgroundColorProperty().addListener((obs, o, n) -> applyBackgroundColor(n));
@@ -189,7 +193,7 @@ public class InputController {
     private static boolean isInsideShape(Object target) {
         Node n = target instanceof Node node ? node : null;
         while (n != null) {
-            if (n instanceof ShapeOverlay)
+            if (n instanceof ShapeOverlay || n instanceof ArrowOverlay)
                 return true;
             n = n.getParent();
         }
@@ -289,6 +293,14 @@ public class InputController {
                 o.setStrokeWidth(s.strokeWidth);
                 o.setRotation(s.rotation);
             }
+
+            for (PageContent.FloatingArrowContent a : content.arrows) {
+                ArrowOverlay o = page.addArrowOverlay(a.startX, a.startY, a.endX, a.endY, a.controlX,
+                        a.controlY);
+                o.setStrokeColor(Color.web("#" + a.strokeHex));
+                o.setStrokeOpacity(a.strokeOpacity);
+                o.setStrokeWidth(a.strokeWidth);
+            }
             if (content.landscape != (page.getPane().getWidth() > page.getPane().getHeight())) {
                 new ToggleOrientation(page).execute();
             }
@@ -346,7 +358,9 @@ public class InputController {
     private void setupPage(Page page) {
         pages.add(page);
         attachContextMenu(page);
-        new BackslashInputHandler(page.getEditor(), commandRegistry, type -> new InsertShape(page, type).execute());
+        new BackslashInputHandler(page.getEditor(), commandRegistry,
+                type -> new InsertShape(page, type).execute(),
+                () -> new InsertArrow(page).execute());
         new CodeBlockStyler(page.getEditor());
     }
 
