@@ -29,6 +29,7 @@ import com.example.model.language.CommandRegistry;
 import com.example.model.language.maths.MathCommands;
 import com.example.model.language.shapes.ShapeCommand;
 import com.example.model.settings.AppSettings;
+import com.example.view.ImageOverlay;
 import com.example.view.RichTextArea;
 import com.example.view.ShapeOverlay;
 import com.example.view.TextFormatMenu;
@@ -176,12 +177,23 @@ public class InputController {
 
         pageMenu.getItems().addAll(toggleOrientationItem, deletePageItem, importImageItem);
 
-        page.getPane().addEventHandler(ContextMenuEvent.CONTEXT_MENU_REQUESTED, event -> {
+        page.getPane().addEventFilter(ContextMenuEvent.CONTEXT_MENU_REQUESTED, event -> {
+            if (isInsideShape(event.getTarget()))
+                return;
             ContextMenu menu = page.hasSelection() ? createTextMenu(page) : pageMenu;
             showMenu(menu, page, event);
             event.consume();
         });
+    }
 
+    private static boolean isInsideShape(Object target) {
+        Node n = target instanceof Node node ? node : null;
+        while (n != null) {
+            if (n instanceof ShapeOverlay)
+                return true;
+            n = n.getParent();
+        }
+        return false;
     }
 
     private ContextMenu createTextMenu(Page page) {
@@ -264,7 +276,9 @@ public class InputController {
             for (PageContent.FloatingImageContent img : content.images) {
                 byte[] bytes = Base64.getDecoder().decode(img.base64);
                 Image image = new Image(new ByteArrayInputStream(bytes));
-                page.addImageOverlay(image, img.x, img.y, img.width, img.height, img.format, img.base64);
+                ImageOverlay overlay = page.addImageOverlay(image, img.x, img.y, img.width, img.height, img.format,
+                        img.base64);
+                overlay.setRotation(img.rotation);
             }
             for (PageContent.FloatingShapeContent s : content.shapes) {
                 ShapeOverlay o = page.addShapeOverlay(s.type, s.x, s.y, s.width, s.height);

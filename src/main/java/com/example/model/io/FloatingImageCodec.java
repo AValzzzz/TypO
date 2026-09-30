@@ -6,8 +6,8 @@ public final class FloatingImageCodec {
 
     private FloatingImageCodec() {}
 
-    public static String encode(double x, double y, double width, double height) {
-        return START + x + "," + y + "," + width + "," + height + END;
+    public static String encode(double x, double y, double width, double height, double rotation) {
+        return START + x + "," + y + "," + width + "," + height + "," + rotation + END;
     }
 
     public static boolean isToken(String text) {
@@ -17,8 +17,9 @@ public final class FloatingImageCodec {
     public static double[] decode(String token) {
         String body = token.substring(START.length(), token.length() - END.length());
         String[] parts = body.split(",");
-        double[] result = new double[4];
+        double[] result = new double[5];
         for (int i = 0; i < 4; i++) result[i] = Double.parseDouble(parts[i]);
+        result[4] = parts.length > 4 ? Double.parseDouble(parts[4]) : 0.0;
         return result;
     }
 }
