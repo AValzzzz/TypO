@@ -179,6 +179,8 @@ public class InputController {
         MenuItem deletePageItem = new MenuItem("Delete Page");
         deletePageItem.setOnAction(e -> {
             new DeletePage(page, pagesContainer, pages).execute();
+            for (int i = 0; i < pages.size(); i++)
+                pages.get(i).setPageNumber(i + 1);
             clampTranslate();
         });
 
@@ -287,6 +289,7 @@ public class InputController {
 
         if (!loadedPages.isEmpty()) {
             PageContent first = loadedPages.get(0);
+            AppSettings.getInstance().setShowPageNumbers(first.showPageNumbers);
             if (AppSettings.areMarginsValid(first.marginLeftCm, first.marginTopCm,
                     first.marginRightCm, first.marginBottomCm)) {
                 AppSettings.getInstance().setMarginsCm(first.marginLeftCm, first.marginTopCm,
@@ -383,6 +386,8 @@ public class InputController {
 
     private void setupPage(Page page) {
         pages.add(page);
+        for (int i = 0; i < pages.size(); i++)
+            pages.get(i).setPageNumber(i + 1);
         page.applyMargins();
         attachContextMenu(page);
         new BackslashInputHandler(page.getEditor(), commandRegistry,

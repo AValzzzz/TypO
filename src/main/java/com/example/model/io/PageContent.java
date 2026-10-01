@@ -26,6 +26,7 @@ public class PageContent {
     public double marginTopCm = AppSettings.getInstance().getMarginTop();
     public double marginRightCm = AppSettings.getInstance().getMarginRight();
     public double marginBottomCm = AppSettings.getInstance().getMarginBottom();
+    public boolean showPageNumbers = AppSettings.getInstance().isShowPageNumbers();
 
     public final List<ParagraphContent> paragraphs = new ArrayList<>();
     public final List<FloatingImageContent> images = new ArrayList<>();

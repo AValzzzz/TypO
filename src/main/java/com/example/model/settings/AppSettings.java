@@ -1,7 +1,9 @@
 package com.example.model.settings;
 
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.paint.Color;
@@ -23,6 +25,7 @@ public class AppSettings {
                                                                                                                    // JavaFX-ish
                                                                                                                    // blue
     private final ObjectProperty<CodeTheme> codeTheme = new SimpleObjectProperty<>(CodeTheme.DARK);
+    private final BooleanProperty showPageNumbers = new SimpleBooleanProperty(false);
 
     private final DoubleProperty marginLeft = new SimpleDoubleProperty(DEFAULT_MARGIN_CM);
     private final DoubleProperty marginTop = new SimpleDoubleProperty(DEFAULT_MARGIN_CM);
@@ -35,6 +38,9 @@ public class AppSettings {
     public ObjectProperty<Color> backgroundColorProperty() { return backgroundColor; }
     public ObjectProperty<Color> selectionColorProperty() { return selectionColor; }
     public ObjectProperty<CodeTheme> codeThemeProperty() { return codeTheme; }
+    public BooleanProperty showPageNumbersProperty() { return showPageNumbers; }
+    public boolean isShowPageNumbers() { return showPageNumbers.get(); }
+    public void setShowPageNumbers(boolean value) { showPageNumbers.set(value); }
 
     public DoubleProperty marginLeftProperty() { return marginLeft; }
     public DoubleProperty marginTopProperty() { return marginTop; }

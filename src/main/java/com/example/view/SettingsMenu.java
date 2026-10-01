@@ -43,6 +43,10 @@ public class SettingsMenu extends ContextMenu {
         themeChoice.setValue(settings.codeThemeProperty().get());
         themeChoice.valueProperty().addListener((obs, o, n) -> settings.codeThemeProperty().set(n));
 
+        CheckBox pageNumberBox = new CheckBox("Numéroter les pages");
+        pageNumberBox.setStyle("-fx-text-fill: BLACK;");
+        pageNumberBox.selectedProperty().bindBidirectional(settings.showPageNumbersProperty());
+
         for (int i = 0; i < marginFields.length; i++)
             marginFields[i] = createMarginField(i);
         refreshMarginFields();
@@ -63,6 +67,7 @@ public class SettingsMenu extends ContextMenu {
                 new SeparatorMenuItem(),
                 row("Thème des blocs de code", themeChoice),
                 new SeparatorMenuItem(),
+                new CustomMenuItem(pageNumberBox, false),
                 menu);
     }
 

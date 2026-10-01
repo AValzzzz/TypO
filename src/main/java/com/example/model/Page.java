@@ -11,12 +11,16 @@ import com.example.view.RichTextArea;
 import com.example.view.ShapeOverlay;
 
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.layout.Pane;
 
 public class Page {
     private final Pane pane;
     private final RichTextArea editor;
+    private static final double FOOTER_OFFSET = 22;
+    private final Label pageNumberLabel = new Label();
     private final List<ImageOverlay> imageOverlays = new ArrayList<>();
     private final List<ShapeOverlay> shapeOverlays = new ArrayList<>();
     private final List<ArrowOverlay> arrowOverlays = new ArrayList<>();
@@ -24,6 +28,14 @@ public class Page {
     public Page(Pane pane, RichTextArea textEditor) {
         this.pane = pane;
         this.editor = textEditor;
+
+        pageNumberLabel.setStyle("-fx-text-fill: BLACK; -fx-font-size: 10px;");
+        pageNumberLabel.setAlignment(Pos.CENTER);
+        pageNumberLabel.setMouseTransparent(true);
+        pageNumberLabel.prefWidthProperty().bind(pane.widthProperty());
+        pageNumberLabel.layoutYProperty().bind(pane.heightProperty().subtract(FOOTER_OFFSET));
+        pageNumberLabel.visibleProperty().bind(AppSettings.getInstance().showPageNumbersProperty());
+        pane.getChildren().add(pageNumberLabel);
     }
 
     public Pane getPane() {
@@ -81,7 +93,7 @@ public class Page {
                 AppSettings.cmToPx(s.getMarginBottom()),
                 AppSettings.cmToPx(s.getMarginLeft())));
     }
-    
+
     public List<ImageOverlay> getImageOverlays() {
         return imageOverlays;
     }
@@ -94,4 +106,7 @@ public class Page {
         return arrowOverlays;
     }
 
+    public void setPageNumber(int number) {
+        pageNumberLabel.setText(String.valueOf(number));
+    }
 }
