@@ -39,6 +39,7 @@ import com.example.view.RichTextArea;
 import com.example.view.ShapeOverlay;
 import com.example.view.TextFormatMenu;
 
+import javafx.beans.property.DoubleProperty;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
@@ -108,6 +109,11 @@ public class InputController {
 
         AppSettings.getInstance().selectionColorProperty().addListener((obs, o, n) -> applySelectionColorToAllPages());
         applySelectionColorToAllPages();
+        AppSettings st = AppSettings.getInstance();
+        for (DoubleProperty p : List.of(st.marginLeftProperty(), st.marginTopProperty(),
+                st.marginRightProperty(), st.marginBottomProperty()))
+            p.addListener((obs, o, n) -> applyMarginsToAllPages());
+
         stackPane.addEventFilter(ScrollEvent.SCROLL, event -> {
             if (event.isControlDown()) {
                 double zoomFactor = Math.exp(event.getDeltaY() * ZOOM_SENSITIVITY);
@@ -279,6 +285,15 @@ public class InputController {
         pagesContainer.getChildren().clear();
         pages.clear();
 
+        if (!loadedPages.isEmpty()) {
+            PageContent first = loadedPages.get(0);
+            if (AppSettings.areMarginsValid(first.marginLeftCm, first.marginTopCm,
+                    first.marginRightCm, first.marginBottomCm)) {
+                AppSettings.getInstance().setMarginsCm(first.marginLeftCm, first.marginTopCm,
+                        first.marginRightCm, first.marginBottomCm);
+            }
+        }
+
         for (PageContent content : loadedPages) {
             Page page = createPage();
             populate(page, content);
@@ -353,6 +368,11 @@ public class InputController {
             applySelectionColor(p.getEditor());
     }
 
+    private void applyMarginsToAllPages() {
+        for (Page p : pages)
+            p.applyMargins();
+    }
+
     private void applySelectionColor(RichTextArea editor) {
         Color color = AppSettings.getInstance().selectionColorProperty().get();
         String css = ".styled-text-area .selection { -fx-fill: " + ColorUtil.toCssRgba(color) + "; }";
@@ -363,6 +383,7 @@ public class InputController {
 
     private void setupPage(Page page) {
         pages.add(page);
+        page.applyMargins();
         attachContextMenu(page);
         new BackslashInputHandler(page.getEditor(), commandRegistry,
                 type -> new InsertShape(page, type).execute(),

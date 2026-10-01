@@ -12,6 +12,7 @@ import com.example.model.ParagraphStyle;
 import com.example.model.TextStyle;
 import com.example.model.language.maths.MathObject;
 import com.example.model.language.shapes.ShapeType;
+import com.example.model.settings.AppSettings;
 import com.example.view.ArrowOverlay;
 import com.example.view.ImageOverlay;
 import com.example.view.RichTextArea;
@@ -21,6 +22,11 @@ import javafx.scene.text.TextAlignment;
 
 public class PageContent {
     public final boolean landscape;
+    public double marginLeftCm = AppSettings.getInstance().getMarginLeft();
+    public double marginTopCm = AppSettings.getInstance().getMarginTop();
+    public double marginRightCm = AppSettings.getInstance().getMarginRight();
+    public double marginBottomCm = AppSettings.getInstance().getMarginBottom();
+
     public final List<ParagraphContent> paragraphs = new ArrayList<>();
     public final List<FloatingImageContent> images = new ArrayList<>();
     public final List<FloatingShapeContent> shapes = new ArrayList<>();
@@ -38,7 +44,8 @@ public class PageContent {
         for (Paragraph<ParagraphStyle, Either<String, MathObject>, TextStyle> paragraph : editor
                 .getParagraphs()) {
             ParagraphStyle ps = ParagraphStyle.orDefault(paragraph.getParagraphStyle());
-            ParagraphContent pc = new ParagraphContent(ps.codeBlock(), ps.alignment());            for (StyledSegment<Either<String, MathObject>, TextStyle> seg : paragraph.getStyledSegments()) {
+            ParagraphContent pc = new ParagraphContent(ps.codeBlock(), ps.alignment());
+            for (StyledSegment<Either<String, MathObject>, TextStyle> seg : paragraph.getStyledSegments()) {
                 TextStyle style = seg.getStyle();
                 seg.getSegment().unify(
                         text -> {
@@ -91,7 +98,7 @@ public class PageContent {
             this.alignment = alignment != null ? alignment : TextAlignment.LEFT;
         }
     }
-    
+
     public static final class RunContent {
         public final String text;
         public final MathObject math;

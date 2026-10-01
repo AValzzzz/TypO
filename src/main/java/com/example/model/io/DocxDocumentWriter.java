@@ -19,6 +19,7 @@ import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.apache.poi.xwpf.usermodel.XWPFRun;
 import org.openxmlformats.schemas.officeDocument.x2006.sharedTypes.STVerticalAlignRun;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTBody;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPageMar;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPageSz;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTRPr;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTSectPr;
@@ -105,6 +106,14 @@ public final class DocxDocumentWriter {
             pageSz.setW(PAGE_SHORT);
             pageSz.setH(PAGE_LONG);
         }
+        CTPageMar mar = sectPr.isSetPgMar() ? sectPr.getPgMar() : sectPr.addNewPgMar();
+        mar.setLeft(cmToTwips(page.marginLeftCm));
+        mar.setRight(cmToTwips(page.marginRightCm));
+        mar.setTop(cmToTwips(page.marginTopCm));
+        mar.setBottom(cmToTwips(page.marginBottomCm));
+        mar.setHeader(720L);
+        mar.setFooter(720L);
+        mar.setGutter(0L);
     }
 
     private void writeTextRun(XWPFParagraph p, String text, TextStyle style, boolean codeBlockParagraph) {
@@ -329,6 +338,13 @@ public final class DocxDocumentWriter {
         boolean landscape = sectPr != null && sectPr.isSetPgSz()
                 && sectPr.getPgSz().getOrient() == STPageOrientation.LANDSCAPE;
         PageContent content = new PageContent(landscape);
+        if (sectPr != null && sectPr.isSetPgMar()) {
+            CTPageMar m = sectPr.getPgMar();
+            content.marginLeftCm = twipsToCm(m.getLeft(), content.marginLeftCm);
+            content.marginRightCm = twipsToCm(m.getRight(), content.marginRightCm);
+            content.marginTopCm = twipsToCm(m.getTop(), content.marginTopCm);
+            content.marginBottomCm = twipsToCm(m.getBottom(), content.marginBottomCm);
+        }
         content.paragraphs.addAll(paragraphs);
         return content;
     }
@@ -421,5 +437,19 @@ public final class DocxDocumentWriter {
         if (run.getCTR().isSetRPr() && run.getCTR().getRPr().sizeOfShdArray() > 0)
             return hexColorToString(run.getCTR().getRPr().getShdArray(0).getFill());
         return null;
+    }
+
+    private static long cmToTwips(double cm) {
+        return Math.round(cm * 1440.0 / 2.54);
+    }
+
+    private static double twipsToCm(Object twips, double fallback) {
+        if (twips == null)
+            return fallback;
+        try {
+            return Double.parseDouble(twips.toString()) * 2.54 / 1440.0;
+        } catch (NumberFormatException e) {
+            return fallback;
+        }
     }
 }

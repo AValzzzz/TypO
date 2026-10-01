@@ -4,11 +4,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.example.model.language.shapes.ShapeType;
+import com.example.model.settings.AppSettings;
 import com.example.view.ArrowOverlay;
 import com.example.view.ImageOverlay;
 import com.example.view.RichTextArea;
 import com.example.view.ShapeOverlay;
 
+import javafx.geometry.Insets;
 import javafx.scene.image.Image;
 import javafx.scene.layout.Pane;
 
@@ -71,6 +73,15 @@ public class Page {
         return overlay;
     }
 
+    public void applyMargins() {
+        AppSettings s = AppSettings.getInstance();
+        editor.setPadding(new Insets(
+                AppSettings.cmToPx(s.getMarginTop()),
+                AppSettings.cmToPx(s.getMarginRight()),
+                AppSettings.cmToPx(s.getMarginBottom()),
+                AppSettings.cmToPx(s.getMarginLeft())));
+    }
+    
     public List<ImageOverlay> getImageOverlays() {
         return imageOverlays;
     }
@@ -82,4 +93,5 @@ public class Page {
     public List<ArrowOverlay> getArrowOverlays() {
         return arrowOverlays;
     }
+
 }
