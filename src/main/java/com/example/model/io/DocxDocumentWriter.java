@@ -18,6 +18,7 @@ import org.apache.poi.xwpf.usermodel.UnderlinePatterns;
 import org.apache.poi.xwpf.usermodel.VerticalAlign;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFFooter;
+import org.apache.poi.xwpf.usermodel.XWPFHyperlinkRun;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.apache.poi.xwpf.usermodel.XWPFRun;
 import org.openxmlformats.schemas.officeDocument.x2006.sharedTypes.STVerticalAlignRun;
@@ -126,7 +127,9 @@ public final class DocxDocumentWriter {
     }
 
     private void writeTextRun(XWPFParagraph p, String text, TextStyle style, boolean codeBlockParagraph) {
-        XWPFRun run = p.createRun();
+        XWPFRun run = (style != null && style.link() != null)
+                ? p.createHyperlinkRun(style.link())
+                : p.createRun();
         run.setText(text == null ? "" : text);
         applyStyle(run, style, codeBlockParagraph);
     }
@@ -241,6 +244,11 @@ public final class DocxDocumentWriter {
         }
         if (style.baselineShift() != null) {
             run.setSubscript(style.baselineShift() < 0 ? VerticalAlign.SUBSCRIPT : VerticalAlign.SUPERSCRIPT);
+        }
+
+        if (style.link() != null) {
+            run.setColor("3588DB");
+            run.setUnderline(UnderlinePatterns.SINGLE);
         }
     }
 
@@ -411,8 +419,9 @@ public final class DocxDocumentWriter {
                 .withStrikethrough(run.isStrikeThrough())
                 .withCodeBlock(codeBlock);
 
+        boolean isLink = run instanceof XWPFHyperlinkRun;
         UnderlinePatterns underline = run.getUnderline();
-        if (underline != null && underline != UnderlinePatterns.NONE) {
+        if (!isLink && underline != null && underline != UnderlinePatterns.NONE) {
             style = style.withUnderline(true).withUnderlineDotted(underline == UnderlinePatterns.DOTTED);
             String uColor = null;
             if (run.getCTR().isSetRPr() && run.getCTR().getRPr().sizeOfUArray() > 0) {
@@ -427,7 +436,7 @@ public final class DocxDocumentWriter {
             style = style.withHighlight(ColorUtil.fromHex(shadingHex));
 
         String color = run.getColor();
-        if (color != null && !(codeBlock && CODE_BLOCK_FG.equalsIgnoreCase(color)))
+        if (!isLink && color != null && !(codeBlock && CODE_BLOCK_FG.equalsIgnoreCase(color)))
             style = style.withTextColor(ColorUtil.fromHex(color));
 
         Double fontSize = run.getFontSizeAsDouble();

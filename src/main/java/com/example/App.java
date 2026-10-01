@@ -1,4 +1,6 @@
 package com.example;
+import com.example.model.LinkOpener;
+
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -14,6 +16,7 @@ public class App extends Application{
 
     @Override
     public void start(Stage stage) throws Exception {
+        LinkOpener.init(getHostServices());
         Parent root = FXMLLoader.load(getClass().getResource("/com/example/view/Main.fxml"));
         Scene scene = new Scene(root);
 

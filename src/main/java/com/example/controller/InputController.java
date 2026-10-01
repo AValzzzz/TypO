@@ -10,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 
 import com.example.model.CodeBlockStyler;
+import com.example.model.LinkHandler;
 import com.example.model.Page;
 import com.example.model.ParagraphStyle;
 import com.example.model.TextStyle;
@@ -468,6 +469,7 @@ public class InputController {
                 type -> new InsertShape(page, type).execute(),
                 () -> new InsertArrow(page).execute());
         new CodeBlockStyler(page.getEditor());
+        new LinkHandler(page.getEditor());
         page.getEditor().richChanges().subscribe(c -> scheduleReflow(page));
     }
 
