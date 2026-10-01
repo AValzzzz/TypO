@@ -13,6 +13,7 @@ public class BackslashInputHandler {
     private final RichTextArea editor;
     private final CommandRegistry registry;
     private final Consumer<ShapeType> shapeSpawner;
+    private final Runnable arrowSpawner;
 
     private boolean buffering = false;
     private int commandStart = -1;
@@ -23,13 +24,19 @@ public class BackslashInputHandler {
     private String convertedRawText = null;
 
     public BackslashInputHandler(RichTextArea editor, CommandRegistry registry) {
-        this(editor, registry, null);
+        this(editor, registry, null, null);
     }
 
     public BackslashInputHandler(RichTextArea editor, CommandRegistry registry, Consumer<ShapeType> shapeSpawner) {
+        this(editor, registry, shapeSpawner, null);
+    }
+
+    public BackslashInputHandler(RichTextArea editor, CommandRegistry registry, Consumer<ShapeType> shapeSpawner,
+            Runnable arrowSpawner) {
         this.editor = editor;
         this.registry = registry;
         this.shapeSpawner = shapeSpawner;
+        this.arrowSpawner = arrowSpawner;
         editor.addEventFilter(KeyEvent.KEY_TYPED, this::onKeyTyped);
         editor.addEventFilter(KeyEvent.KEY_PRESSED, this::onKeyPressed);
     }
@@ -80,6 +87,12 @@ public class BackslashInputHandler {
                     editor.replaceText(commandStart, caret, "");
                     if (shapeSpawner != null)
                         shapeSpawner.accept(result.getShape());
+                    justConverted = false;
+                } else if (result.isArrow()) {
+                    event.consume();
+                    editor.replaceText(commandStart, caret, "");
+                    if (arrowSpawner != null)
+                        arrowSpawner.run();
                     justConverted = false;
                 } else if (result.isMathObject()) {
                     editor.replaceText(commandStart, caret, "");

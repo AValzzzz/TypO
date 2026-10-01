@@ -5,6 +5,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
+import com.example.model.ParagraphStyle;
 import com.example.model.TextStyle;
 
 import javafx.geometry.Pos;
@@ -21,30 +22,36 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
+import javafx.scene.text.TextAlignment;
 
 public class TextFormatMenu extends ContextMenu {
-    private static final int[] SIZES = {8,10,12,14,18,24,36,48,72};
+    private static final int[] SIZES = { 8, 10, 12, 14, 18, 24, 36, 48, 72 };
 
     private final RichTextArea editor;
     private final Consumer<UnaryOperator<TextStyle>> onChange;
+    private final Consumer<TextAlignment> onAlign;
 
-    public TextFormatMenu(RichTextArea editor, Consumer<UnaryOperator<TextStyle>> onChange) {
+    public TextFormatMenu(RichTextArea editor, Consumer<UnaryOperator<TextStyle>> onChange,
+            Consumer<TextAlignment> onAlign) {
         this.editor = editor;
         this.onChange = onChange;
+        this.onAlign = onAlign;
 
         getItems().addAll(
-            sizeMenu(),
-            colorItem(),
-            new SeparatorMenuItem(),
-            toggleItem("Gras", TextStyle::bold, TextStyle::withBold),
-            toggleItem("Italique", TextStyle::italic, TextStyle::withItalic),
-            toggleItem("Barré", TextStyle::strikethrough, TextStyle::withStrikethrough),
-            underlineToggle(),
-            underlineStyleToggle(),
-            underlineColorItem(),
-            highlightToggle(),
-            highlightColorItem());
-        }
+                sizeMenu(),
+                colorItem(),
+                new SeparatorMenuItem(),
+                toggleItem("Gras", TextStyle::bold, TextStyle::withBold),
+                toggleItem("Italique", TextStyle::italic, TextStyle::withItalic),
+                toggleItem("Barré", TextStyle::strikethrough, TextStyle::withStrikethrough),
+                underlineToggle(),
+                underlineStyleToggle(),
+                underlineColorItem(),
+                highlightToggle(),
+                highlightColorItem(),
+                new SeparatorMenuItem(),
+                alignmentMenu());
+    }
 
     private Menu sizeMenu() {
         Menu menu = new Menu("Taille");
@@ -55,22 +62,22 @@ public class TextFormatMenu extends ContextMenu {
             RadioMenuItem item = new RadioMenuItem(String.valueOf(size));
             item.setToggleGroup(group);
             item.setSelected(current != null && current == size);
-            item.setOnAction(e-> onChange.accept(s -> s.withFontSize(size)));
-            menu.getItems().add(item); 
+            item.setOnAction(e -> onChange.accept(s -> s.withFontSize(size)));
+            menu.getItems().add(item);
         }
 
-        TextField field = new TextField(current != null ? String.valueOf(current):"");
+        TextField field = new TextField(current != null ? String.valueOf(current) : "");
         field.setPromptText("Taille");
         field.setPrefColumnCount(4);
-        field.setOnAction(e-> {
+        field.setOnAction(e -> {
             try {
                 int size = Integer.parseInt(field.getText().trim());
-                if(size < 1 || size > 400) {
+                if (size < 1 || size > 400) {
                     throw new NumberFormatException();
                 }
-                onChange.accept(s-> s.withFontSize(size));
+                onChange.accept(s -> s.withFontSize(size));
                 hide();
-            } catch(NumberFormatException ex) {
+            } catch (NumberFormatException ex) {
                 field.setStyle("-fx-border-color: red");
             }
         });
@@ -84,9 +91,9 @@ public class TextFormatMenu extends ContextMenu {
 
     private MenuItem colorItem() {
         ColorPicker picker = new ColorPicker(editor.commonValue(TextStyle::textColor).orElse(Color.BLACK));
-        picker.setOnAction(e-> {
+        picker.setOnAction(e -> {
             Color color = picker.getValue();
-            onChange.accept(s->s.withTextColor(color));
+            onChange.accept(s -> s.withTextColor(color));
             hide();
         });
 
@@ -94,12 +101,12 @@ public class TextFormatMenu extends ContextMenu {
 
         HBox row = new HBox(8, new Label("Couleur"), picker);
         row.setAlignment(Pos.CENTER_LEFT);
-        
+
         return new CustomMenuItem(row, false);
     }
 
     private void keepMenuOpenWhilePickerActive(ColorPicker picker) {
-        picker.showingProperty().addListener((obs,wasShowing,isShowing)-> {
+        picker.showingProperty().addListener((obs, wasShowing, isShowing) -> {
             if (isShowing) {
                 setAutoHide(false);
             } else {
@@ -112,12 +119,13 @@ public class TextFormatMenu extends ContextMenu {
         return toggleItem("Soulignement en pointillés", TextStyle::underlineDotted, TextStyle::withUnderlineDotted);
     }
 
-    private MenuItem toggleItem(String label, Function<TextStyle, Boolean> getter, BiFunction<TextStyle, Boolean, TextStyle> setter) {
+    private MenuItem toggleItem(String label, Function<TextStyle, Boolean> getter,
+            BiFunction<TextStyle, Boolean, TextStyle> setter) {
         CheckMenuItem item = new CheckMenuItem(label);
         item.setSelected(editor.commonValue(getter).orElse(false));
-        item.setOnAction (e-> {
+        item.setOnAction(e -> {
             boolean enabled = item.isSelected();
-            onChange.accept(s->setter.apply(s, enabled));
+            onChange.accept(s -> setter.apply(s, enabled));
         });
         return item;
     }
@@ -129,7 +137,7 @@ public class TextFormatMenu extends ContextMenu {
     private MenuItem underlineColorItem() {
         Color current = editor.commonValue(TextStyle::underlineColor).orElse(Color.BLACK);
         ColorPicker picker = new ColorPicker(current);
-        picker.setOnAction(e-> {
+        picker.setOnAction(e -> {
             Color color = picker.getValue();
             onChange.accept(s -> s.withUnderline(true).withUnderlineColor(color));
             hide();
@@ -138,21 +146,21 @@ public class TextFormatMenu extends ContextMenu {
     }
 
     private MenuItem highlightToggle() {
-        CheckMenuItem item = new CheckMenuItem("Surligné)");
+        CheckMenuItem item = new CheckMenuItem("Surligné");
         boolean active = editor.commonValue(TextStyle::highlight).isPresent();
         item.setSelected(active);
-        item.setOnAction(e->onChange.accept(s->s.withHighlight(item.isSelected() ? Color.YELLOW : null)));
+        item.setOnAction(e -> onChange.accept(s -> s.withHighlight(item.isSelected() ? Color.YELLOW : null)));
         return item;
     }
 
     private MenuItem highlightColorItem() {
         Color current = editor.commonValue(TextStyle::highlight).orElse(Color.YELLOW);
         ColorPicker picker = new ColorPicker(current);
-            picker.setOnAction(e-> {
-                Color color = picker.getValue();
-                onChange.accept(s->s.withHighlight(color));
-                hide();
-            });
+        picker.setOnAction(e -> {
+            Color color = picker.getValue();
+            onChange.accept(s -> s.withHighlight(color));
+            hide();
+        });
         return colorRow("Couleur du surlignage", picker);
     }
 
@@ -162,4 +170,28 @@ public class TextFormatMenu extends ContextMenu {
         return new CustomMenuItem(row, false);
     }
 
+    private Menu alignmentMenu() {
+        Menu menu = new Menu("Alignement");
+
+        boolean hasEditableParagraph = editor.selectedParagraphStyles().stream().anyMatch(s -> !s.codeBlock());
+        menu.setDisable(!hasEditableParagraph);
+
+        TextAlignment current = editor.commonParagraphValue(ParagraphStyle::alignment).orElse(null);
+        ToggleGroup group = new ToggleGroup();
+
+        menu.getItems().addAll(
+                alignmentItem("Aligner à gauche", TextAlignment.LEFT, current, group),
+                alignmentItem("Centrer", TextAlignment.CENTER, current, group),
+                alignmentItem("Aligner à droite", TextAlignment.RIGHT, current, group),
+                alignmentItem("Justifier", TextAlignment.JUSTIFY, current, group));
+        return menu;
+    }
+
+    private RadioMenuItem alignmentItem(String label, TextAlignment value, TextAlignment current, ToggleGroup group) {
+        RadioMenuItem item = new RadioMenuItem(label);
+        item.setToggleGroup(group);
+        item.setSelected(value == current);
+        item.setOnAction(e -> onAlign.accept(value));
+        return item;
+    }
 }

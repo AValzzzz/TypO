@@ -8,19 +8,30 @@ import org.fxmisc.richtext.model.StyledSegment;
 import org.reactfx.util.Either;
 
 import com.example.model.Page;
+import com.example.model.ParagraphStyle;
 import com.example.model.TextStyle;
 import com.example.model.language.maths.MathObject;
 import com.example.model.language.shapes.ShapeType;
-import com.example.model.settings.CodeTheme;
+import com.example.model.settings.AppSettings;
+import com.example.view.ArrowOverlay;
 import com.example.view.ImageOverlay;
 import com.example.view.RichTextArea;
 import com.example.view.ShapeOverlay;
 
+import javafx.scene.text.TextAlignment;
+
 public class PageContent {
     public final boolean landscape;
+    public double marginLeftCm = AppSettings.getInstance().getMarginLeft();
+    public double marginTopCm = AppSettings.getInstance().getMarginTop();
+    public double marginRightCm = AppSettings.getInstance().getMarginRight();
+    public double marginBottomCm = AppSettings.getInstance().getMarginBottom();
+    public boolean showPageNumbers = AppSettings.getInstance().isShowPageNumbers();
+
     public final List<ParagraphContent> paragraphs = new ArrayList<>();
     public final List<FloatingImageContent> images = new ArrayList<>();
     public final List<FloatingShapeContent> shapes = new ArrayList<>();
+    public final List<FloatingArrowContent> arrows = new ArrayList<>();
 
     public PageContent(boolean landscape) {
         this.landscape = landscape;
@@ -31,9 +42,10 @@ public class PageContent {
         PageContent content = new PageContent(landscape);
         RichTextArea editor = page.getEditor();
 
-        for (Paragraph<CodeTheme, Either<String, MathObject>, TextStyle> paragraph : editor
+        for (Paragraph<ParagraphStyle, Either<String, MathObject>, TextStyle> paragraph : editor
                 .getParagraphs()) {
-            ParagraphContent pc = new ParagraphContent(paragraph.getParagraphStyle() != null);
+            ParagraphStyle ps = ParagraphStyle.orDefault(paragraph.getParagraphStyle());
+            ParagraphContent pc = new ParagraphContent(ps.codeBlock(), ps.alignment());
             for (StyledSegment<Either<String, MathObject>, TextStyle> seg : paragraph.getStyledSegments()) {
                 TextStyle style = seg.getStyle();
                 seg.getSegment().unify(
@@ -63,15 +75,28 @@ public class PageContent {
                     ColorUtil.toHex(s.getStrokeColor()), s.getStrokeOpacity(), s.getStrokeWidth(),
                     s.getShapeRotation()));
         }
+
+        for (ArrowOverlay a : page.getArrowOverlays()) {
+            content.arrows.add(new FloatingArrowContent(
+                    a.getStartX(), a.getStartY(), a.getEndX(), a.getEndY(),
+                    a.getControlX(), a.getControlY(),
+                    ColorUtil.toHex(a.getStrokeColor()), a.getStrokeOpacity(), a.getStrokeWidth()));
+        }
         return content;
     }
 
     public static final class ParagraphContent {
         public final boolean codeBlock;
+        public TextAlignment alignment;
         public final List<RunContent> runs = new ArrayList<>();
 
         public ParagraphContent(boolean codeBlock) {
+            this(codeBlock, TextAlignment.LEFT);
+        }
+
+        public ParagraphContent(boolean codeBlock, TextAlignment alignment) {
             this.codeBlock = codeBlock;
+            this.alignment = alignment != null ? alignment : TextAlignment.LEFT;
         }
     }
 
@@ -137,6 +162,25 @@ public class PageContent {
             this.strokeOpacity = strokeOpacity;
             this.strokeWidth = strokeWidth;
             this.rotation = rotation;
+        }
+    }
+
+    public static final class FloatingArrowContent {
+        public final double startX, startY, endX, endY, controlX, controlY;
+        public final String strokeHex;
+        public final double strokeOpacity, strokeWidth;
+
+        public FloatingArrowContent(double startX, double startY, double endX, double endY,
+                double controlX, double controlY, String strokeHex, double strokeOpacity, double strokeWidth) {
+            this.startX = startX;
+            this.startY = startY;
+            this.endX = endX;
+            this.endY = endY;
+            this.controlX = controlX;
+            this.controlY = controlY;
+            this.strokeHex = strokeHex;
+            this.strokeOpacity = strokeOpacity;
+            this.strokeWidth = strokeWidth;
         }
     }
 }

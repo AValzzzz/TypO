@@ -8,37 +8,22 @@ import javafx.scene.control.ContextMenu;
 import javafx.scene.control.CustomMenuItem;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
-import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.Slider;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 
-public class ShapeFormatMenu extends ContextMenu {
-    public ShapeFormatMenu(ShapeOverlay shape) {
-        Slider fillOpacity = new Slider(0, 100, shape.getFillOpacity() * 100);
-        Slider strokeOpacity = new Slider(0, 100, shape.getStrokeOpacity() * 100);
+public class ArrowFormatMenu extends ContextMenu {
+    public ArrowFormatMenu(ArrowOverlay arrow) {
+        Slider opacity = new Slider(0, 100, arrow.getStrokeOpacity() * 100);
 
         getItems().addAll(
-                colorRow("Couleur du fond", shape.getFillColor(), shape.getFillOpacity(), c -> {
-                    shape.setFillColor(opaque(c));
+                colorRow("Couleur", arrow.getStrokeColor(), arrow.getStrokeOpacity(), c -> {
+                    arrow.setStrokeColor(Color.color(c.getRed(), c.getGreen(), c.getBlue()));
                     if (c.getOpacity() < 1)
-                        fillOpacity.setValue(c.getOpacity() * 100);
+                        opacity.setValue(c.getOpacity() * 100);
                 }),
-                sliderRow("Opacité du fond", fillOpacity, v -> shape.setFillOpacity(v / 100)),
-                new SeparatorMenuItem(),
-                colorRow("Couleur de la bordure", shape.getStrokeColor(), shape.getStrokeOpacity(), c -> {
-                    shape.setStrokeColor(opaque(c));
-                    if (c.getOpacity() < 1)
-                        strokeOpacity.setValue(c.getOpacity() * 100);
-                }),
-                sliderRow("Opacité de la bordure", strokeOpacity, v -> shape.setStrokeOpacity(v / 100)),
-                sliderRow("Épaisseur de la bordure", new Slider(0, 30, shape.getStrokeWidth()),
-                        shape::setStrokeWidth),
-                new SeparatorMenuItem());
-    }
-
-    private static Color opaque(Color c) {
-        return Color.color(c.getRed(), c.getGreen(), c.getBlue());
+                sliderRow("Opacité", opacity, v -> arrow.setStrokeOpacity(v / 100)),
+                sliderRow("Épaisseur", new Slider(1, 20, arrow.getStrokeWidth()), arrow::setStrokeWidth));
     }
 
     private MenuItem colorRow(String label, Color current, double opacity, Consumer<Color> onChange) {

@@ -2,18 +2,23 @@ package com.example.controller;
 
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 
 import com.example.model.CodeBlockStyler;
 import com.example.model.Page;
+import com.example.model.ParagraphStyle;
 import com.example.model.TextStyle;
+import com.example.model.actions.AlignParagraph;
 import com.example.model.actions.DeletePage;
 import com.example.model.actions.FormatText;
 import com.example.model.actions.Help;
 import com.example.model.actions.ImportImage;
+import com.example.model.actions.InsertArrow;
 import com.example.model.actions.InsertShape;
 import com.example.model.actions.NewPage;
 import com.example.model.actions.OpenFile;
@@ -27,15 +32,20 @@ import com.example.model.io.PageContent;
 import com.example.model.language.BackslashInputHandler;
 import com.example.model.language.CommandRegistry;
 import com.example.model.language.maths.MathCommands;
+import com.example.model.language.shapes.ArrowCommand;
 import com.example.model.language.shapes.ShapeCommand;
 import com.example.model.settings.AppSettings;
+import com.example.view.ArrowOverlay;
 import com.example.view.ImageOverlay;
 import com.example.view.RichTextArea;
 import com.example.view.ShapeOverlay;
 import com.example.view.TextFormatMenu;
 
+import javafx.application.Platform;
+import javafx.beans.property.DoubleProperty;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.geometry.Bounds;
 import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
@@ -53,6 +63,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.text.TextAlignment;
 import javafx.stage.Window;
 
 public class InputController {
@@ -83,6 +94,8 @@ public class InputController {
     private ContextMenu activeMenu;
     private final CommandRegistry commandRegistry = new CommandRegistry();
     private final DocumentSession session = new DocumentSession();
+    private final Set<Page> pendingReflow = new HashSet<>();
+    private boolean loading = false;
 
     private static final double MIN_SCALE = 0.8;
     private static final double MAX_SCALE = 3.0;
@@ -94,6 +107,7 @@ public class InputController {
     public void initialize() {
         MathCommands.registerAll(commandRegistry);
         commandRegistry.register(new ShapeCommand());
+        commandRegistry.register(new ArrowCommand());
         Page firstPage = new Page(whitePane, textEditor);
         setupPage(firstPage);
         AppSettings.getInstance().backgroundColorProperty().addListener((obs, o, n) -> applyBackgroundColor(n));
@@ -101,6 +115,11 @@ public class InputController {
 
         AppSettings.getInstance().selectionColorProperty().addListener((obs, o, n) -> applySelectionColorToAllPages());
         applySelectionColorToAllPages();
+        AppSettings st = AppSettings.getInstance();
+        for (DoubleProperty p : List.of(st.marginLeftProperty(), st.marginTopProperty(),
+                st.marginRightProperty(), st.marginBottomProperty()))
+            p.addListener((obs, o, n) -> applyMarginsToAllPages());
+
         stackPane.addEventFilter(ScrollEvent.SCROLL, event -> {
             if (event.isControlDown()) {
                 double zoomFactor = Math.exp(event.getDeltaY() * ZOOM_SENSITIVITY);
@@ -161,11 +180,16 @@ public class InputController {
         pageMenu.setAutoHide(true);
 
         MenuItem toggleOrientationItem = new MenuItem("Toggle Orientation (Portrait/Landscape)");
-        toggleOrientationItem.setOnAction(e -> new ToggleOrientation(page).execute());
+        toggleOrientationItem.setOnAction(e -> {
+            new ToggleOrientation(page).execute();
+            scheduleReflow(page);
+        });
 
         MenuItem deletePageItem = new MenuItem("Delete Page");
         deletePageItem.setOnAction(e -> {
             new DeletePage(page, pagesContainer, pages).execute();
+            for (int i = 0; i < pages.size(); i++)
+                pages.get(i).setPageNumber(i + 1);
             clampTranslate();
         });
 
@@ -189,7 +213,7 @@ public class InputController {
     private static boolean isInsideShape(Object target) {
         Node n = target instanceof Node node ? node : null;
         while (n != null) {
-            if (n instanceof ShapeOverlay)
+            if (n instanceof ShapeOverlay || n instanceof ArrowOverlay)
                 return true;
             n = n.getParent();
         }
@@ -197,7 +221,9 @@ public class InputController {
     }
 
     private ContextMenu createTextMenu(Page page) {
-        return new TextFormatMenu(page.getEditor(), change -> new FormatText(page, change).execute());
+        return new TextFormatMenu(page.getEditor(),
+                change -> new FormatText(page, change).execute(),
+                alignment -> new AlignParagraph(page, alignment).execute());
     }
 
     private void showMenu(ContextMenu menu, Page page, ContextMenuEvent event) {
@@ -266,9 +292,28 @@ public class InputController {
     }
 
     private void loadDocument(List<PageContent> loadedPages, Path source) {
+        loading = true;
+        try {
+            doLoadDocument(loadedPages, source);
+        } finally {
+            loading = false;
+        }
+    }
+
+    private void doLoadDocument(List<PageContent> loadedPages, Path source) {
         session.setCurrentFile(source);
         pagesContainer.getChildren().clear();
         pages.clear();
+
+        if (!loadedPages.isEmpty()) {
+            PageContent first = loadedPages.get(0);
+            AppSettings.getInstance().setShowPageNumbers(first.showPageNumbers);
+            if (AppSettings.areMarginsValid(first.marginLeftCm, first.marginTopCm,
+                    first.marginRightCm, first.marginBottomCm)) {
+                AppSettings.getInstance().setMarginsCm(first.marginLeftCm, first.marginTopCm,
+                        first.marginRightCm, first.marginBottomCm);
+            }
+        }
 
         for (PageContent content : loadedPages) {
             Page page = createPage();
@@ -288,6 +333,14 @@ public class InputController {
                 o.setStrokeOpacity(s.strokeOpacity);
                 o.setStrokeWidth(s.strokeWidth);
                 o.setRotation(s.rotation);
+            }
+
+            for (PageContent.FloatingArrowContent a : content.arrows) {
+                ArrowOverlay o = page.addArrowOverlay(a.startX, a.startY, a.endX, a.endY, a.controlX,
+                        a.controlY);
+                o.setStrokeColor(Color.web("#" + a.strokeHex));
+                o.setStrokeOpacity(a.strokeOpacity);
+                o.setStrokeWidth(a.strokeWidth);
             }
             if (content.landscape != (page.getPane().getWidth() > page.getPane().getHeight())) {
                 new ToggleOrientation(page).execute();
@@ -309,13 +362,68 @@ public class InputController {
                     editor.appendStyledText(run.text, run.style);
                 }
             }
-            editor.setParagraphStyle(
-                    editor.getParagraphs().size() - 1,
-                    paragraph.codeBlock ? AppSettings.getInstance().codeThemeProperty().get() : null);
+            ParagraphStyle style = paragraph.codeBlock
+                    ? new ParagraphStyle(AppSettings.getInstance().codeThemeProperty().get(), TextAlignment.LEFT)
+                    : new ParagraphStyle(null, paragraph.alignment);
+            editor.setParagraphStyle(editor.getParagraphs().size() - 1, style);
             if (i < content.paragraphs.size() - 1) {
                 editor.appendStyledText("\n", TextStyle.DEFAULT);
             }
         }
+    }
+
+    private void scheduleReflow(Page page) {
+        if (loading || !pendingReflow.add(page))
+            return;
+        Platform.runLater(() -> {
+            pendingReflow.remove(page);
+            if (pages.contains(page))
+                reflow(page);
+        });
+    }
+
+    private void reflow(Page page) {
+        RichTextArea editor = page.getEditor();
+        int cut = editor.findOverflowOffset();
+        if (cut <= 0)
+            return;
+
+        int index = pages.indexOf(page);
+        Page next = index + 1 < pages.size() ? pages.get(index + 1) : createPageAfter(page);
+        RichTextArea target = next.getEditor();
+
+        int caret = editor.getCaretPosition();
+        boolean followCaret = editor.isFocused() && caret >= cut;
+
+        var tail = editor.removeTail(cut);
+        target.prependDocument(tail);
+
+        if (followCaret) {
+            target.requestFocus();
+            target.moveTo(Math.min(caret - cut, target.getLength()));
+            Platform.runLater(() -> scrollCaretIntoView(target));
+        }
+    }
+
+    private Page createPageAfter(Page previous) {
+        Page created = createPage();
+        if (previous.getPane().getPrefWidth() > previous.getPane().getPrefHeight())
+            new ToggleOrientation(created).execute();
+        return created;
+    }
+
+    private void scrollCaretIntoView(RichTextArea editor) {
+        editor.getCaretBounds().ifPresent(caret -> {
+            Bounds view = stackPane.localToScreen(stackPane.getBoundsInLocal());
+            double margin = 60;
+            if (caret.getMaxY() > view.getMaxY() - margin)
+                pagesContainer.setTranslateY(
+                        pagesContainer.getTranslateY() - (caret.getMaxY() - (view.getMaxY() - margin)));
+            else if (caret.getMinY() < view.getMinY() + margin)
+                pagesContainer.setTranslateY(
+                        pagesContainer.getTranslateY() + ((view.getMinY() + margin) - caret.getMinY()));
+            clampTranslate();
+        });
     }
 
     private Page createPage() {
@@ -335,6 +443,13 @@ public class InputController {
             applySelectionColor(p.getEditor());
     }
 
+    private void applyMarginsToAllPages() {
+        for (Page p : pages) {
+            p.applyMargins();
+            scheduleReflow(p);
+        }
+    }
+
     private void applySelectionColor(RichTextArea editor) {
         Color color = AppSettings.getInstance().selectionColorProperty().get();
         String css = ".styled-text-area .selection { -fx-fill: " + ColorUtil.toCssRgba(color) + "; }";
@@ -345,9 +460,15 @@ public class InputController {
 
     private void setupPage(Page page) {
         pages.add(page);
+        for (int i = 0; i < pages.size(); i++)
+            pages.get(i).setPageNumber(i + 1);
+        page.applyMargins();
         attachContextMenu(page);
-        new BackslashInputHandler(page.getEditor(), commandRegistry, type -> new InsertShape(page, type).execute());
+        new BackslashInputHandler(page.getEditor(), commandRegistry,
+                type -> new InsertShape(page, type).execute(),
+                () -> new InsertArrow(page).execute());
         new CodeBlockStyler(page.getEditor());
+        page.getEditor().richChanges().subscribe(c -> scheduleReflow(page));
     }
 
     @FXML

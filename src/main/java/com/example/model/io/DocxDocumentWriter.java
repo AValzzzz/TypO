@@ -11,18 +11,24 @@ import java.util.Base64;
 import java.util.List;
 
 import org.apache.poi.util.Units;
+import org.apache.poi.xwpf.model.XWPFHeaderFooterPolicy;
 import org.apache.poi.xwpf.usermodel.Document;
+import org.apache.poi.xwpf.usermodel.ParagraphAlignment;
 import org.apache.poi.xwpf.usermodel.UnderlinePatterns;
 import org.apache.poi.xwpf.usermodel.VerticalAlign;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
+import org.apache.poi.xwpf.usermodel.XWPFFooter;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.apache.poi.xwpf.usermodel.XWPFRun;
 import org.openxmlformats.schemas.officeDocument.x2006.sharedTypes.STVerticalAlignRun;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTBody;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPageMar;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPageSz;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTRPr;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTSectPr;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTShd;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTSimpleField;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.STHdrFtr;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.STPageOrientation;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.STSectionMark;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.STShd;
@@ -31,6 +37,8 @@ import com.example.model.TextStyle;
 import com.example.model.io.PageContent.ParagraphContent;
 import com.example.model.io.PageContent.RunContent;
 import com.example.model.language.maths.MathObject;
+
+import javafx.scene.text.TextAlignment;
 
 public final class DocxDocumentWriter {
 
@@ -43,7 +51,7 @@ public final class DocxDocumentWriter {
     public void write(List<PageContent> pages, Path target) throws IOException {
         try (XWPFDocument doc = new XWPFDocument()) {
             for (int i = 0; i < pages.size(); i++) {
-                writePage(doc, pages.get(i), i == pages.size() - 1);
+                writePage(doc, pages.get(i), i == 0, i == pages.size() - 1);
             }
             try (OutputStream out = Files.newOutputStream(target)) {
                 doc.write(out);
@@ -51,12 +59,14 @@ public final class DocxDocumentWriter {
         }
     }
 
-    private void writePage(XWPFDocument doc, PageContent page, boolean lastPage) {
+    private void writePage(XWPFDocument doc, PageContent page, boolean firstPage, boolean lastPage) {
         for (ParagraphContent paragraph : page.paragraphs) {
             XWPFParagraph p = doc.createParagraph();
+            p.setAlignment(ParagraphAlignments.toPoi(paragraph.alignment));
             if (paragraph.codeBlock) {
                 setParagraphShading(p, CODE_BLOCK_BG);
             }
+
             if (paragraph.runs.isEmpty()) {
                 p.createRun();
             } else {
@@ -78,6 +88,10 @@ public final class DocxDocumentWriter {
             writeFloatingShapeParagraph(doc, shape);
         }
 
+        for (PageContent.FloatingArrowContent arrow : page.arrows) {
+            writeFloatingArrowParagraph(doc, arrow);
+        }
+
         CTSectPr sectPr;
         if (lastPage) {
             CTBody body = doc.getDocument().getBody();
@@ -86,6 +100,10 @@ public final class DocxDocumentWriter {
             XWPFParagraph marker = doc.createParagraph();
             sectPr = marker.getCTP().addNewPPr().addNewSectPr();
             sectPr.addNewType().setVal(STSectionMark.NEXT_PAGE);
+        }
+
+        if (firstPage && page.showPageNumbers) {
+            writePageNumberFooter(doc, sectPr);
         }
 
         CTPageSz pageSz = sectPr.addNewPgSz();
@@ -97,6 +115,14 @@ public final class DocxDocumentWriter {
             pageSz.setW(PAGE_SHORT);
             pageSz.setH(PAGE_LONG);
         }
+        CTPageMar mar = sectPr.isSetPgMar() ? sectPr.getPgMar() : sectPr.addNewPgMar();
+        mar.setLeft(cmToTwips(page.marginLeftCm));
+        mar.setRight(cmToTwips(page.marginRightCm));
+        mar.setTop(cmToTwips(page.marginTopCm));
+        mar.setBottom(cmToTwips(page.marginBottomCm));
+        mar.setHeader(720L);
+        mar.setFooter(page.showPageNumbers ? 300L : 720L);
+        mar.setGutter(0L);
     }
 
     private void writeTextRun(XWPFParagraph p, String text, TextStyle style, boolean codeBlockParagraph) {
@@ -140,11 +166,42 @@ public final class DocxDocumentWriter {
         addHiddenRun(p, FloatingShapeCodec.encode(shape));
     }
 
+    private void writePageNumberFooter(XWPFDocument doc, CTSectPr sectPr) {
+        XWPFHeaderFooterPolicy policy = new XWPFHeaderFooterPolicy(doc, sectPr);
+        XWPFFooter footer = policy.createFooter(STHdrFtr.DEFAULT);
+
+        XWPFParagraph p = footer.getParagraphs().isEmpty()
+                ? footer.createParagraph()
+                : footer.getParagraphs().get(0);
+        p.setAlignment(ParagraphAlignment.CENTER);
+
+        CTSimpleField field = p.getCTP().addNewFldSimple();
+        field.setInstr("PAGE");
+        field.addNewR().addNewT().setStringValue("1");
+
+        addHiddenRun(p, PageNumberCodec.encode());
+    }
+
     private PageContent.FloatingShapeContent tryReadFloatingShape(XWPFParagraph paragraph) {
         for (XWPFRun run : paragraph.getRuns()) {
             String text = run.text();
             if (isHidden(run) && FloatingShapeCodec.isToken(text))
                 return FloatingShapeCodec.decode(text);
+        }
+        return null;
+    }
+
+    private void writeFloatingArrowParagraph(XWPFDocument doc, PageContent.FloatingArrowContent arrow) {
+        XWPFParagraph p = doc.createParagraph();
+        p.createRun();
+        addHiddenRun(p, FloatingArrowCodec.encode(arrow));
+    }
+
+    private PageContent.FloatingArrowContent tryReadFloatingArrow(XWPFParagraph paragraph) {
+        for (XWPFRun run : paragraph.getRuns()) {
+            String text = run.text();
+            if (isHidden(run) && FloatingArrowCodec.isToken(text))
+                return FloatingArrowCodec.decode(text);
         }
         return null;
     }
@@ -228,6 +285,7 @@ public final class DocxDocumentWriter {
             List<ParagraphContent> current = new ArrayList<>();
             List<PageContent.FloatingImageContent> currentImages = new ArrayList<>();
             List<PageContent.FloatingShapeContent> currentShapes = new ArrayList<>();
+            List<PageContent.FloatingArrowContent> currentArrows = new ArrayList<>();
 
             for (XWPFParagraph paragraph : doc.getParagraphs()) {
                 CTSectPr sectPr = (paragraph.getCTP().isSetPPr() && paragraph.getCTP().getPPr().isSetSectPr())
@@ -237,11 +295,17 @@ public final class DocxDocumentWriter {
                 PageContent.FloatingImageContent floatingImage = tryReadFloatingImage(paragraph);
                 PageContent.FloatingShapeContent floatingShape = floatingImage == null ? tryReadFloatingShape(paragraph)
                         : null;
+                PageContent.FloatingArrowContent floatingArrow = (floatingImage == null && floatingShape == null)
+                        ? tryReadFloatingArrow(paragraph)
+                        : null;
                 boolean boundaryOnly = sectPr != null && paragraph.getRuns().isEmpty();
+
                 if (floatingImage != null)
                     currentImages.add(floatingImage);
                 else if (floatingShape != null)
                     currentShapes.add(floatingShape);
+                else if (floatingArrow != null)
+                    currentArrows.add(floatingArrow);
                 else if (!boundaryOnly)
                     current.add(readParagraph(paragraph));
 
@@ -249,10 +313,12 @@ public final class DocxDocumentWriter {
                     PageContent pc = finish(current, sectPr);
                     pc.images.addAll(currentImages);
                     pc.shapes.addAll(currentShapes);
+                    pc.arrows.addAll(currentArrows);
                     pages.add(pc);
                     current = new ArrayList<>();
                     currentImages = new ArrayList<>();
                     currentShapes = new ArrayList<>();
+                    currentArrows = new ArrayList<>();
                 }
             }
 
@@ -262,8 +328,13 @@ public final class DocxDocumentWriter {
                 PageContent pc = finish(current, bodySectPr);
                 pc.images.addAll(currentImages);
                 pc.shapes.addAll(currentShapes);
+                pc.arrows.addAll(currentArrows);
                 pages.add(pc);
             }
+
+            boolean numbered = readPageNumbersFlag(doc);
+            for (PageContent pc : pages)
+                pc.showPageNumbers = numbered;
         }
         return pages;
     }
@@ -296,6 +367,13 @@ public final class DocxDocumentWriter {
         boolean landscape = sectPr != null && sectPr.isSetPgSz()
                 && sectPr.getPgSz().getOrient() == STPageOrientation.LANDSCAPE;
         PageContent content = new PageContent(landscape);
+        if (sectPr != null && sectPr.isSetPgMar()) {
+            CTPageMar m = sectPr.getPgMar();
+            content.marginLeftCm = twipsToCm(m.getLeft(), content.marginLeftCm);
+            content.marginRightCm = twipsToCm(m.getRight(), content.marginRightCm);
+            content.marginTopCm = twipsToCm(m.getTop(), content.marginTopCm);
+            content.marginBottomCm = twipsToCm(m.getBottom(), content.marginBottomCm);
+        }
         content.paragraphs.addAll(paragraphs);
         return content;
     }
@@ -303,6 +381,9 @@ public final class DocxDocumentWriter {
     private ParagraphContent readParagraph(XWPFParagraph paragraph) {
         boolean codeBlock = CODE_BLOCK_BG.equalsIgnoreCase(paragraphShadingHex(paragraph));
         ParagraphContent content = new ParagraphContent(codeBlock);
+        content.alignment = codeBlock
+                ? TextAlignment.LEFT
+                : ParagraphAlignments.fromPoi(paragraph.getAlignment());
 
         List<XWPFRun> runs = paragraph.getRuns();
         for (int i = 0; i < runs.size(); i++) {
@@ -362,6 +443,15 @@ public final class DocxDocumentWriter {
         return style;
     }
 
+    private boolean readPageNumbersFlag(XWPFDocument doc) {
+        for (XWPFFooter footer : doc.getFooterList())
+            for (XWPFParagraph p : footer.getParagraphs())
+                for (XWPFRun run : p.getRuns())
+                    if (isHidden(run) && PageNumberCodec.isToken(run.text()))
+                        return true;
+        return false;
+    }
+
     private String hexColorToString(Object val) {
         if (val == null)
             return null;
@@ -385,5 +475,19 @@ public final class DocxDocumentWriter {
         if (run.getCTR().isSetRPr() && run.getCTR().getRPr().sizeOfShdArray() > 0)
             return hexColorToString(run.getCTR().getRPr().getShdArray(0).getFill());
         return null;
+    }
+
+    private static long cmToTwips(double cm) {
+        return Math.round(cm * 1440.0 / 2.54);
+    }
+
+    private static double twipsToCm(Object twips, double fallback) {
+        if (twips == null)
+            return fallback;
+        try {
+            return Double.parseDouble(twips.toString()) * 2.54 / 1440.0;
+        } catch (NumberFormatException e) {
+            return fallback;
+        }
     }
 }

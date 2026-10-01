@@ -30,7 +30,6 @@ public class NewPage implements AppAction {
         editor.setWrapText(true);
         editor.setPrefSize(PAGE_WIDTH, PAGE_HEIGHT);
         editor.relocate(0, 0);
-        editor.setStyle("-fx-background-color: transparent; -fx-padding: 20; -fx-font-size: 14px;");
         
         pane.getChildren().add(editor);
         pagesContainer.getChildren().add(pane);
