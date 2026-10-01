@@ -9,7 +9,9 @@ import java.nio.file.Path;
 
 import com.example.model.CodeBlockStyler;
 import com.example.model.Page;
+import com.example.model.ParagraphStyle;
 import com.example.model.TextStyle;
+import com.example.model.actions.AlignParagraph;
 import com.example.model.actions.DeletePage;
 import com.example.model.actions.FormatText;
 import com.example.model.actions.Help;
@@ -56,6 +58,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.text.TextAlignment;
 import javafx.stage.Window;
 
 public class InputController {
@@ -201,7 +204,9 @@ public class InputController {
     }
 
     private ContextMenu createTextMenu(Page page) {
-        return new TextFormatMenu(page.getEditor(), change -> new FormatText(page, change).execute());
+        return new TextFormatMenu(page.getEditor(),
+                change -> new FormatText(page, change).execute(),
+                alignment -> new AlignParagraph(page, alignment).execute());
     }
 
     private void showMenu(ContextMenu menu, Page page, ContextMenuEvent event) {
@@ -321,9 +326,10 @@ public class InputController {
                     editor.appendStyledText(run.text, run.style);
                 }
             }
-            editor.setParagraphStyle(
-                    editor.getParagraphs().size() - 1,
-                    paragraph.codeBlock ? AppSettings.getInstance().codeThemeProperty().get() : null);
+            ParagraphStyle style = paragraph.codeBlock
+                    ? new ParagraphStyle(AppSettings.getInstance().codeThemeProperty().get(), TextAlignment.LEFT)
+                    : new ParagraphStyle(null, paragraph.alignment);
+            editor.setParagraphStyle(editor.getParagraphs().size() - 1, style);
             if (i < content.paragraphs.size() - 1) {
                 editor.appendStyledText("\n", TextStyle.DEFAULT);
             }

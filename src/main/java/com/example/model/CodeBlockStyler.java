@@ -121,7 +121,7 @@ public class CodeBlockStyler {
     private void clearLine(int paragraph) {
         int len = editor.getParagraphLength(paragraph);
         if (len == 0) {
-            editor.setParagraphStyle(paragraph, null);
+            editor.setParagraphCodeTheme(paragraph, null);
             return;
         }
         int start = editor.position(paragraph, 0).toOffset();
@@ -131,7 +131,7 @@ public class CodeBlockStyler {
                 s.fontSize() != null && s.fontSize() == 1 ? 12 : s.fontSize()).withTextColor(
                         s.textColor() == Color.TRANSPARENT || s.textColor() == Color.WHITESMOKE ? null
                                 : s.textColor()));
-        editor.setParagraphStyle(paragraph, null);
+        editor.setParagraphCodeTheme(paragraph, null);
     }
 
     private void styleFenceLine(int paragraph, boolean visible) {
@@ -146,7 +146,7 @@ public class CodeBlockStyler {
                 ? s.withCodeTheme(null).withFontSize(11).withTextColor(markerColor)
                 : s.withCodeTheme(null).withFontSize(1).withTextColor(Color.TRANSPARENT));
 
-        editor.setParagraphStyle(paragraph, theme);
+        editor.setParagraphCodeTheme(paragraph, theme);
     }
 
     private void styleBodyLine(int paragraph) {
@@ -156,6 +156,6 @@ public class CodeBlockStyler {
         int end = editor.position(paragraph, len).toOffset();
 
         editor.applyStyle(start, end, s -> s.withCodeTheme(theme).withTextColor(null));
-        editor.setParagraphStyle(paragraph, theme);
+        editor.setParagraphCodeTheme(paragraph, theme);
     }
 }

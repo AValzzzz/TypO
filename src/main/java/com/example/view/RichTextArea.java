@@ -1,6 +1,8 @@
 package com.example.view;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -17,6 +19,7 @@ import org.fxmisc.richtext.model.StyleSpans;
 import org.fxmisc.richtext.model.StyleSpansBuilder;
 import org.reactfx.util.Either;
 
+import com.example.model.ParagraphStyle;
 import com.example.model.TextStyle;
 import com.example.model.io.ColorUtil;
 import com.example.model.language.maths.MathNodeFactory;
@@ -28,28 +31,33 @@ import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.IndexRange;
 import javafx.scene.control.Label;
+import javafx.scene.text.TextAlignment;
 import javafx.scene.text.TextFlow;
 
-public class RichTextArea extends GenericStyledArea<CodeTheme, Either<String, MathObject>, TextStyle> {
+public class RichTextArea extends GenericStyledArea<ParagraphStyle, Either<String, MathObject>, TextStyle> {
     private static final TextOps<Either<String, MathObject>, TextStyle> SEGMENT_OPS = SegmentOps
             .<TextStyle>styledTextOps()._or(new MathObjectSegmentOps(), (s1, s2) -> Optional.empty());
 
     public RichTextArea() {
-        super(null,
+        super(ParagraphStyle.DEFAULT,
                 RichTextArea::applyParagraphStyle,
                 TextStyle.DEFAULT,
                 SEGMENT_OPS,
                 RichTextArea::createNode);
     }
 
-    private static void applyParagraphStyle(TextFlow flow, CodeTheme theme) {
+    private static void applyParagraphStyle(TextFlow flow, ParagraphStyle style) {
+        ParagraphStyle s = ParagraphStyle.orDefault(style);
+        CodeTheme theme = s.codeTheme();
         if (theme != null) {
             flow.setStyle("-fx-background-color: " + ColorUtil.toCssRgba(theme.getBackground()) + ";");
             flow.setPadding(new Insets(2, 8, 2, 8));
             flow.setMaxWidth(Double.MAX_VALUE);
+            flow.setTextAlignment(TextAlignment.LEFT);
         } else {
             flow.setStyle("");
             flow.setPadding(Insets.EMPTY);
+            flow.setTextAlignment(s.alignment());
         }
     }
 
@@ -143,5 +151,49 @@ public class RichTextArea extends GenericStyledArea<CodeTheme, Either<String, Ma
 
     public void appendMathObject(MathObject obj, TextStyle style) {
         insertMathObject(getLength(), obj, style);
+    }
+
+    private int[] selectedParagraphRange() {
+        IndexRange sel = getSelection();
+        int first = offsetToPosition(sel.getStart(), Bias.Forward).getMajor();
+        int last = offsetToPosition(sel.getEnd(), Bias.Backward).getMajor();
+        return new int[] { first, Math.max(first, last) };
+    }
+
+    public List<ParagraphStyle> selectedParagraphStyles() {
+        int[] r = selectedParagraphRange();
+        List<ParagraphStyle> styles = new ArrayList<>();
+        for (int i = r[0]; i <= r[1]; i++)
+            styles.add(ParagraphStyle.orDefault(getParagraph(i).getParagraphStyle()));
+        return styles;
+    }
+
+    public <T> Optional<T> commonParagraphValue(Function<ParagraphStyle, T> property) {
+        Set<T> values = new HashSet<>();
+        for (ParagraphStyle s : selectedParagraphStyles())
+            if (!s.codeBlock())
+                values.add(property.apply(s));
+        return values.size() == 1 ? Optional.ofNullable(values.iterator().next()) : Optional.empty();
+    }
+
+    public void updateSelectionParagraphStyle(UnaryOperator<ParagraphStyle> change) {
+        int[] r = selectedParagraphRange();
+        for (int i = r[0]; i <= r[1]; i++) {
+            ParagraphStyle current = ParagraphStyle.orDefault(getParagraph(i).getParagraphStyle());
+            if (current.codeBlock())
+                continue;
+            ParagraphStyle next = change.apply(current);
+            if (!next.equals(current))
+                setParagraphStyle(i, next);
+        }
+    }
+
+    public void setParagraphCodeTheme(int paragraph, CodeTheme theme) {
+        ParagraphStyle current = ParagraphStyle.orDefault(getParagraph(paragraph).getParagraphStyle());
+        ParagraphStyle next = theme != null
+                ? new ParagraphStyle(theme, TextAlignment.LEFT)
+                : current.withCodeTheme(null);
+        if (!next.equals(current))
+            setParagraphStyle(paragraph, next);
     }
 }

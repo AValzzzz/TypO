@@ -32,6 +32,8 @@ import com.example.model.io.PageContent.ParagraphContent;
 import com.example.model.io.PageContent.RunContent;
 import com.example.model.language.maths.MathObject;
 
+import javafx.scene.text.TextAlignment;
+
 public final class DocxDocumentWriter {
 
     private static final long PAGE_LONG = 15840;
@@ -54,9 +56,11 @@ public final class DocxDocumentWriter {
     private void writePage(XWPFDocument doc, PageContent page, boolean lastPage) {
         for (ParagraphContent paragraph : page.paragraphs) {
             XWPFParagraph p = doc.createParagraph();
+            p.setAlignment(ParagraphAlignments.toPoi(paragraph.alignment));
             if (paragraph.codeBlock) {
                 setParagraphShading(p, CODE_BLOCK_BG);
             }
+
             if (paragraph.runs.isEmpty()) {
                 p.createRun();
             } else {
@@ -290,6 +294,7 @@ public final class DocxDocumentWriter {
                 PageContent pc = finish(current, bodySectPr);
                 pc.images.addAll(currentImages);
                 pc.shapes.addAll(currentShapes);
+                pc.arrows.addAll(currentArrows);
                 pages.add(pc);
             }
         }
@@ -331,6 +336,9 @@ public final class DocxDocumentWriter {
     private ParagraphContent readParagraph(XWPFParagraph paragraph) {
         boolean codeBlock = CODE_BLOCK_BG.equalsIgnoreCase(paragraphShadingHex(paragraph));
         ParagraphContent content = new ParagraphContent(codeBlock);
+        content.alignment = codeBlock
+                ? TextAlignment.LEFT
+                : ParagraphAlignments.fromPoi(paragraph.getAlignment());
 
         List<XWPFRun> runs = paragraph.getRuns();
         for (int i = 0; i < runs.size(); i++) {
