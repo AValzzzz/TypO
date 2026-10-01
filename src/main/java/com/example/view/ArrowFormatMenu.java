@@ -14,14 +14,21 @@ import javafx.scene.paint.Color;
 
 public class ArrowFormatMenu extends ContextMenu {
     public ArrowFormatMenu(ArrowOverlay arrow) {
+        Slider opacity = new Slider(0, 100, arrow.getStrokeOpacity() * 100);
+
         getItems().addAll(
-                colorRow("Couleur", arrow.getStrokeColor(), arrow::setStrokeColor),
-                sliderRow("Opacité", 0, 100, arrow.getStrokeOpacity() * 100, v -> arrow.setStrokeOpacity(v / 100)),
-                sliderRow("Épaisseur", 1, 20, arrow.getStrokeWidth(), arrow::setStrokeWidth));
+                colorRow("Couleur", arrow.getStrokeColor(), arrow.getStrokeOpacity(), c -> {
+                    arrow.setStrokeColor(Color.color(c.getRed(), c.getGreen(), c.getBlue()));
+                    if (c.getOpacity() < 1)
+                        opacity.setValue(c.getOpacity() * 100);
+                }),
+                sliderRow("Opacité", opacity, v -> arrow.setStrokeOpacity(v / 100)),
+                sliderRow("Épaisseur", new Slider(1, 20, arrow.getStrokeWidth()), arrow::setStrokeWidth));
     }
 
-    private MenuItem colorRow(String label, Color current, Consumer<Color> onChange) {
-        ColorPicker picker = new ColorPicker(current);
+    private MenuItem colorRow(String label, Color current, double opacity, Consumer<Color> onChange) {
+        ColorPicker picker = new ColorPicker(
+                Color.color(current.getRed(), current.getGreen(), current.getBlue(), opacity));
         picker.setOnAction(e -> onChange.accept(picker.getValue()));
         picker.showingProperty().addListener((obs, was, is) -> setAutoHide(!is));
 
@@ -30,10 +37,9 @@ public class ArrowFormatMenu extends ContextMenu {
         return new CustomMenuItem(row, false);
     }
 
-    private MenuItem sliderRow(String label, double min, double max, double value, Consumer<Double> onChange) {
-        Slider slider = new Slider(min, max, value);
+    private MenuItem sliderRow(String label, Slider slider, Consumer<Double> onChange) {
         slider.setPrefWidth(120);
-        Label valueLabel = new Label(String.valueOf(Math.round(value)));
+        Label valueLabel = new Label(String.valueOf(Math.round(slider.getValue())));
         valueLabel.setMinWidth(28);
         slider.valueProperty().addListener((obs, o, n) -> {
             valueLabel.setText(String.valueOf(Math.round(n.doubleValue())));

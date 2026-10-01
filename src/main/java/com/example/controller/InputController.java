@@ -2,7 +2,9 @@ package com.example.controller;
 
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -39,9 +41,11 @@ import com.example.view.RichTextArea;
 import com.example.view.ShapeOverlay;
 import com.example.view.TextFormatMenu;
 
+import javafx.application.Platform;
 import javafx.beans.property.DoubleProperty;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.geometry.Bounds;
 import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
@@ -90,6 +94,8 @@ public class InputController {
     private ContextMenu activeMenu;
     private final CommandRegistry commandRegistry = new CommandRegistry();
     private final DocumentSession session = new DocumentSession();
+    private final Set<Page> pendingReflow = new HashSet<>();
+    private boolean loading = false;
 
     private static final double MIN_SCALE = 0.8;
     private static final double MAX_SCALE = 3.0;
@@ -174,7 +180,10 @@ public class InputController {
         pageMenu.setAutoHide(true);
 
         MenuItem toggleOrientationItem = new MenuItem("Toggle Orientation (Portrait/Landscape)");
-        toggleOrientationItem.setOnAction(e -> new ToggleOrientation(page).execute());
+        toggleOrientationItem.setOnAction(e -> {
+            new ToggleOrientation(page).execute();
+            scheduleReflow(page);
+        });
 
         MenuItem deletePageItem = new MenuItem("Delete Page");
         deletePageItem.setOnAction(e -> {
@@ -283,6 +292,15 @@ public class InputController {
     }
 
     private void loadDocument(List<PageContent> loadedPages, Path source) {
+        loading = true;
+        try {
+            doLoadDocument(loadedPages, source);
+        } finally {
+            loading = false;
+        }
+    }
+
+    private void doLoadDocument(List<PageContent> loadedPages, Path source) {
         session.setCurrentFile(source);
         pagesContainer.getChildren().clear();
         pages.clear();
@@ -354,6 +372,60 @@ public class InputController {
         }
     }
 
+    private void scheduleReflow(Page page) {
+        if (loading || !pendingReflow.add(page))
+            return;
+        Platform.runLater(() -> {
+            pendingReflow.remove(page);
+            if (pages.contains(page))
+                reflow(page);
+        });
+    }
+
+    private void reflow(Page page) {
+        RichTextArea editor = page.getEditor();
+        int cut = editor.findOverflowOffset();
+        if (cut <= 0)
+            return;
+
+        int index = pages.indexOf(page);
+        Page next = index + 1 < pages.size() ? pages.get(index + 1) : createPageAfter(page);
+        RichTextArea target = next.getEditor();
+
+        int caret = editor.getCaretPosition();
+        boolean followCaret = editor.isFocused() && caret >= cut;
+
+        var tail = editor.removeTail(cut);
+        target.prependDocument(tail);
+
+        if (followCaret) {
+            target.requestFocus();
+            target.moveTo(Math.min(caret - cut, target.getLength()));
+            Platform.runLater(() -> scrollCaretIntoView(target));
+        }
+    }
+
+    private Page createPageAfter(Page previous) {
+        Page created = createPage();
+        if (previous.getPane().getPrefWidth() > previous.getPane().getPrefHeight())
+            new ToggleOrientation(created).execute();
+        return created;
+    }
+
+    private void scrollCaretIntoView(RichTextArea editor) {
+        editor.getCaretBounds().ifPresent(caret -> {
+            Bounds view = stackPane.localToScreen(stackPane.getBoundsInLocal());
+            double margin = 60;
+            if (caret.getMaxY() > view.getMaxY() - margin)
+                pagesContainer.setTranslateY(
+                        pagesContainer.getTranslateY() - (caret.getMaxY() - (view.getMaxY() - margin)));
+            else if (caret.getMinY() < view.getMinY() + margin)
+                pagesContainer.setTranslateY(
+                        pagesContainer.getTranslateY() + ((view.getMinY() + margin) - caret.getMinY()));
+            clampTranslate();
+        });
+    }
+
     private Page createPage() {
         NewPage action = new NewPage(pagesContainer);
         action.execute();
@@ -372,8 +444,10 @@ public class InputController {
     }
 
     private void applyMarginsToAllPages() {
-        for (Page p : pages)
+        for (Page p : pages) {
             p.applyMargins();
+            scheduleReflow(p);
+        }
     }
 
     private void applySelectionColor(RichTextArea editor) {
@@ -394,6 +468,7 @@ public class InputController {
                 type -> new InsertShape(page, type).execute(),
                 () -> new InsertArrow(page).execute());
         new CodeBlockStyler(page.getEditor());
+        page.getEditor().richChanges().subscribe(c -> scheduleReflow(page));
     }
 
     @FXML

@@ -17,6 +17,7 @@ import org.fxmisc.richtext.model.SegmentOps;
 import org.fxmisc.richtext.model.StyleSpan;
 import org.fxmisc.richtext.model.StyleSpans;
 import org.fxmisc.richtext.model.StyleSpansBuilder;
+import org.fxmisc.richtext.model.StyledDocument;
 import org.reactfx.util.Either;
 
 import com.example.model.ParagraphStyle;
@@ -27,7 +28,9 @@ import com.example.model.language.maths.MathObject;
 import com.example.model.language.maths.MathObjectSegmentOps;
 import com.example.model.settings.CodeTheme;
 
+import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
+import javafx.geometry.Point2D;
 import javafx.scene.Node;
 import javafx.scene.control.IndexRange;
 import javafx.scene.control.Label;
@@ -195,5 +198,80 @@ public class RichTextArea extends GenericStyledArea<ParagraphStyle, Either<Strin
                 : current.withCodeTheme(null);
         if (!next.equals(current))
             setParagraphStyle(paragraph, next);
+    }
+
+    public int findOverflowOffset() {
+        if (getScene() == null || getParagraphs().isEmpty())
+            return -1;
+
+        Insets in = getInsets();
+        double viewport = getHeight() - in.getTop() - in.getBottom();
+        Double estimate = totalHeightEstimateProperty().getValue();
+        if (estimate != null && estimate < viewport - 30)
+            return -1;
+
+        scrollYToPixel(0);
+        applyCss();
+        layout();
+
+        Point2D bottom = localToScreen(0, getHeight() - in.getBottom());
+        if (bottom == null)
+            return -1;
+        double limit = bottom.getY() + 0.5;
+
+        int count = getParagraphs().size();
+        int k = -1;
+        Bounds kBounds = null;
+        for (int i = 0; i < count; i++) {
+            Optional<Bounds> b = getParagraphBoundsOnScreen(i);
+            if (b.isEmpty() || b.get().getMaxY() > limit) {
+                k = i;
+                kBounds = b.orElse(null);
+                break;
+            }
+        }
+        if (k < 0 || (k == 0 && kBounds == null))
+            return -1;
+
+        int start = position(k, 0).toOffset();
+        int len = getParagraphLength(k);
+
+        if (kBounds != null && kBounds.getMinY() < limit && len > 1) {
+            int lo = 0, hi = len;
+            while (lo < hi) {
+                int mid = (lo + hi) >>> 1;
+                Optional<Bounds> cb = getCharacterBoundsOnScreen(start + mid, start + mid + 1);
+                if (cb.isPresent() && cb.get().getMaxY() <= limit)
+                    lo = mid + 1;
+                else
+                    hi = mid;
+            }
+            if (lo > 0 && lo < len)
+                return start + lo;
+        }
+        return start > 0 ? start : -1;
+    }
+
+    public StyledDocument<ParagraphStyle, Either<String, MathObject>, TextStyle> removeTail(int cut) {
+        int end = getLength();
+        StyledDocument<ParagraphStyle, Either<String, MathObject>, TextStyle> tail = subDocument(cut, end);
+        boolean atParagraphStart = offsetToPosition(cut, Bias.Forward).getMinor() == 0;
+        deleteText(atParagraphStart && cut > 0 ? cut - 1 : cut, end);
+        return tail;
+    }
+
+    public void prependDocument(StyledDocument<ParagraphStyle, Either<String, MathObject>, TextStyle> doc) {
+        boolean wasEmpty = getLength() == 0;
+        ParagraphStyle firstOld = ParagraphStyle.orDefault(getParagraph(0).getParagraphStyle());
+        int movedLength = doc.length();
+        int movedParagraphs = doc.getParagraphs().size();
+
+        replace(0, 0, doc);
+        if (!wasEmpty) {
+            insertText(movedLength, "\n");
+            setParagraphStyle(movedParagraphs, firstOld);
+        }
+        for (int i = 0; i < movedParagraphs; i++)
+            setParagraphStyle(i, ParagraphStyle.orDefault(doc.getParagraphs().get(i).getParagraphStyle()));
     }
 }
