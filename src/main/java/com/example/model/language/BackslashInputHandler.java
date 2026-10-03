@@ -14,6 +14,7 @@ public class BackslashInputHandler {
     private final CommandRegistry registry;
     private final Consumer<ShapeType> shapeSpawner;
     private final Runnable arrowSpawner;
+    private final Runnable tableSpawner;
 
     private boolean buffering = false;
     private int commandStart = -1;
@@ -33,10 +34,16 @@ public class BackslashInputHandler {
 
     public BackslashInputHandler(RichTextArea editor, CommandRegistry registry, Consumer<ShapeType> shapeSpawner,
             Runnable arrowSpawner) {
+        this(editor, registry, shapeSpawner, arrowSpawner, null);
+    }
+
+    public BackslashInputHandler(RichTextArea editor, CommandRegistry registry, Consumer<ShapeType> shapeSpawner,
+            Runnable arrowSpawner, Runnable tableSpawner) {
         this.editor = editor;
         this.registry = registry;
         this.shapeSpawner = shapeSpawner;
         this.arrowSpawner = arrowSpawner;
+        this.tableSpawner = tableSpawner;
         editor.addEventFilter(KeyEvent.KEY_TYPED, this::onKeyTyped);
         editor.addEventFilter(KeyEvent.KEY_PRESSED, this::onKeyPressed);
     }
@@ -94,6 +101,12 @@ public class BackslashInputHandler {
                     if (arrowSpawner != null)
                         arrowSpawner.run();
                     justConverted = false;
+                } else if (result.isTable()) {
+                    event.consume();
+                    editor.replaceText(commandStart, caret, "");
+                    if (tableSpawner != null)
+                        tableSpawner.run();
+                    justConverted = false;
                 } else if (result.isMathObject()) {
                     editor.replaceText(commandStart, caret, "");
                     editor.insertMathObject(commandStart, result.getMathObject());
@@ -121,6 +134,7 @@ public class BackslashInputHandler {
             resetBuffering();
             return;
         }
+
     }
 
     private void onKeyPressed(KeyEvent event) {

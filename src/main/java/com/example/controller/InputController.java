@@ -21,6 +21,7 @@ import com.example.model.actions.Help;
 import com.example.model.actions.ImportImage;
 import com.example.model.actions.InsertArrow;
 import com.example.model.actions.InsertShape;
+import com.example.model.actions.InsertTable;
 import com.example.model.actions.NewPage;
 import com.example.model.actions.OpenFile;
 import com.example.model.actions.Save;
@@ -35,11 +36,13 @@ import com.example.model.language.CommandRegistry;
 import com.example.model.language.maths.MathCommands;
 import com.example.model.language.shapes.ArrowCommand;
 import com.example.model.language.shapes.ShapeCommand;
+import com.example.model.language.tables.TableCommand;
 import com.example.model.settings.AppSettings;
 import com.example.view.ArrowOverlay;
 import com.example.view.ImageOverlay;
 import com.example.view.RichTextArea;
 import com.example.view.ShapeOverlay;
+import com.example.view.TableOverlay;
 import com.example.view.TextFormatMenu;
 
 import javafx.application.Platform;
@@ -109,6 +112,7 @@ public class InputController {
         MathCommands.registerAll(commandRegistry);
         commandRegistry.register(new ShapeCommand());
         commandRegistry.register(new ArrowCommand());
+        commandRegistry.register(new TableCommand());
         Page firstPage = new Page(whitePane, textEditor);
         setupPage(firstPage);
         AppSettings.getInstance().backgroundColorProperty().addListener((obs, o, n) -> applyBackgroundColor(n));
@@ -214,7 +218,7 @@ public class InputController {
     private static boolean isInsideShape(Object target) {
         Node n = target instanceof Node node ? node : null;
         while (n != null) {
-            if (n instanceof ShapeOverlay || n instanceof ArrowOverlay)
+            if (n instanceof ShapeOverlay || n instanceof ArrowOverlay || n instanceof TableOverlay)
                 return true;
             n = n.getParent();
         }
@@ -343,6 +347,15 @@ public class InputController {
                 o.setStrokeOpacity(a.strokeOpacity);
                 o.setStrokeWidth(a.strokeWidth);
             }
+
+            for (PageContent.FloatingTableContent t : content.tables) {
+                if (t.colWidths.length == 0 || t.rowHeights.length == 0)
+                    continue;
+                TableOverlay o = page.addTableOverlay(t.x, t.y, t.rowHeights.length, t.colWidths.length,
+                        this::setupCell);
+                o.load(t.colWidths, t.rowHeights, t.offX, t.offY, t.merges, t.cells);
+            }
+
             if (content.landscape != (page.getPane().getWidth() > page.getPane().getHeight())) {
                 new ToggleOrientation(page).execute();
             }
@@ -467,10 +480,17 @@ public class InputController {
         attachContextMenu(page);
         new BackslashInputHandler(page.getEditor(), commandRegistry,
                 type -> new InsertShape(page, type).execute(),
-                () -> new InsertArrow(page).execute());
+                () -> new InsertArrow(page).execute(),
+                () -> new InsertTable(page, this::setupCell).execute());
         new CodeBlockStyler(page.getEditor());
         new LinkHandler(page.getEditor());
         page.getEditor().richChanges().subscribe(c -> scheduleReflow(page));
+    }
+
+    private void setupCell(RichTextArea cell) {
+        applySelectionColor(cell);
+        new BackslashInputHandler(cell, commandRegistry);
+        new LinkHandler(cell);
     }
 
     @FXML

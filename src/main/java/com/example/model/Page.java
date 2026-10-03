@@ -2,6 +2,7 @@ package com.example.model;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 import com.example.model.language.shapes.ShapeType;
 import com.example.model.settings.AppSettings;
@@ -9,6 +10,7 @@ import com.example.view.ArrowOverlay;
 import com.example.view.ImageOverlay;
 import com.example.view.RichTextArea;
 import com.example.view.ShapeOverlay;
+import com.example.view.TableOverlay;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -24,6 +26,7 @@ public class Page {
     private final List<ImageOverlay> imageOverlays = new ArrayList<>();
     private final List<ShapeOverlay> shapeOverlays = new ArrayList<>();
     private final List<ArrowOverlay> arrowOverlays = new ArrayList<>();
+    private final List<TableOverlay> tableOverlays = new ArrayList<>();
 
     public Page(Pane pane, RichTextArea textEditor) {
         this.pane = pane;
@@ -85,6 +88,18 @@ public class Page {
         return overlay;
     }
 
+    public TableOverlay addTableOverlay(double x, double y, int rows, int cols, Consumer<RichTextArea> cellSetup) {
+        TableOverlay overlay = new TableOverlay(rows, cols, x, y, cellSetup);
+        overlay.setOnDelete(() -> {
+            pane.getChildren().remove(overlay);
+            tableOverlays.remove(overlay);
+            editor.requestFocus();
+        });
+        pane.getChildren().add(overlay);
+        tableOverlays.add(overlay);
+        return overlay;
+    }
+
     public void applyMargins() {
         AppSettings s = AppSettings.getInstance();
         editor.setPadding(new Insets(
@@ -104,6 +119,10 @@ public class Page {
 
     public List<ArrowOverlay> getArrowOverlays() {
         return arrowOverlays;
+    }
+
+    public List<TableOverlay> getTableOverlays() {
+        return tableOverlays;
     }
 
     public void setPageNumber(int number) {

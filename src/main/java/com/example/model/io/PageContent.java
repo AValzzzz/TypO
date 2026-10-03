@@ -17,6 +17,7 @@ import com.example.view.ArrowOverlay;
 import com.example.view.ImageOverlay;
 import com.example.view.RichTextArea;
 import com.example.view.ShapeOverlay;
+import com.example.view.TableOverlay;
 
 import javafx.scene.text.TextAlignment;
 
@@ -32,6 +33,7 @@ public class PageContent {
     public final List<FloatingImageContent> images = new ArrayList<>();
     public final List<FloatingShapeContent> shapes = new ArrayList<>();
     public final List<FloatingArrowContent> arrows = new ArrayList<>();
+    public final List<FloatingTableContent> tables = new ArrayList<>();
 
     public PageContent(boolean landscape) {
         this.landscape = landscape;
@@ -82,6 +84,13 @@ public class PageContent {
                     a.getControlX(), a.getControlY(),
                     ColorUtil.toHex(a.getStrokeColor()), a.getStrokeOpacity(), a.getStrokeWidth()));
         }
+
+        for (TableOverlay t : page.getTableOverlays()) {
+            content.tables.add(new FloatingTableContent(t.getTableX(), t.getTableY(),
+                    t.getColumnWidths(), t.getRowHeights(),
+                    t.getOffsetsX(), t.getOffsetsY(), t.getMerges(), t.encodeCells()));
+        }
+
         return content;
     }
 
@@ -181,6 +190,31 @@ public class PageContent {
             this.strokeHex = strokeHex;
             this.strokeOpacity = strokeOpacity;
             this.strokeWidth = strokeWidth;
+        }
+    }
+
+    public static final class FloatingTableContent {
+        public final double x, y;
+        public final double[] colWidths, rowHeights;
+        public final double[][] offX, offY;
+        public final int[][] merges;
+        public final String[][] cells;
+
+        public FloatingTableContent(double x, double y, double[] colWidths, double[] rowHeights,
+                double[][] offX, double[][] offY, int[][] merges, String[][] cells) {
+            this.x = x;
+            this.y = y;
+            this.colWidths = colWidths;
+            this.rowHeights = rowHeights;
+            this.offX = offX;
+            this.offY = offY;
+            this.merges = merges;
+            this.cells = cells;
+        }
+
+        public static FloatingTableContent empty() {
+            return new FloatingTableContent(0, 0, new double[0], new double[0],
+                    new double[0][0], new double[0][0], new int[0][0], new String[0][0]);
         }
     }
 }

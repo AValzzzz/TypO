@@ -93,6 +93,10 @@ public final class DocxDocumentWriter {
             writeFloatingArrowParagraph(doc, arrow);
         }
 
+        for (PageContent.FloatingTableContent table : page.tables) {
+            writeFloatingTableParagraph(doc, table);
+        }
+
         CTSectPr sectPr;
         if (lastPage) {
             CTBody body = doc.getDocument().getBody();
@@ -183,6 +187,26 @@ public final class DocxDocumentWriter {
         field.addNewR().addNewT().setStringValue("1");
 
         addHiddenRun(p, PageNumberCodec.encode());
+    }
+
+    private void writeFloatingTableParagraph(XWPFDocument doc, PageContent.FloatingTableContent table) {
+        XWPFParagraph p = doc.createParagraph();
+        p.createRun();
+        addHiddenRun(p, FloatingTableCodec.encode(table));
+    }
+
+    private PageContent.FloatingTableContent tryReadFloatingTable(XWPFParagraph paragraph) {
+        for (XWPFRun run : paragraph.getRuns()) {
+            String text = run.text();
+            if (isHidden(run) && FloatingTableCodec.isToken(text)) {
+                try {
+                    return FloatingTableCodec.decode(text);
+                } catch (RuntimeException e) {
+                    return null;
+                }
+            }
+        }
+        return null;
     }
 
     private PageContent.FloatingShapeContent tryReadFloatingShape(XWPFParagraph paragraph) {
@@ -294,6 +318,7 @@ public final class DocxDocumentWriter {
             List<PageContent.FloatingImageContent> currentImages = new ArrayList<>();
             List<PageContent.FloatingShapeContent> currentShapes = new ArrayList<>();
             List<PageContent.FloatingArrowContent> currentArrows = new ArrayList<>();
+            List<PageContent.FloatingTableContent> currentTables = new ArrayList<>();
 
             for (XWPFParagraph paragraph : doc.getParagraphs()) {
                 CTSectPr sectPr = (paragraph.getCTP().isSetPPr() && paragraph.getCTP().getPPr().isSetSectPr())
@@ -301,11 +326,14 @@ public final class DocxDocumentWriter {
                         : null;
 
                 PageContent.FloatingImageContent floatingImage = tryReadFloatingImage(paragraph);
-                PageContent.FloatingShapeContent floatingShape = floatingImage == null ? tryReadFloatingShape(paragraph)
+                PageContent.FloatingShapeContent floatingShape = floatingImage == null
+                        ? tryReadFloatingShape(paragraph)
                         : null;
                 PageContent.FloatingArrowContent floatingArrow = (floatingImage == null && floatingShape == null)
                         ? tryReadFloatingArrow(paragraph)
                         : null;
+                PageContent.FloatingTableContent floatingTable = (floatingImage == null && floatingShape == null
+                        && floatingArrow == null) ? tryReadFloatingTable(paragraph) : null;
                 boolean boundaryOnly = sectPr != null && paragraph.getRuns().isEmpty();
 
                 if (floatingImage != null)
@@ -314,6 +342,8 @@ public final class DocxDocumentWriter {
                     currentShapes.add(floatingShape);
                 else if (floatingArrow != null)
                     currentArrows.add(floatingArrow);
+                else if (floatingTable != null)
+                    currentTables.add(floatingTable);
                 else if (!boundaryOnly)
                     current.add(readParagraph(paragraph));
 
@@ -322,28 +352,31 @@ public final class DocxDocumentWriter {
                     pc.images.addAll(currentImages);
                     pc.shapes.addAll(currentShapes);
                     pc.arrows.addAll(currentArrows);
+                    pc.tables.addAll(currentTables);
                     pages.add(pc);
                     current = new ArrayList<>();
                     currentImages = new ArrayList<>();
                     currentShapes = new ArrayList<>();
                     currentArrows = new ArrayList<>();
+                    currentTables = new ArrayList<>();
                 }
             }
 
             CTBody body = doc.getDocument().getBody();
             CTSectPr bodySectPr = body.isSetSectPr() ? body.getSectPr() : null;
-            if (!current.isEmpty() || !currentImages.isEmpty() || pages.isEmpty()) {
+            if (!current.isEmpty() || !currentImages.isEmpty() || !currentShapes.isEmpty()
+                    || !currentArrows.isEmpty() || !currentTables.isEmpty() || pages.isEmpty()) {
                 PageContent pc = finish(current, bodySectPr);
                 pc.images.addAll(currentImages);
                 pc.shapes.addAll(currentShapes);
                 pc.arrows.addAll(currentArrows);
+                pc.tables.addAll(currentTables);
                 pages.add(pc);
             }
-
-            boolean numbered = readPageNumbersFlag(doc);
-            for (PageContent pc : pages)
-                pc.showPageNumbers = numbered;
+            if (!pages.isEmpty() && readPageNumbersFlag(doc))
+                pages.get(0).showPageNumbers = true;
         }
+
         return pages;
     }
 
