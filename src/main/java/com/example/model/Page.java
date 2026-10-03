@@ -1,13 +1,17 @@
 package com.example.model;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
 import com.example.model.language.shapes.ShapeType;
 import com.example.model.settings.AppSettings;
 import com.example.view.ArrowOverlay;
 import com.example.view.ImageOverlay;
+import com.example.view.Layerable;
 import com.example.view.RichTextArea;
 import com.example.view.ShapeOverlay;
 import com.example.view.TableOverlay;
@@ -27,6 +31,7 @@ public class Page {
     private final List<ShapeOverlay> shapeOverlays = new ArrayList<>();
     private final List<ArrowOverlay> arrowOverlays = new ArrayList<>();
     private final List<TableOverlay> tableOverlays = new ArrayList<>();
+    private final List<Layerable> layers = new ArrayList<>();
 
     public Page(Pane pane, RichTextArea textEditor) {
         this.pane = pane;
@@ -60,7 +65,7 @@ public class Page {
     public ImageOverlay addImageOverlay(Image image, double x, double y, double width, double height,
             String format, String base64) {
         ImageOverlay overlay = new ImageOverlay(image, x, y, width, height, format, base64);
-        pane.getChildren().add(overlay);
+        addLayer(overlay);
         imageOverlays.add(overlay);
         return overlay;
     }
@@ -68,10 +73,10 @@ public class Page {
     public ShapeOverlay addShapeOverlay(ShapeType type, double x, double y, double width, double height) {
         ShapeOverlay overlay = new ShapeOverlay(type, x, y, width, height);
         overlay.setOnDelete(() -> {
-            pane.getChildren().remove(overlay);
+            removeLayer(overlay);
             shapeOverlays.remove(overlay);
         });
-        pane.getChildren().add(overlay);
+        addLayer(overlay);
         shapeOverlays.add(overlay);
         return overlay;
     }
@@ -80,10 +85,10 @@ public class Page {
             double controlX, double controlY) {
         ArrowOverlay overlay = new ArrowOverlay(startX, startY, endX, endY, controlX, controlY);
         overlay.setOnDelete(() -> {
-            pane.getChildren().remove(overlay);
+            removeLayer(overlay);
             arrowOverlays.remove(overlay);
         });
-        pane.getChildren().add(overlay);
+        addLayer(overlay);
         arrowOverlays.add(overlay);
         return overlay;
     }
@@ -91,11 +96,11 @@ public class Page {
     public TableOverlay addTableOverlay(double x, double y, int rows, int cols, Consumer<RichTextArea> cellSetup) {
         TableOverlay overlay = new TableOverlay(rows, cols, x, y, cellSetup);
         overlay.setOnDelete(() -> {
-            pane.getChildren().remove(overlay);
+            removeLayer(overlay);
             tableOverlays.remove(overlay);
             editor.requestFocus();
         });
-        pane.getChildren().add(overlay);
+        addLayer(overlay);
         tableOverlays.add(overlay);
         return overlay;
     }
@@ -107,6 +112,61 @@ public class Page {
                 AppSettings.cmToPx(s.getMarginRight()),
                 AppSettings.cmToPx(s.getMarginBottom()),
                 AppSettings.cmToPx(s.getMarginLeft())));
+    }
+
+    private void addLayer(Layerable overlay) {
+        pane.getChildren().add(overlay.node());
+        layers.add(overlay);
+        overlay.setLayerControl(new Layerable.Control() {
+            @Override
+            public boolean canMoveUp() {
+                return layers.indexOf(overlay) < layers.size() - 1;
+            }
+
+            @Override
+            public boolean canMoveDown() {
+                return layers.indexOf(overlay) > 0;
+            }
+
+            @Override
+            public void moveUp() {
+                moveLayer(overlay, 1);
+            }
+
+            @Override
+            public void moveDown() {
+                moveLayer(overlay, -1);
+            }
+        });
+        applyLayers();
+    }
+
+    private void removeLayer(Layerable overlay) {
+        pane.getChildren().remove(overlay.node());
+        layers.remove(overlay);
+        applyLayers();
+    }
+
+    private void moveLayer(Layerable overlay, int delta) {
+        int i = layers.indexOf(overlay);
+        int j = i + delta;
+        if (i < 0 || j < 0 || j >= layers.size())
+            return;
+        Collections.swap(layers, i, j);
+        applyLayers();
+    }
+
+    private void applyLayers() {
+        for (int i = 0; i < layers.size(); i++) {
+            Layerable l = layers.get(i);
+            l.setLevel(i);
+            l.node().toFront();
+        }
+    }
+
+    public void orderLayers(Map<Layerable, Integer> savedLevels) {
+        layers.sort(Comparator.comparingInt((Layerable l) -> savedLevels.getOrDefault(l, 0)));
+        applyLayers();
     }
 
     public List<ImageOverlay> getImageOverlays() {

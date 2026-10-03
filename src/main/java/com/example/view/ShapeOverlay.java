@@ -18,7 +18,7 @@ import javafx.scene.shape.Polygon;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.Shape;
 
-public class ShapeOverlay extends Group {
+public class ShapeOverlay extends Group implements Layerable {
     private static final double MIN_SIZE = 10;
     private static final double ROTATE_HANDLE_OFFSET = 30;
     private static final double ROTATE_SNAP_DEGREE = 15;

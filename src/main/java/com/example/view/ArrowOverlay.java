@@ -11,7 +11,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Polygon;
 import javafx.scene.shape.QuadCurve;
 
-public class ArrowOverlay extends Group {
+public class ArrowOverlay extends Group implements Layerable {
     private static final double HANDLE_SIZE = 12;
     private static final double HEAD_LENGTH = 14;
     private static final double HEAD_WIDTH = 10;

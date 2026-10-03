@@ -8,6 +8,7 @@ import javafx.scene.control.ContextMenu;
 import javafx.scene.control.CustomMenuItem;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.Slider;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
@@ -24,6 +25,8 @@ public class ArrowFormatMenu extends ContextMenu {
                 }),
                 sliderRow("Opacité", opacity, v -> arrow.setStrokeOpacity(v / 100)),
                 sliderRow("Épaisseur", new Slider(1, 20, arrow.getStrokeWidth()), arrow::setStrokeWidth));
+        getItems().add(new SeparatorMenuItem());
+        getItems().addAll(LayerMenu.items(arrow));
     }
 
     private MenuItem colorRow(String label, Color current, double opacity, Consumer<Color> onChange) {

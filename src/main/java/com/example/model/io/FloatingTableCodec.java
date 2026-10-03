@@ -15,6 +15,7 @@ public final class FloatingTableCodec {
         sb.append(join(t.colWidths)).append('|').append(join(t.rowHeights)).append('|');
         sb.append(joinMatrix(t.offX)).append('|').append(joinMatrix(t.offY)).append('|');
         sb.append(joinMerges(t.merges)).append('|');
+        sb.append(t.x).append(',').append(t.y).append(',').append(t.level).append('|');
         boolean first = true;
         for (String[] row : t.cells) {
             for (String cell : row) {
@@ -36,7 +37,7 @@ public final class FloatingTableCodec {
             String body = token.substring(START.length(), token.length() - END.length());
             String[] parts = body.split("\\|", -1);
             if (parts.length != 7)
-                return FloatingTableContent.empty(); 
+                return FloatingTableContent.empty();
             String[] pos = parts[0].split(",");
             double[] cols = parseDoubles(parts[1]);
             double[] rows = parseDoubles(parts[2]);
@@ -51,8 +52,12 @@ public final class FloatingTableCodec {
                     int k = r * cols.length + c;
                     cells[r][c] = k < flat.length ? flat[k] : "";
                 }
-            return new FloatingTableContent(Double.parseDouble(pos[0]), Double.parseDouble(pos[1]),
+            FloatingTableContent table = new FloatingTableContent(Double.parseDouble(pos[0]),
+                    Double.parseDouble(pos[1]),
                     cols, rows, offX, offY, merges, cells);
+            if (pos.length > 2)
+                table.level = Integer.parseInt(pos[2]);
+            return table;
         } catch (RuntimeException e) {
             return FloatingTableContent.empty();
         }

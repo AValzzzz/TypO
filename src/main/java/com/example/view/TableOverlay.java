@@ -16,6 +16,7 @@ import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.input.ContextMenuEvent;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
@@ -29,7 +30,7 @@ import javafx.scene.shape.MoveTo;
 import javafx.scene.shape.Path;
 import javafx.scene.shape.PathElement;
 
-public class TableOverlay extends Pane {
+public class TableOverlay extends Pane implements Layerable {
     public static final int MAX_ROWS = 20;
     public static final int MAX_COLS = 20;
 
@@ -448,6 +449,10 @@ public class TableOverlay extends Pane {
                 extra.add(split);
             }
         }
+        if (!extra.isEmpty())
+            extra.add(new SeparatorMenuItem());
+        extra.addAll(LayerMenu.items(this));
+
         return new TableFormatMenu(this, extra);
     }
 
@@ -899,7 +904,7 @@ public class TableOverlay extends Pane {
                 continue;
             int[] m = mergeContaining(i, dr.b);
             if (m != null && m[3] != dr.b)
-                continue; 
+                continue;
             targets.add(rectOf(i, dr.b)[2]);
         }
         double[] out = new double[targets.size() * dr.idx.length];

@@ -5,6 +5,7 @@ import javafx.geometry.Point2D;
 import javafx.scene.Cursor;
 import javafx.scene.Group;
 import javafx.scene.Node;
+import javafx.scene.control.ContextMenu;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
@@ -12,7 +13,7 @@ import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
 
-public class ImageOverlay extends Group {
+public class ImageOverlay extends Group implements Layerable {
     private static final double MIN_SIZE = 20;
     private static final double ROTATE_HANDLE_OFFSET = 30;
     private static final double ROTATE_SNAP_DEGREES = 15;
@@ -23,6 +24,8 @@ public class ImageOverlay extends Group {
     private final Line rotateLine;
     private final String format;
     private final String base64;
+
+    private static ContextMenu openMenu;
 
     private double rotation = 0;
     private boolean selected = false;
@@ -81,6 +84,17 @@ public class ImageOverlay extends Group {
                 oldScene.removeEventFilter(MouseEvent.MOUSE_PRESSED, deselectFilter);
             if (newScene != null)
                 newScene.addEventFilter(MouseEvent.MOUSE_PRESSED, deselectFilter);
+        });
+
+        setOnContextMenuRequested(e -> {
+            setSelected(true);
+            requestFocus();
+            if (openMenu != null && openMenu.isShowing())
+                openMenu.hide();
+            openMenu = new ContextMenu();
+            openMenu.getItems().addAll(LayerMenu.items(this));
+            openMenu.show(this, e.getScreenX(), e.getScreenY());
+            e.consume();
         });
     }
 

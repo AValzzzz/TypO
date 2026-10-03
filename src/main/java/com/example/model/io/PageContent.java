@@ -64,31 +64,39 @@ public class PageContent {
         }
 
         for (ImageOverlay overlay : page.getImageOverlays()) {
-            content.images.add(new FloatingImageContent(
+            FloatingImageContent fi = new FloatingImageContent(
                     overlay.getImageX(), overlay.getImageY(),
                     overlay.getImageWidth(), overlay.getImageHeight(),
-                    overlay.getFormat(), overlay.getBase64(), overlay.getImageRotation()));
+                    overlay.getFormat(), overlay.getBase64(), overlay.getImageRotation());
+            fi.level = overlay.getLevel();
+            content.images.add(fi);
         }
 
         for (ShapeOverlay s : page.getShapeOverlays()) {
-            content.shapes.add(new FloatingShapeContent(
+            FloatingShapeContent fs = new FloatingShapeContent(
                     s.getShapeType(), s.getShapeX(), s.getShapeY(), s.getShapeWidth(), s.getShapeHeight(),
                     ColorUtil.toHex(s.getFillColor()), s.getFillOpacity(),
                     ColorUtil.toHex(s.getStrokeColor()), s.getStrokeOpacity(), s.getStrokeWidth(),
-                    s.getShapeRotation()));
+                    s.getShapeRotation());
+            fs.level = s.getLevel();
+            content.shapes.add(fs);
         }
 
         for (ArrowOverlay a : page.getArrowOverlays()) {
-            content.arrows.add(new FloatingArrowContent(
+            FloatingArrowContent fa = new FloatingArrowContent(
                     a.getStartX(), a.getStartY(), a.getEndX(), a.getEndY(),
                     a.getControlX(), a.getControlY(),
-                    ColorUtil.toHex(a.getStrokeColor()), a.getStrokeOpacity(), a.getStrokeWidth()));
+                    ColorUtil.toHex(a.getStrokeColor()), a.getStrokeOpacity(), a.getStrokeWidth());
+            fa.level = a.getLevel();
+            content.arrows.add(fa);
         }
 
         for (TableOverlay t : page.getTableOverlays()) {
-            content.tables.add(new FloatingTableContent(t.getTableX(), t.getTableY(),
+            FloatingTableContent ft = new FloatingTableContent(t.getTableX(), t.getTableY(),
                     t.getColumnWidths(), t.getRowHeights(),
-                    t.getOffsetsX(), t.getOffsetsY(), t.getMerges(), t.encodeCells()));
+                    t.getOffsetsX(), t.getOffsetsY(), t.getMerges(), t.encodeCells());
+            ft.level = t.getLevel();
+            content.tables.add(ft);
         }
 
         return content;
@@ -138,6 +146,7 @@ public class PageContent {
         public final String format;
         public final String base64;
         public final double rotation;
+        public Integer level;
 
         public FloatingImageContent(double x, double y, double width, double height, String format, String base64,
                 double rotation) {
@@ -149,6 +158,10 @@ public class PageContent {
             this.base64 = base64;
             this.rotation = rotation;
         }
+
+        public Integer getLevel() {
+            return level;
+        }
     }
 
     public static final class FloatingShapeContent {
@@ -156,6 +169,7 @@ public class PageContent {
         public final double x, y, width, height;
         public final String fillHex, strokeHex;
         public final double fillOpacity, strokeOpacity, strokeWidth, rotation;
+        public Integer level;
 
         public FloatingShapeContent(ShapeType type, double x, double y, double width, double height,
                 String fillHex, double fillOpacity, String strokeHex, double strokeOpacity, double strokeWidth,
@@ -172,12 +186,17 @@ public class PageContent {
             this.strokeWidth = strokeWidth;
             this.rotation = rotation;
         }
+
+        public Integer getLevel() {
+            return level;
+        }
     }
 
     public static final class FloatingArrowContent {
         public final double startX, startY, endX, endY, controlX, controlY;
         public final String strokeHex;
         public final double strokeOpacity, strokeWidth;
+        public Integer level;
 
         public FloatingArrowContent(double startX, double startY, double endX, double endY,
                 double controlX, double controlY, String strokeHex, double strokeOpacity, double strokeWidth) {
@@ -191,6 +210,10 @@ public class PageContent {
             this.strokeOpacity = strokeOpacity;
             this.strokeWidth = strokeWidth;
         }
+
+        public Integer getLevel() {
+            return level;
+        }
     }
 
     public static final class FloatingTableContent {
@@ -199,6 +222,7 @@ public class PageContent {
         public final double[][] offX, offY;
         public final int[][] merges;
         public final String[][] cells;
+        public Integer level;
 
         public FloatingTableContent(double x, double y, double[] colWidths, double[] rowHeights,
                 double[][] offX, double[][] offY, int[][] merges, String[][] cells) {
@@ -215,6 +239,10 @@ public class PageContent {
         public static FloatingTableContent empty() {
             return new FloatingTableContent(0, 0, new double[0], new double[0],
                     new double[0][0], new double[0][0], new int[0][0], new String[0][0]);
+        }
+
+        public Integer getLevel() {
+            return level;
         }
     }
 }

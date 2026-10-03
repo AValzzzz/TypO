@@ -2,8 +2,10 @@ package com.example.controller;
 
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
@@ -40,6 +42,7 @@ import com.example.model.language.tables.TableCommand;
 import com.example.model.settings.AppSettings;
 import com.example.view.ArrowOverlay;
 import com.example.view.ImageOverlay;
+import com.example.view.Layerable;
 import com.example.view.RichTextArea;
 import com.example.view.ShapeOverlay;
 import com.example.view.TableOverlay;
@@ -218,7 +221,8 @@ public class InputController {
     private static boolean isInsideShape(Object target) {
         Node n = target instanceof Node node ? node : null;
         while (n != null) {
-            if (n instanceof ShapeOverlay || n instanceof ArrowOverlay || n instanceof TableOverlay)
+            if (n instanceof ShapeOverlay || n instanceof ArrowOverlay || n instanceof TableOverlay
+                    || n instanceof ImageOverlay)
                 return true;
             n = n.getParent();
         }
@@ -323,12 +327,15 @@ public class InputController {
         for (PageContent content : loadedPages) {
             Page page = createPage();
             populate(page, content);
+            Map<Layerable, Integer> levels = new HashMap<>();
+
             for (PageContent.FloatingImageContent img : content.images) {
                 byte[] bytes = Base64.getDecoder().decode(img.base64);
                 Image image = new Image(new ByteArrayInputStream(bytes));
                 ImageOverlay overlay = page.addImageOverlay(image, img.x, img.y, img.width, img.height, img.format,
                         img.base64);
                 overlay.setRotation(img.rotation);
+                levels.put(overlay, img.level);
             }
             for (PageContent.FloatingShapeContent s : content.shapes) {
                 ShapeOverlay o = page.addShapeOverlay(s.type, s.x, s.y, s.width, s.height);
@@ -338,23 +345,24 @@ public class InputController {
                 o.setStrokeOpacity(s.strokeOpacity);
                 o.setStrokeWidth(s.strokeWidth);
                 o.setRotation(s.rotation);
+                levels.put(o, s.level);
             }
-
             for (PageContent.FloatingArrowContent a : content.arrows) {
-                ArrowOverlay o = page.addArrowOverlay(a.startX, a.startY, a.endX, a.endY, a.controlX,
-                        a.controlY);
+                ArrowOverlay o = page.addArrowOverlay(a.startX, a.startY, a.endX, a.endY, a.controlX, a.controlY);
                 o.setStrokeColor(Color.web("#" + a.strokeHex));
                 o.setStrokeOpacity(a.strokeOpacity);
                 o.setStrokeWidth(a.strokeWidth);
+                levels.put(o, a.level);
             }
-
             for (PageContent.FloatingTableContent t : content.tables) {
                 if (t.colWidths.length == 0 || t.rowHeights.length == 0)
                     continue;
                 TableOverlay o = page.addTableOverlay(t.x, t.y, t.rowHeights.length, t.colWidths.length,
                         this::setupCell);
                 o.load(t.colWidths, t.rowHeights, t.offX, t.offY, t.merges, t.cells);
+                levels.put(o, t.level);
             }
+            page.orderLayers(levels);
 
             if (content.landscape != (page.getPane().getWidth() > page.getPane().getHeight())) {
                 new ToggleOrientation(page).execute();
