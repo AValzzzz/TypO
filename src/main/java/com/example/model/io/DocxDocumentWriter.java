@@ -97,6 +97,10 @@ public final class DocxDocumentWriter {
             writeFloatingTableParagraph(doc, table);
         }
 
+        for (PageContent.FloatingTextBoxContent box : page.textBoxes) {
+            writeFloatingTextBoxParagraph(doc, box);
+        }
+
         CTSectPr sectPr;
         if (lastPage) {
             CTBody body = doc.getDocument().getBody();
@@ -225,6 +229,27 @@ public final class DocxDocumentWriter {
         addHiddenRun(p, FloatingArrowCodec.encode(arrow));
     }
 
+    private void writeFloatingTextBoxParagraph(XWPFDocument doc, PageContent.FloatingTextBoxContent box) {
+        XWPFParagraph p = doc.createParagraph();
+        String visible = box.plainText == null ? "" : box.plainText.replace("\uFFFC", "").replace('\n', ' ');
+        p.createRun().setText(visible);
+        addHiddenRun(p, FloatingTextBoxCodec.encode(box));
+    }
+
+    private PageContent.FloatingTextBoxContent tryReadFloatingTextBox(XWPFParagraph paragraph) {
+        for (XWPFRun run : paragraph.getRuns()) {
+            String text = run.text();
+            if (isHidden(run) && FloatingTextBoxCodec.isToken(text)) {
+                try {
+                    return FloatingTextBoxCodec.decode(text);
+                } catch (RuntimeException e) {
+                    return null;
+                }
+            }
+        }
+        return null;
+    }
+
     private PageContent.FloatingArrowContent tryReadFloatingArrow(XWPFParagraph paragraph) {
         for (XWPFRun run : paragraph.getRuns()) {
             String text = run.text();
@@ -320,6 +345,7 @@ public final class DocxDocumentWriter {
             List<PageContent.FloatingShapeContent> currentShapes = new ArrayList<>();
             List<PageContent.FloatingArrowContent> currentArrows = new ArrayList<>();
             List<PageContent.FloatingTableContent> currentTables = new ArrayList<>();
+            List<PageContent.FloatingTextBoxContent> currentTextBoxes = new ArrayList<>();
 
             for (XWPFParagraph paragraph : doc.getParagraphs()) {
                 CTSectPr sectPr = (paragraph.getCTP().isSetPPr() && paragraph.getCTP().getPPr().isSetSectPr())
@@ -335,6 +361,9 @@ public final class DocxDocumentWriter {
                         : null;
                 PageContent.FloatingTableContent floatingTable = (floatingImage == null && floatingShape == null
                         && floatingArrow == null) ? tryReadFloatingTable(paragraph) : null;
+                PageContent.FloatingTextBoxContent floatingTextBox = (floatingImage == null && floatingShape == null
+                        && floatingArrow == null && floatingTable == null) ? tryReadFloatingTextBox(paragraph) : null;
+
                 boolean boundaryOnly = sectPr != null && paragraph.getRuns().isEmpty();
 
                 if (floatingImage != null)
@@ -347,6 +376,8 @@ public final class DocxDocumentWriter {
                     currentTables.add(floatingTable);
                 else if (!boundaryOnly)
                     current.add(readParagraph(paragraph));
+                else if (floatingTextBox != null)
+                    currentTextBoxes.add(floatingTextBox);
 
                 if (sectPr != null) {
                     PageContent pc = finish(current, sectPr);
@@ -354,12 +385,14 @@ public final class DocxDocumentWriter {
                     pc.shapes.addAll(currentShapes);
                     pc.arrows.addAll(currentArrows);
                     pc.tables.addAll(currentTables);
+                    pc.textBoxes.addAll(currentTextBoxes);
                     pages.add(pc);
                     current = new ArrayList<>();
                     currentImages = new ArrayList<>();
                     currentShapes = new ArrayList<>();
                     currentArrows = new ArrayList<>();
                     currentTables = new ArrayList<>();
+                    currentTextBoxes = new ArrayList<>();
                 }
             }
 
@@ -372,6 +405,8 @@ public final class DocxDocumentWriter {
                 pc.shapes.addAll(currentShapes);
                 pc.arrows.addAll(currentArrows);
                 pc.tables.addAll(currentTables);
+                pc.textBoxes.addAll(currentTextBoxes);
+                pc.textBoxes.addAll(currentTextBoxes);
                 pages.add(pc);
             }
             if (!pages.isEmpty() && readPageNumbersFlag(doc))

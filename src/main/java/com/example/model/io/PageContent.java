@@ -18,6 +18,7 @@ import com.example.view.ImageOverlay;
 import com.example.view.RichTextArea;
 import com.example.view.ShapeOverlay;
 import com.example.view.TableOverlay;
+import com.example.view.TextBoxOverlay;
 
 import javafx.scene.text.TextAlignment;
 
@@ -34,6 +35,7 @@ public class PageContent {
     public final List<FloatingShapeContent> shapes = new ArrayList<>();
     public final List<FloatingArrowContent> arrows = new ArrayList<>();
     public final List<FloatingTableContent> tables = new ArrayList<>();
+    public final List<FloatingTextBoxContent> textBoxes = new ArrayList<>();
 
     public PageContent(boolean landscape) {
         this.landscape = landscape;
@@ -99,6 +101,16 @@ public class PageContent {
                     t.getOffsetsX(), t.getOffsetsY(), t.getMerges(), t.encodeCells());
             ft.level = t.getLevel();
             content.tables.add(ft);
+        }
+
+        for (TextBoxOverlay t : page.getTextBoxOverlays()) {
+            FloatingTextBoxContent ft = new FloatingTextBoxContent(t.getBoxX(), t.getBoxY(), t.getBoxWidth(),
+                    t.isBorderVisible(), ColorUtil.toHex(t.getBorderColor()),
+                    t.isBackgroundVisible(), ColorUtil.toHex(t.getBackgroundColor()), t.getBackgroundOpacity(),
+                    t.encodeContent());
+            ft.level = t.getLevel();
+            ft.plainText = t.getEditor().getText();
+            content.textBoxes.add(ft);
         }
 
         return content;
@@ -242,6 +254,33 @@ public class PageContent {
         public static FloatingTableContent empty() {
             return new FloatingTableContent(0, 0, new double[0], new double[0],
                     new double[0][0], new double[0][0], new int[0][0], new String[0][0]);
+        }
+
+        public Integer getLevel() {
+            return level;
+        }
+    }
+
+    public static final class FloatingTextBoxContent {
+        public final double x, y, width;
+        public final boolean borderVisible, backgroundVisible;
+        public final String borderHex, backgroundHex;
+        public final double backgroundOpacity;
+        public final String cells;
+        public Integer level;
+        public String plainText = "";
+
+        public FloatingTextBoxContent(double x, double y, double width, boolean borderVisible, String borderHex,
+                boolean backgroundVisible, String backgroundHex, double backgroundOpacity, String cells) {
+            this.x = x;
+            this.y = y;
+            this.width = width;
+            this.borderVisible = borderVisible;
+            this.borderHex = borderHex;
+            this.backgroundVisible = backgroundVisible;
+            this.backgroundHex = backgroundHex;
+            this.backgroundOpacity = backgroundOpacity;
+            this.cells = cells;
         }
 
         public Integer getLevel() {

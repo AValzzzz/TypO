@@ -46,7 +46,9 @@ import com.example.view.Layerable;
 import com.example.view.RichTextArea;
 import com.example.view.ShapeOverlay;
 import com.example.view.TableOverlay;
+import com.example.view.TextBoxOverlay;
 import com.example.view.TextFormatMenu;
+import com.example.view.TextSelectionMover;
 
 import javafx.application.Platform;
 import javafx.beans.property.DoubleProperty;
@@ -365,6 +367,12 @@ public class InputController {
             }
             page.orderLayers(levels);
 
+            for (PageContent.FloatingTextBoxContent t : content.textBoxes) {
+                TextBoxOverlay o = page.addTextBoxOverlay(t.x, t.y, t.width, this::setupCell);
+                o.load(t);
+                levels.put(o, t.level);
+            }
+
             if (content.landscape != (page.getPane().getWidth() > page.getPane().getHeight())) {
                 new ToggleOrientation(page).execute();
             }
@@ -493,6 +501,7 @@ public class InputController {
                 () -> new InsertTable(page, this::setupCell).execute());
         new CodeBlockStyler(page.getEditor());
         new LinkHandler(page.getEditor());
+        new TextSelectionMover(page, this::setupCell);
         page.getEditor().richChanges().subscribe(c -> scheduleReflow(page));
     }
 

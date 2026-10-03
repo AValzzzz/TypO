@@ -15,6 +15,7 @@ import com.example.view.Layerable;
 import com.example.view.RichTextArea;
 import com.example.view.ShapeOverlay;
 import com.example.view.TableOverlay;
+import com.example.view.TextBoxOverlay;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -31,6 +32,7 @@ public class Page {
     private final List<ShapeOverlay> shapeOverlays = new ArrayList<>();
     private final List<ArrowOverlay> arrowOverlays = new ArrayList<>();
     private final List<TableOverlay> tableOverlays = new ArrayList<>();
+    private final List<TextBoxOverlay> textBoxOverlays = new ArrayList<>();
     private final List<Layerable> layers = new ArrayList<>();
 
     public Page(Pane pane, RichTextArea textEditor) {
@@ -102,6 +104,17 @@ public class Page {
         });
         addLayer(overlay);
         tableOverlays.add(overlay);
+        return overlay;
+    }
+
+    public TextBoxOverlay addTextBoxOverlay(double x, double y, double width, Consumer<RichTextArea> cellSetup) {
+        TextBoxOverlay overlay = new TextBoxOverlay(x, y, width, cellSetup);
+        overlay.setOnDelete(() -> {
+            removeLayer(overlay);
+            textBoxOverlays.remove(overlay);
+        });
+        addLayer(overlay);
+        textBoxOverlays.add(overlay);
         return overlay;
     }
 
@@ -183,6 +196,10 @@ public class Page {
 
     public List<TableOverlay> getTableOverlays() {
         return tableOverlays;
+    }
+
+    public List<TextBoxOverlay> getTextBoxOverlays() {
+        return textBoxOverlays;
     }
 
     public void setPageNumber(int number) {
