@@ -28,6 +28,7 @@ public class ImageOverlay extends Group implements Layerable {
     private static ContextMenu openMenu;
 
     private double rotation = 0;
+    private double imageOpacity = 1.0;
     private boolean selected = false;
     private boolean resizing = false;
     private boolean rotating = false;
@@ -91,8 +92,7 @@ public class ImageOverlay extends Group implements Layerable {
             requestFocus();
             if (openMenu != null && openMenu.isShowing())
                 openMenu.hide();
-            openMenu = new ContextMenu();
-            openMenu.getItems().addAll(LayerMenu.items(this));
+            openMenu = new ImageFormatMenu(this);
             openMenu.show(this, e.getScreenX(), e.getScreenY());
             e.consume();
         });
@@ -123,6 +123,15 @@ public class ImageOverlay extends Group implements Layerable {
 
     public double getImageRotation() {
         return rotation;
+    }
+
+    public void setImageOpacity(double opacity) {
+        this.imageOpacity = Math.max(0, Math.min(1, opacity));
+        imageView.setOpacity(this.imageOpacity);
+    }
+
+    public double getImageOpacity() {
+        return imageOpacity;
     }
 
     public void setSelected(boolean value) {

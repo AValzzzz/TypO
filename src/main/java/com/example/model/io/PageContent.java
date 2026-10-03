@@ -69,6 +69,8 @@ public class PageContent {
                     overlay.getImageWidth(), overlay.getImageHeight(),
                     overlay.getFormat(), overlay.getBase64(), overlay.getImageRotation());
             fi.level = overlay.getLevel();
+            fi.opacity = overlay.getImageOpacity();
+            content.images.add(fi);
             content.images.add(fi);
         }
 
@@ -147,6 +149,7 @@ public class PageContent {
         public final String base64;
         public final double rotation;
         public Integer level;
+        public double opacity = 1.0;
 
         public FloatingImageContent(double x, double y, double width, double height, String format, String base64,
                 double rotation) {

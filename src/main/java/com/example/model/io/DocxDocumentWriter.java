@@ -163,7 +163,8 @@ public final class DocxDocumentWriter {
             visible.setText("[image]");
         }
 
-        addHiddenRun(p, FloatingImageCodec.encode(img.x, img.y, img.width, img.height, img.rotation, img.level));
+        addHiddenRun(p, FloatingImageCodec.encode(img.x, img.y, img.width, img.height, img.rotation,
+                img.level, img.opacity));
         addHiddenRun(p, MathObjectCodec.encode(new MathObject(MathObject.Type.IMAGE, img.format + "|" + img.base64)));
     }
 
@@ -403,6 +404,7 @@ public final class DocxDocumentWriter {
         PageContent.FloatingImageContent image = new PageContent.FloatingImageContent(pos[0], pos[1], pos[2], pos[3],
                 raw.substring(0, sep), raw.substring(sep + 1), pos[4]);
         image.level = (int) pos[5];
+        image.opacity = pos[6];
         return image;
     }
 

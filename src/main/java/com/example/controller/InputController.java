@@ -335,6 +335,7 @@ public class InputController {
                 ImageOverlay overlay = page.addImageOverlay(image, img.x, img.y, img.width, img.height, img.format,
                         img.base64);
                 overlay.setRotation(img.rotation);
+                overlay.setImageOpacity(img.opacity);
                 levels.put(overlay, img.level);
             }
             for (PageContent.FloatingShapeContent s : content.shapes) {
