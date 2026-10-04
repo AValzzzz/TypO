@@ -318,6 +318,7 @@ public class InputController {
         } finally {
             loading = false;
         }
+        for (Page p : new ArrayList<>(pages)) scheduleReflow(p);
     }
 
     private void doLoadDocument(List<PageContent> loadedPages, Path source) {
@@ -375,13 +376,13 @@ public class InputController {
                 o.load(t.colWidths, t.rowHeights, t.offX, t.offY, t.merges, t.cells);
                 levels.put(o, t.level);
             }
-            page.orderLayers(levels);
-
             for (PageContent.FloatingTextBoxContent t : content.textBoxes) {
                 TextBoxOverlay o = page.addTextBoxOverlay(t.x, t.y, t.width, this::setupCell);
                 o.load(t);
                 levels.put(o, t.level);
             }
+            page.orderLayers(levels);
+
 
             if (content.landscape != (page.getPane().getWidth() > page.getPane().getHeight())) {
                 new ToggleOrientation(page).execute();

@@ -40,6 +40,7 @@ public class TextBoxOverlay extends Pane implements Layerable {
     private final Rectangle outline = new Rectangle();
     private final Region moveHandle = new Region();
     private final Region widthHandle = new Region();
+    private SnapGuides snap;
 
     private double boxWidth;
     private boolean borderVisible = false;
@@ -175,7 +176,10 @@ public class TextBoxOverlay extends Pane implements Layerable {
         });
         widthHandle.setOnMouseDragged(e -> {
             double dx = sceneToLocal(e.getSceneX(), e.getSceneY()).getX() - widthPressX;
-            boxWidth = Math.max(MIN_WIDTH, widthPressValue + dx);
+            double w = Math.max(MIN_WIDTH, widthPressValue + dx);
+            if (snap != null)
+                w = Math.max(MIN_WIDTH, snap.resize(this, w, 0, true, false, e.isAltDown())[0]);
+            boxWidth = w;
             requestLayout();
             e.consume();
         });
@@ -191,8 +195,15 @@ public class TextBoxOverlay extends Pane implements Layerable {
 
     private void doMove(MouseEvent e) {
         Point2D p = getParent().sceneToLocal(e.getSceneX(), e.getSceneY());
-        setLayoutX(pressLayoutX + (p.getX() - pressParentX));
-        setLayoutY(pressLayoutY + (p.getY() - pressParentY));
+        double nx = pressLayoutX + (p.getX() - pressParentX);
+        double ny = pressLayoutY + (p.getY() - pressParentY);
+        if (snap != null) {
+            double[] s = snap.move(this, nx, ny, e.isAltDown());
+            nx = s[0];
+            ny = s[1];
+        }
+        setLayoutX(nx);
+        setLayoutY(ny);
     }
 
     private void startEditing(double sceneX, double sceneY) {
@@ -408,5 +419,9 @@ public class TextBoxOverlay extends Pane implements Layerable {
         deleted = true;
         if (onDelete != null)
             onDelete.run();
+    }
+
+    public void setSnap(SnapGuides snap) {
+        this.snap = snap;
     }
 }

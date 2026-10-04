@@ -25,48 +25,4 @@ public class MathObjectCodec {
         String raw = body.substring(sep + 1);
         return new MathObject(MathObject.Type.valueOf(typeName), raw);
     }
-
-    public static String approximate(MathObject obj) {
-        if (obj == null || obj.getType() == null) {
-            return "";
-        }
-        String raw = obj.getRaw();
-        return switch (obj.getType()) {
-            case FRACTION -> {
-                String[] p = split(raw, ",", 2);
-                yield "(" + p[0] + "/" + p[1] + ")";
-            }
-            case EXPONENT -> {
-                String[] p = split(raw, ",", 2);
-                yield p[0] + "^(" + p[1] + ")";
-            }
-            case SUBSCRIPT -> {
-                String[] p = split(raw, ",", 2);
-                yield p[0] + "_(" + p[1] + ")";
-            }
-            case SQRT -> "\u221A(" + raw + ")";
-            case MATRIX -> "[" + raw.replace(";", " ; ") + "]";
-            case SUM, INTEGRAL, PRODUCT -> {
-                String[] p = split(raw, "\\|", 3);
-                yield obj.getType().symbol() + "(" + p[0] + "\u2192" + p[1] + ") " + p[2];
-            }
-            case LIMIT -> {
-                String[] p = split(raw, "\\|", 2);
-                yield "lim(" + p[0] + ") " + p[1];
-            }
-            case IMAGE -> "[image]";
-        };
-    }
-
-    private static String[] split(String raw, String delimiterRegex, int expected) {
-        String[] parts = raw.split(delimiterRegex, -1);
-        if (parts.length >= expected)
-            return parts;
-
-        String[] padded = new String[expected];
-        for (int i = 0; i < expected; i++)
-            padded[i] = i < parts.length ? parts[i] : "";
-
-        return padded;
-    }
 }
