@@ -10,12 +10,12 @@ import org.fxmisc.richtext.model.StyleSpan;
 import org.fxmisc.richtext.model.StyleSpans;
 import org.fxmisc.richtext.model.StyleSpansBuilder;
 
+import com.example.model.code.syntax.Language;
+import com.example.model.code.syntax.Languages;
+import com.example.model.code.syntax.SyntaxHighlighter;
+import com.example.model.code.syntax.TokenType;
 import com.example.model.settings.AppSettings;
 import com.example.model.settings.CodeTheme;
-import com.example.model.syntax.Language;
-import com.example.model.syntax.Languages;
-import com.example.model.syntax.SyntaxHighlighter;
-import com.example.model.syntax.TokenType;
 import com.example.view.RichTextArea;
 
 import javafx.application.Platform;

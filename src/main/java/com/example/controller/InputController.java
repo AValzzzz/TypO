@@ -41,6 +41,8 @@ import com.example.model.language.shapes.ShapeCommand;
 import com.example.model.language.tables.TableCommand;
 import com.example.model.settings.AppSettings;
 import com.example.view.ArrowOverlay;
+import com.example.view.CodeOutputOverlay;
+import com.example.view.CodeRunController;
 import com.example.view.ImageOverlay;
 import com.example.view.Layerable;
 import com.example.view.RichTextArea;
@@ -185,7 +187,7 @@ public class InputController {
 
     }
 
-    private void attachContextMenu(Page page) {
+    private void attachContextMenu(Page page, CodeRunController runner) {
         ContextMenu pageMenu = new ContextMenu();
         pageMenu.setAutoHide(true);
 
@@ -211,10 +213,17 @@ public class InputController {
 
         pageMenu.getItems().addAll(toggleOrientationItem, deletePageItem, importImageItem);
 
+        List<MenuItem> runItems = new ArrayList<>();
         page.getPane().addEventFilter(ContextMenuEvent.CONTEXT_MENU_REQUESTED, event -> {
             if (isInsideShape(event.getTarget()))
                 return;
+            pageMenu.getItems().removeAll(runItems);
+            runItems.clear();
+
             ContextMenu menu = page.hasSelection() ? createTextMenu(page) : pageMenu;
+            runItems.addAll(runner.contextItems(event.getScreenX(), event.getScreenY()));
+            menu.getItems().addAll(runItems);
+
             showMenu(menu, page, event);
             event.consume();
         });
@@ -224,7 +233,7 @@ public class InputController {
         Node n = target instanceof Node node ? node : null;
         while (n != null) {
             if (n instanceof ShapeOverlay || n instanceof ArrowOverlay || n instanceof TableOverlay
-                    || n instanceof ImageOverlay)
+                    || n instanceof ImageOverlay || n instanceof CodeOutputOverlay)
                 return true;
             n = n.getParent();
         }
@@ -312,6 +321,7 @@ public class InputController {
     }
 
     private void doLoadDocument(List<PageContent> loadedPages, Path source) {
+        CodeRunController.resetApproval();
         session.setCurrentFile(source);
         pagesContainer.getChildren().clear();
         pages.clear();
@@ -494,7 +504,7 @@ public class InputController {
         for (int i = 0; i < pages.size(); i++)
             pages.get(i).setPageNumber(i + 1);
         page.applyMargins();
-        attachContextMenu(page);
+        attachContextMenu(page, new CodeRunController(page));
         new BackslashInputHandler(page.getEditor(), commandRegistry,
                 type -> new InsertShape(page, type).execute(),
                 () -> new InsertArrow(page).execute(),

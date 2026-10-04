@@ -12,10 +12,12 @@ import com.example.model.io.DocxDocumentWriter;
 import com.example.model.io.PageContent;
 import com.example.model.io.PdfDocumentWriter;
 import com.example.model.io.PdfDocumentWriter.PageSnapshot;
+import com.example.view.CodeOutputOverlay;
 import com.example.view.ImageOverlay;
 import com.example.view.TableOverlay;
 
 import javafx.embed.swing.SwingFXUtils;
+import javafx.scene.Node;
 import javafx.scene.SnapshotParameters;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
@@ -88,6 +90,12 @@ public class SaveAs implements AppAction {
                 overlay.setHandleSuppressed(true);
             for (TableOverlay t : page.getTableOverlays())
                 t.setHandleSuppressed(true);
+            List<Node> hiddenOutputs = new ArrayList<>();
+            for (Node n : pane.getChildren())
+                if (n instanceof CodeOutputOverlay && n.isVisible()) {
+                    n.setVisible(false);
+                    hiddenOutputs.add(n);
+                }
             try {
                 SnapshotParameters params = new SnapshotParameters();
                 params.setTransform(new Scale(PDF_RENDER_SCALE, PDF_RENDER_SCALE));
@@ -100,6 +108,8 @@ public class SaveAs implements AppAction {
                     overlay.setHandleSuppressed(false);
                 for (TableOverlay t : page.getTableOverlays())
                     t.setHandleSuppressed(false);
+                for (Node n : hiddenOutputs)
+                    n.setVisible(true);
             }
         }
         return snapshots;

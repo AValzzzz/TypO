@@ -1,4 +1,4 @@
-package com.example.model.syntax;
+package com.example.model.code.syntax;
 
 import java.util.ArrayList;
 import java.util.Comparator;

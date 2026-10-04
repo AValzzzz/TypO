@@ -1,6 +1,6 @@
 package com.example.model.settings;
 
-import com.example.model.syntax.TokenType;
+import com.example.model.code.syntax.TokenType;
 
 import javafx.scene.paint.Color;
 

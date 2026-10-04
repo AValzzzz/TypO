@@ -1,4 +1,4 @@
-package com.example.model.syntax;
+package com.example.model.code.syntax;
 
 import java.util.HashMap;
 import java.util.Locale;
