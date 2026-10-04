@@ -14,11 +14,13 @@ import com.example.view.ImageOverlay;
 import com.example.view.Layerable;
 import com.example.view.RichTextArea;
 import com.example.view.ShapeOverlay;
+import com.example.view.SnapGuides;
 import com.example.view.TableOverlay;
 import com.example.view.TextBoxOverlay;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.layout.Pane;
@@ -26,6 +28,7 @@ import javafx.scene.layout.Pane;
 public class Page {
     private final Pane pane;
     private final RichTextArea editor;
+    private final SnapGuides snapGuides;
     private static final double FOOTER_OFFSET = 22;
     private final Label pageNumberLabel = new Label();
     private final List<ImageOverlay> imageOverlays = new ArrayList<>();
@@ -46,6 +49,7 @@ public class Page {
         pageNumberLabel.layoutYProperty().bind(pane.heightProperty().subtract(FOOTER_OFFSET));
         pageNumberLabel.visibleProperty().bind(AppSettings.getInstance().showPageNumbersProperty());
         pane.getChildren().add(pageNumberLabel);
+        snapGuides = new SnapGuides(pane, this::snapRectsExcept);
     }
 
     public Pane getPane() {
@@ -67,6 +71,7 @@ public class Page {
     public ImageOverlay addImageOverlay(Image image, double x, double y, double width, double height,
             String format, String base64) {
         ImageOverlay overlay = new ImageOverlay(image, x, y, width, height, format, base64);
+        overlay.setSnap(snapGuides);
         addLayer(overlay);
         imageOverlays.add(overlay);
         return overlay;
@@ -78,6 +83,7 @@ public class Page {
             removeLayer(overlay);
             shapeOverlays.remove(overlay);
         });
+        overlay.setSnap(snapGuides);
         addLayer(overlay);
         shapeOverlays.add(overlay);
         return overlay;
@@ -102,6 +108,7 @@ public class Page {
             tableOverlays.remove(overlay);
             editor.requestFocus();
         });
+        overlay.setSnap(snapGuides);
         addLayer(overlay);
         tableOverlays.add(overlay);
         return overlay;
@@ -113,6 +120,7 @@ public class Page {
             removeLayer(overlay);
             textBoxOverlays.remove(overlay);
         });
+        overlay.setSnap(snapGuides);
         addLayer(overlay);
         textBoxOverlays.add(overlay);
         return overlay;
@@ -175,6 +183,20 @@ public class Page {
             l.setLevel(i);
             l.node().toFront();
         }
+        snapGuides.toFront();
+    }
+
+    private List<SnapGuides.Rect> snapRectsExcept(Node self) {
+        List<SnapGuides.Rect> out = new ArrayList<>();
+        for (Layerable l : layers) {
+            Node n = l.node();
+            if (n == self)
+                continue;
+            SnapGuides.Rect r = SnapGuides.rectOf(n);
+            if (r != null)
+                out.add(r);
+        }
+        return out;
     }
 
     public void orderLayers(Map<Layerable, Integer> savedLevels) {

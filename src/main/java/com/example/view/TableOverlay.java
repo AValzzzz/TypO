@@ -72,6 +72,7 @@ public class TableOverlay extends Pane implements Layerable {
     private final Path grid = new Path();
     private final Path selectionShade = new Path();
     private final Region moveHandle = new Region();
+    private SnapGuides snap;
 
     private double[] xs = new double[] { 0 };
     private double[] ys = new double[] { 0 };
@@ -674,6 +675,20 @@ public class TableOverlay extends Pane implements Layerable {
 
         if (!drag.ctrl) {
             double v = Math.max(drag.minBase, drag.startBase + delta);
+            if (snap != null) {
+                if (drag.vertical) {
+                    double total = computePrefWidth(-1) - colWidths.get(drag.b) + v;
+                    double[] s = snap.resize(this, total, 0, true, false, e.isAltDown());
+                    v = Math.max(drag.minBase, v + (s[0] - total));
+                } else {
+                    double[] eff = effectiveRowHeights();
+                    double total = -eff[drag.b] + v;
+                    for (double h : eff)
+                        total += h;
+                    double[] s = snap.resize(this, 0, total, false, true, e.isAltDown());
+                    v = Math.max(drag.minBase, v + (s[1] - total));
+                }
+            }
             if (drag.vertical)
                 colWidths.set(drag.b, v);
             else
@@ -773,8 +788,15 @@ public class TableOverlay extends Pane implements Layerable {
         });
         moveHandle.setOnMouseDragged(e -> {
             Point2D p = getParent().sceneToLocal(e.getSceneX(), e.getSceneY());
-            setLayoutX(pressLayoutX + (p.getX() - pressParentX));
-            setLayoutY(pressLayoutY + (p.getY() - pressParentY));
+            double nx = pressLayoutX + (p.getX() - pressParentX);
+            double ny = pressLayoutY + (p.getY() - pressParentY);
+            if (snap != null) {
+                double[] s = snap.move(this, nx, ny, e.isAltDown());
+                nx = s[0];
+                ny = s[1];
+            }
+            setLayoutX(nx);
+            setLayoutY(ny);
             e.consume();
         });
     }
@@ -949,5 +971,9 @@ public class TableOverlay extends Pane implements Layerable {
             }
         }
         return best;
+    }
+
+    public void setSnap(SnapGuides snap) {
+        this.snap = snap;
     }
 }

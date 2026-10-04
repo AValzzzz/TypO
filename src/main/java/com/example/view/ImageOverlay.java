@@ -24,6 +24,7 @@ public class ImageOverlay extends Group implements Layerable {
     private final Line rotateLine;
     private final String format;
     private final String base64;
+    private SnapGuides snap;
 
     private static ContextMenu openMenu;
 
@@ -178,8 +179,15 @@ public class ImageOverlay extends Group implements Layerable {
         });
         imageView.setOnMouseDragged(e -> {
             Point2D p = getParent().sceneToLocal(e.getSceneX(), e.getSceneY());
-            setLayoutX(pressLayoutX + (p.getX() - pressParentX));
-            setLayoutY(pressLayoutY + (p.getY() - pressParentY));
+            double nx = pressLayoutX + (p.getX() - pressParentX);
+            double ny = pressLayoutY + (p.getY() - pressParentY);
+            if (snap != null) {
+                double[] s = snap.move(this, nx, ny, e.isAltDown());
+                nx = s[0];
+                ny = s[1];
+            }
+            setLayoutX(nx);
+            setLayoutY(ny);
             e.consume();
         });
     }
@@ -202,6 +210,8 @@ public class ImageOverlay extends Group implements Layerable {
             double newWidth;
             double newHeight;
             if (e.isControlDown()) {
+                if (snap != null)
+                    snap.clear();
                 double scale = Math.max((resizeStartWidth + dx) / resizeStartWidth,
                         (resizeStartHeight + dy) / resizeStartHeight);
                 scale = Math.max(scale, Math.max(MIN_SIZE / resizeStartWidth, MIN_SIZE / resizeStartHeight));
@@ -210,6 +220,11 @@ public class ImageOverlay extends Group implements Layerable {
             } else {
                 newWidth = Math.max(MIN_SIZE, resizeStartWidth + dx);
                 newHeight = Math.max(MIN_SIZE, resizeStartHeight + dy);
+                if (snap != null) {
+                    double[] s = snap.resize(this, newWidth, newHeight, true, true, e.isAltDown());
+                    newWidth = Math.max(MIN_SIZE, s[0]);
+                    newHeight = Math.max(MIN_SIZE, s[1]);
+                }
             }
 
             imageView.setFitWidth(newWidth);
@@ -271,5 +286,9 @@ public class ImageOverlay extends Group implements Layerable {
 
     public String getBase64() {
         return base64;
+    }
+
+    public void setSnap(SnapGuides snap) {
+        this.snap = snap;
     }
 }
