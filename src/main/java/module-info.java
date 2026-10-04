@@ -10,6 +10,8 @@ module com.example.javafx {
 
     requires javafx.swing;
     requires java.desktop;
+    
+    requires java.xml;
 
     requires org.apache.poi.ooxml;
 

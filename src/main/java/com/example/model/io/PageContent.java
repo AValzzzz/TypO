@@ -73,7 +73,6 @@ public class PageContent {
             fi.level = overlay.getLevel();
             fi.opacity = overlay.getImageOpacity();
             content.images.add(fi);
-            content.images.add(fi);
         }
 
         for (ShapeOverlay s : page.getShapeOverlays()) {
