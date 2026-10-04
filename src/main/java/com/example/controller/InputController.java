@@ -2,14 +2,17 @@ package com.example.controller;
 
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 
 import com.example.model.CodeBlockStyler;
+import com.example.model.LinkHandler;
 import com.example.model.Page;
 import com.example.model.ParagraphStyle;
 import com.example.model.TextStyle;
@@ -20,6 +23,7 @@ import com.example.model.actions.Help;
 import com.example.model.actions.ImportImage;
 import com.example.model.actions.InsertArrow;
 import com.example.model.actions.InsertShape;
+import com.example.model.actions.InsertTable;
 import com.example.model.actions.NewPage;
 import com.example.model.actions.OpenFile;
 import com.example.model.actions.Save;
@@ -34,12 +38,19 @@ import com.example.model.language.CommandRegistry;
 import com.example.model.language.maths.MathCommands;
 import com.example.model.language.shapes.ArrowCommand;
 import com.example.model.language.shapes.ShapeCommand;
+import com.example.model.language.tables.TableCommand;
 import com.example.model.settings.AppSettings;
 import com.example.view.ArrowOverlay;
+import com.example.view.CodeOutputOverlay;
+import com.example.view.CodeRunController;
 import com.example.view.ImageOverlay;
+import com.example.view.Layerable;
 import com.example.view.RichTextArea;
 import com.example.view.ShapeOverlay;
+import com.example.view.TableOverlay;
+import com.example.view.TextBoxOverlay;
 import com.example.view.TextFormatMenu;
+import com.example.view.TextSelectionMover;
 
 import javafx.application.Platform;
 import javafx.beans.property.DoubleProperty;
@@ -108,6 +119,7 @@ public class InputController {
         MathCommands.registerAll(commandRegistry);
         commandRegistry.register(new ShapeCommand());
         commandRegistry.register(new ArrowCommand());
+        commandRegistry.register(new TableCommand());
         Page firstPage = new Page(whitePane, textEditor);
         setupPage(firstPage);
         AppSettings.getInstance().backgroundColorProperty().addListener((obs, o, n) -> applyBackgroundColor(n));
@@ -175,7 +187,7 @@ public class InputController {
 
     }
 
-    private void attachContextMenu(Page page) {
+    private void attachContextMenu(Page page, CodeRunController runner) {
         ContextMenu pageMenu = new ContextMenu();
         pageMenu.setAutoHide(true);
 
@@ -201,10 +213,17 @@ public class InputController {
 
         pageMenu.getItems().addAll(toggleOrientationItem, deletePageItem, importImageItem);
 
+        List<MenuItem> runItems = new ArrayList<>();
         page.getPane().addEventFilter(ContextMenuEvent.CONTEXT_MENU_REQUESTED, event -> {
             if (isInsideShape(event.getTarget()))
                 return;
+            pageMenu.getItems().removeAll(runItems);
+            runItems.clear();
+
             ContextMenu menu = page.hasSelection() ? createTextMenu(page) : pageMenu;
+            runItems.addAll(runner.contextItems(event.getScreenX(), event.getScreenY()));
+            menu.getItems().addAll(runItems);
+
             showMenu(menu, page, event);
             event.consume();
         });
@@ -213,7 +232,8 @@ public class InputController {
     private static boolean isInsideShape(Object target) {
         Node n = target instanceof Node node ? node : null;
         while (n != null) {
-            if (n instanceof ShapeOverlay || n instanceof ArrowOverlay)
+            if (n instanceof ShapeOverlay || n instanceof ArrowOverlay || n instanceof TableOverlay
+                    || n instanceof ImageOverlay || n instanceof CodeOutputOverlay)
                 return true;
             n = n.getParent();
         }
@@ -301,6 +321,7 @@ public class InputController {
     }
 
     private void doLoadDocument(List<PageContent> loadedPages, Path source) {
+        CodeRunController.resetApproval();
         session.setCurrentFile(source);
         pagesContainer.getChildren().clear();
         pages.clear();
@@ -318,12 +339,16 @@ public class InputController {
         for (PageContent content : loadedPages) {
             Page page = createPage();
             populate(page, content);
+            Map<Layerable, Integer> levels = new HashMap<>();
+
             for (PageContent.FloatingImageContent img : content.images) {
                 byte[] bytes = Base64.getDecoder().decode(img.base64);
                 Image image = new Image(new ByteArrayInputStream(bytes));
                 ImageOverlay overlay = page.addImageOverlay(image, img.x, img.y, img.width, img.height, img.format,
                         img.base64);
                 overlay.setRotation(img.rotation);
+                overlay.setImageOpacity(img.opacity);
+                levels.put(overlay, img.level);
             }
             for (PageContent.FloatingShapeContent s : content.shapes) {
                 ShapeOverlay o = page.addShapeOverlay(s.type, s.x, s.y, s.width, s.height);
@@ -333,15 +358,31 @@ public class InputController {
                 o.setStrokeOpacity(s.strokeOpacity);
                 o.setStrokeWidth(s.strokeWidth);
                 o.setRotation(s.rotation);
+                levels.put(o, s.level);
             }
-
             for (PageContent.FloatingArrowContent a : content.arrows) {
-                ArrowOverlay o = page.addArrowOverlay(a.startX, a.startY, a.endX, a.endY, a.controlX,
-                        a.controlY);
+                ArrowOverlay o = page.addArrowOverlay(a.startX, a.startY, a.endX, a.endY, a.controlX, a.controlY);
                 o.setStrokeColor(Color.web("#" + a.strokeHex));
                 o.setStrokeOpacity(a.strokeOpacity);
                 o.setStrokeWidth(a.strokeWidth);
+                levels.put(o, a.level);
             }
+            for (PageContent.FloatingTableContent t : content.tables) {
+                if (t.colWidths.length == 0 || t.rowHeights.length == 0)
+                    continue;
+                TableOverlay o = page.addTableOverlay(t.x, t.y, t.rowHeights.length, t.colWidths.length,
+                        this::setupCell);
+                o.load(t.colWidths, t.rowHeights, t.offX, t.offY, t.merges, t.cells);
+                levels.put(o, t.level);
+            }
+            page.orderLayers(levels);
+
+            for (PageContent.FloatingTextBoxContent t : content.textBoxes) {
+                TextBoxOverlay o = page.addTextBoxOverlay(t.x, t.y, t.width, this::setupCell);
+                o.load(t);
+                levels.put(o, t.level);
+            }
+
             if (content.landscape != (page.getPane().getWidth() > page.getPane().getHeight())) {
                 new ToggleOrientation(page).execute();
             }
@@ -463,12 +504,21 @@ public class InputController {
         for (int i = 0; i < pages.size(); i++)
             pages.get(i).setPageNumber(i + 1);
         page.applyMargins();
-        attachContextMenu(page);
+        attachContextMenu(page, new CodeRunController(page));
         new BackslashInputHandler(page.getEditor(), commandRegistry,
                 type -> new InsertShape(page, type).execute(),
-                () -> new InsertArrow(page).execute());
+                () -> new InsertArrow(page).execute(),
+                () -> new InsertTable(page, this::setupCell).execute());
         new CodeBlockStyler(page.getEditor());
+        new LinkHandler(page.getEditor());
+        new TextSelectionMover(page, this::setupCell);
         page.getEditor().richChanges().subscribe(c -> scheduleReflow(page));
+    }
+
+    private void setupCell(RichTextArea cell) {
+        applySelectionColor(cell);
+        new BackslashInputHandler(cell, commandRegistry);
+        new LinkHandler(cell);
     }
 
     @FXML

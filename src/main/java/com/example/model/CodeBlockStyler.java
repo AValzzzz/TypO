@@ -1,10 +1,19 @@
 package com.example.model;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Base64;
+import java.util.List;
+import java.util.Objects;
 import java.nio.charset.StandardCharsets;
 
+import org.fxmisc.richtext.model.StyleSpan;
+import org.fxmisc.richtext.model.StyleSpans;
+import org.fxmisc.richtext.model.StyleSpansBuilder;
+
+import com.example.model.code.syntax.Language;
+import com.example.model.code.syntax.Languages;
+import com.example.model.code.syntax.SyntaxHighlighter;
+import com.example.model.code.syntax.TokenType;
 import com.example.model.settings.AppSettings;
 import com.example.model.settings.CodeTheme;
 import com.example.view.RichTextArea;
@@ -20,24 +29,36 @@ public class CodeBlockStyler {
     static {
         AppSettings.getInstance().codeThemeProperty().addListener((obs, o, n) -> {
             for (CodeBlockStyler s : ACTIVE)
-                Platform.runLater(s::rescan);
+                s.scheduleRescan();
         });
     }
 
     private final RichTextArea editor;
     private boolean updating = false;
+    private boolean scheduled = false;
     private String injectedStylesheet;
 
     public CodeBlockStyler(RichTextArea editor) {
         this.editor = editor;
         ACTIVE.add(this);
 
-        editor.addEventFilter(KeyEvent.KEY_TYPED, e -> Platform.runLater(this::rescan));
-        editor.addEventFilter(KeyEvent.KEY_PRESSED, e -> Platform.runLater(this::rescan));
-        editor.caretPositionProperty().addListener((obs, o, n) -> Platform.runLater(this::rescan));
+        editor.addEventFilter(KeyEvent.KEY_TYPED, e -> scheduleRescan());
+        editor.addEventFilter(KeyEvent.KEY_PRESSED, e -> scheduleRescan());
+        editor.caretPositionProperty().addListener((obs, o, n) -> scheduleRescan());
+        editor.plainTextChanges().subscribe(c -> scheduleRescan());
 
         refreshCaretStylesheet();
         AppSettings.getInstance().codeThemeProperty().addListener((obs, o, n) -> refreshCaretStylesheet());
+    }
+
+    private void scheduleRescan() {
+        if (scheduled)
+            return;
+        scheduled = true;
+        Platform.runLater(() -> {
+            scheduled = false;
+            rescan();
+        });
     }
 
     private void refreshCaretStylesheet() {
@@ -89,10 +110,7 @@ public class CodeBlockStyler {
 
                 styleFenceLine(open, caretInside);
                 styleFenceLine(close, caretInside);
-
-                for (int i = open + 1; i < close; i++) {
-                    styleBodyLine(i);
-                }
+                styleBody(open, close);
             }
 
             for (int i = 0; i < paragraphCount; i++) {
@@ -127,10 +145,14 @@ public class CodeBlockStyler {
         int start = editor.position(paragraph, 0).toOffset();
         int end = editor.position(paragraph, len).toOffset();
 
-        editor.applyStyle(start, end, s -> s.withCodeTheme(null).withFontSize(
-                s.fontSize() != null && s.fontSize() == 1 ? 12 : s.fontSize()).withTextColor(
-                        s.textColor() == Color.TRANSPARENT || s.textColor() == Color.WHITESMOKE ? null
-                                : s.textColor()));
+        editor.applyStyle(start, end, s -> {
+            Color color = s.textColor();
+            boolean wasCode = s.codeTheme() != null;
+            if (wasCode || color == Color.TRANSPARENT || color == Color.WHITESMOKE)
+                color = null;
+            Integer size = s.fontSize() != null && s.fontSize() == 1 ? Integer.valueOf(12) : s.fontSize();
+            return s.withCodeTheme(null).withFontSize(size).withTextColor(color);
+        });
         editor.setParagraphCodeTheme(paragraph, null);
     }
 
@@ -149,13 +171,73 @@ public class CodeBlockStyler {
         editor.setParagraphCodeTheme(paragraph, theme);
     }
 
-    private void styleBodyLine(int paragraph) {
-        CodeTheme theme = AppSettings.getInstance().codeThemeProperty().get();
-        int len = editor.getParagraphLength(paragraph);
-        int start = editor.position(paragraph, 0).toOffset();
-        int end = editor.position(paragraph, len).toOffset();
+    private Language languageOf(int fenceParagraph) {
+        String line = editor.getParagraph(fenceParagraph).getText().trim();
+        String tag = line.length() > 3 ? line.substring(3).trim() : "";
+        int space = 0;
+        while (space < tag.length() && !Character.isWhitespace(tag.charAt(space)))
+            space++;
+        return Languages.forTag(tag.substring(0, space));
+    }
 
-        editor.applyStyle(start, end, s -> s.withCodeTheme(theme).withTextColor(null));
+    private void styleBody(int open, int close) {
+        int first = open + 1;
+        int last = close - 1;
+        if (first > last)
+            return;
+
+        CodeTheme theme = AppSettings.getInstance().codeThemeProperty().get();
+        Language language = languageOf(open);
+
+        int[] offsets = new int[last - first + 1];
+        StringBuilder code = new StringBuilder();
+        for (int p = first; p <= last; p++) {
+            offsets[p - first] = code.length();
+            code.append(editor.getParagraph(p).getText());
+            if (p < last)
+                code.append('\n');
+        }
+
+        TokenType[] tokens = SyntaxHighlighter.highlight(code.toString(), language);
+        for (int p = first; p <= last; p++)
+            styleBodyLine(p, tokens, offsets[p - first], theme);
+    }
+
+    private void styleBodyLine(int paragraph, TokenType[] tokens, int offset, CodeTheme theme) {
+        int len = editor.getParagraphLength(paragraph);
+        if (len > 0) {
+            int start = editor.position(paragraph, 0).toOffset();
+            StyleSpans<TextStyle> spans = editor.getStyleSpans(start, start + len);
+            StyleSpansBuilder<TextStyle> builder = new StyleSpansBuilder<>();
+            boolean changed = false;
+            int pos = 0;
+
+            for (StyleSpan<TextStyle> span : spans) {
+                int spanEnd = pos + span.getLength();
+                int runStart = pos;
+                while (runStart < spanEnd) {
+                    Color color = colorFor(tokens[offset + runStart], theme);
+                    int runEnd = runStart + 1;
+                    while (runEnd < spanEnd && Objects.equals(colorFor(tokens[offset + runEnd], theme), color))
+                        runEnd++;
+
+                    TextStyle old = span.getStyle();
+                    TextStyle next = old.withCodeTheme(theme).withTextColor(color);
+                    if (!next.equals(old))
+                        changed = true;
+                    builder.add(next, runEnd - runStart);
+                    runStart = runEnd;
+                }
+                pos = spanEnd;
+            }
+
+            if (changed)
+                editor.setStyleSpans(start, builder.create());
+        }
         editor.setParagraphCodeTheme(paragraph, theme);
+    }
+
+    private static Color colorFor(TokenType type, CodeTheme theme) {
+        return type == null ? null : theme.tokenColor(type);
     }
 }

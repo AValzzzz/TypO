@@ -16,64 +16,72 @@ public record TextStyle(
         Color highlight,
         Color textColor,
         Integer fontSize,
-        Double baselineShift, CodeTheme codeTheme) {
+        Double baselineShift, CodeTheme codeTheme,
+        String link) {
+
+    public static final String LINK_COLOR = "#0563C1";
 
     public static final TextStyle DEFAULT = new TextStyle(false, false, false, false, null, false, null, null, 12,
-            null, null);
+            null, null, null);
 
     public TextStyle withBold(boolean v) {
         return new TextStyle(v, italic, strikethrough, underline, underlineColor, underlineDotted, highlight, textColor,
-                fontSize, baselineShift, codeTheme);
+                fontSize, baselineShift, codeTheme, link);
     }
 
     public TextStyle withItalic(boolean v) {
         return new TextStyle(bold, v, strikethrough, underline, underlineColor, underlineDotted, highlight, textColor,
-                fontSize, baselineShift, codeTheme);
+                fontSize, baselineShift, codeTheme, link);
     }
 
     public TextStyle withStrikethrough(boolean v) {
         return new TextStyle(bold, italic, v, underline, underlineColor, underlineDotted, highlight, textColor,
-                fontSize, baselineShift, codeTheme);
+                fontSize, baselineShift, codeTheme, link);
     }
 
     public TextStyle withUnderline(boolean v) {
         return new TextStyle(bold, italic, strikethrough, v, underlineColor, underlineDotted, highlight, textColor,
-                fontSize, baselineShift, codeTheme);
+                fontSize, baselineShift, codeTheme, link);
     }
 
     public TextStyle withUnderlineColor(Color v) {
         return new TextStyle(bold, italic, strikethrough, underline, v, underlineDotted, highlight, textColor, fontSize,
-                baselineShift, codeTheme);
+                baselineShift, codeTheme, link);
     }
 
     public TextStyle withUnderlineDotted(boolean v) {
         return new TextStyle(bold, italic, strikethrough, underline, underlineColor, v, highlight, textColor, fontSize,
-                baselineShift, codeTheme);
+                baselineShift, codeTheme, link);
     }
 
     public TextStyle withHighlight(Color v) {
         return new TextStyle(bold, italic, strikethrough, underline, underlineColor, underlineDotted, v, textColor,
-                fontSize, baselineShift, codeTheme);
+                fontSize, baselineShift, codeTheme, link);
     }
 
     public TextStyle withTextColor(Color v) {
         return new TextStyle(bold, italic, strikethrough, underline, underlineColor, underlineDotted, highlight, v,
-                fontSize, baselineShift, codeTheme);
+                fontSize, baselineShift, codeTheme, link);
     }
 
     public TextStyle withFontSize(Integer v) {
         return new TextStyle(bold, italic, strikethrough, underline, underlineColor, underlineDotted, highlight,
-                textColor, v, baselineShift, codeTheme);
+                textColor, v, baselineShift, codeTheme, link);
     }
 
     public TextStyle withBaselineShift(Double v) {
         return new TextStyle(bold, italic, strikethrough, underline, underlineColor, underlineDotted, highlight,
-                textColor, fontSize, v, codeTheme);
+                textColor, fontSize, v, codeTheme, link);
     }
 
     public TextStyle withCodeTheme(CodeTheme v) {
         return new TextStyle(bold, italic, strikethrough, underline, underlineColor, underlineDotted, highlight,
-                textColor, fontSize, baselineShift, v);
+                textColor, fontSize, baselineShift, v, link);
+    }
+
+    public TextStyle withLink(String v) {
+        return new TextStyle(bold, italic, strikethrough, underline, underlineColor, underlineDotted, highlight,
+                textColor, fontSize, baselineShift, codeTheme, v);
     }
 
     public boolean codeBlock() {
@@ -117,6 +125,11 @@ public record TextStyle(
         }
         if (textColor != null)
             css.append("-fx-fill: ").append(ColorUtil.toCssRgba(textColor)).append(";");
+        if (link != null) {
+            css.append("-fx-fill: ").append(LINK_COLOR).append(";");
+            css.append("-rtfx-underline-color: ").append(LINK_COLOR).append(";")
+                    .append("-rtfx-underline-width: 1;");
+        }
         if (fontSize != null)
             css.append("-fx-font-size: ").append(fontSize).append("px;");
         if (baselineShift != null) {

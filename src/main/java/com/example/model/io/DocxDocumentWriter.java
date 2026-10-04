@@ -18,6 +18,7 @@ import org.apache.poi.xwpf.usermodel.UnderlinePatterns;
 import org.apache.poi.xwpf.usermodel.VerticalAlign;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFFooter;
+import org.apache.poi.xwpf.usermodel.XWPFHyperlinkRun;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.apache.poi.xwpf.usermodel.XWPFRun;
 import org.openxmlformats.schemas.officeDocument.x2006.sharedTypes.STVerticalAlignRun;
@@ -37,7 +38,9 @@ import com.example.model.TextStyle;
 import com.example.model.io.PageContent.ParagraphContent;
 import com.example.model.io.PageContent.RunContent;
 import com.example.model.language.maths.MathObject;
+import com.example.model.settings.CodeTheme;
 
+import javafx.scene.paint.Color;
 import javafx.scene.text.TextAlignment;
 
 public final class DocxDocumentWriter {
@@ -92,6 +95,14 @@ public final class DocxDocumentWriter {
             writeFloatingArrowParagraph(doc, arrow);
         }
 
+        for (PageContent.FloatingTableContent table : page.tables) {
+            writeFloatingTableParagraph(doc, table);
+        }
+
+        for (PageContent.FloatingTextBoxContent box : page.textBoxes) {
+            writeFloatingTextBoxParagraph(doc, box);
+        }
+
         CTSectPr sectPr;
         if (lastPage) {
             CTBody body = doc.getDocument().getBody();
@@ -126,7 +137,9 @@ public final class DocxDocumentWriter {
     }
 
     private void writeTextRun(XWPFParagraph p, String text, TextStyle style, boolean codeBlockParagraph) {
-        XWPFRun run = p.createRun();
+        XWPFRun run = (style != null && style.link() != null)
+                ? p.createHyperlinkRun(style.link())
+                : p.createRun();
         run.setText(text == null ? "" : text);
         applyStyle(run, style, codeBlockParagraph);
     }
@@ -156,7 +169,8 @@ public final class DocxDocumentWriter {
             visible.setText("[image]");
         }
 
-        addHiddenRun(p, FloatingImageCodec.encode(img.x, img.y, img.width, img.height, img.rotation));
+        addHiddenRun(p, FloatingImageCodec.encode(img.x, img.y, img.width, img.height, img.rotation,
+                img.level, img.opacity));
         addHiddenRun(p, MathObjectCodec.encode(new MathObject(MathObject.Type.IMAGE, img.format + "|" + img.base64)));
     }
 
@@ -182,6 +196,26 @@ public final class DocxDocumentWriter {
         addHiddenRun(p, PageNumberCodec.encode());
     }
 
+    private void writeFloatingTableParagraph(XWPFDocument doc, PageContent.FloatingTableContent table) {
+        XWPFParagraph p = doc.createParagraph();
+        p.createRun();
+        addHiddenRun(p, FloatingTableCodec.encode(table));
+    }
+
+    private PageContent.FloatingTableContent tryReadFloatingTable(XWPFParagraph paragraph) {
+        for (XWPFRun run : paragraph.getRuns()) {
+            String text = run.text();
+            if (isHidden(run) && FloatingTableCodec.isToken(text)) {
+                try {
+                    return FloatingTableCodec.decode(text);
+                } catch (RuntimeException e) {
+                    return null;
+                }
+            }
+        }
+        return null;
+    }
+
     private PageContent.FloatingShapeContent tryReadFloatingShape(XWPFParagraph paragraph) {
         for (XWPFRun run : paragraph.getRuns()) {
             String text = run.text();
@@ -195,6 +229,27 @@ public final class DocxDocumentWriter {
         XWPFParagraph p = doc.createParagraph();
         p.createRun();
         addHiddenRun(p, FloatingArrowCodec.encode(arrow));
+    }
+
+    private void writeFloatingTextBoxParagraph(XWPFDocument doc, PageContent.FloatingTextBoxContent box) {
+        XWPFParagraph p = doc.createParagraph();
+        String visible = box.plainText == null ? "" : box.plainText.replace("\uFFFC", "").replace('\n', ' ');
+        p.createRun().setText(visible);
+        addHiddenRun(p, FloatingTextBoxCodec.encode(box));
+    }
+
+    private PageContent.FloatingTextBoxContent tryReadFloatingTextBox(XWPFParagraph paragraph) {
+        for (XWPFRun run : paragraph.getRuns()) {
+            String text = run.text();
+            if (isHidden(run) && FloatingTextBoxCodec.isToken(text)) {
+                try {
+                    return FloatingTextBoxCodec.decode(text);
+                } catch (RuntimeException e) {
+                    return null;
+                }
+            }
+        }
+        return null;
     }
 
     private PageContent.FloatingArrowContent tryReadFloatingArrow(XWPFParagraph paragraph) {
@@ -232,15 +287,22 @@ public final class DocxDocumentWriter {
         }
 
         if (style.textColor() != null) {
-            run.setColor(ColorUtil.toHex(style.textColor()));
+            Color exported = mono ? CodeTheme.toDarkPalette(style.textColor()) : style.textColor();
+            run.setColor(ColorUtil.toHex(exported));
         } else if (mono) {
             run.setColor(CODE_BLOCK_FG);
         }
+
         if (style.fontSize() != null) {
             run.setFontSize(style.fontSize());
         }
         if (style.baselineShift() != null) {
             run.setSubscript(style.baselineShift() < 0 ? VerticalAlign.SUBSCRIPT : VerticalAlign.SUPERSCRIPT);
+        }
+
+        if (style.link() != null) {
+            run.setColor("3588DB");
+            run.setUnderline(UnderlinePatterns.SINGLE);
         }
     }
 
@@ -286,6 +348,8 @@ public final class DocxDocumentWriter {
             List<PageContent.FloatingImageContent> currentImages = new ArrayList<>();
             List<PageContent.FloatingShapeContent> currentShapes = new ArrayList<>();
             List<PageContent.FloatingArrowContent> currentArrows = new ArrayList<>();
+            List<PageContent.FloatingTableContent> currentTables = new ArrayList<>();
+            List<PageContent.FloatingTextBoxContent> currentTextBoxes = new ArrayList<>();
 
             for (XWPFParagraph paragraph : doc.getParagraphs()) {
                 CTSectPr sectPr = (paragraph.getCTP().isSetPPr() && paragraph.getCTP().getPPr().isSetSectPr())
@@ -293,11 +357,17 @@ public final class DocxDocumentWriter {
                         : null;
 
                 PageContent.FloatingImageContent floatingImage = tryReadFloatingImage(paragraph);
-                PageContent.FloatingShapeContent floatingShape = floatingImage == null ? tryReadFloatingShape(paragraph)
+                PageContent.FloatingShapeContent floatingShape = floatingImage == null
+                        ? tryReadFloatingShape(paragraph)
                         : null;
                 PageContent.FloatingArrowContent floatingArrow = (floatingImage == null && floatingShape == null)
                         ? tryReadFloatingArrow(paragraph)
                         : null;
+                PageContent.FloatingTableContent floatingTable = (floatingImage == null && floatingShape == null
+                        && floatingArrow == null) ? tryReadFloatingTable(paragraph) : null;
+                PageContent.FloatingTextBoxContent floatingTextBox = (floatingImage == null && floatingShape == null
+                        && floatingArrow == null && floatingTable == null) ? tryReadFloatingTextBox(paragraph) : null;
+
                 boolean boundaryOnly = sectPr != null && paragraph.getRuns().isEmpty();
 
                 if (floatingImage != null)
@@ -306,36 +376,47 @@ public final class DocxDocumentWriter {
                     currentShapes.add(floatingShape);
                 else if (floatingArrow != null)
                     currentArrows.add(floatingArrow);
+                else if (floatingTable != null)
+                    currentTables.add(floatingTable);
                 else if (!boundaryOnly)
                     current.add(readParagraph(paragraph));
+                else if (floatingTextBox != null)
+                    currentTextBoxes.add(floatingTextBox);
 
                 if (sectPr != null) {
                     PageContent pc = finish(current, sectPr);
                     pc.images.addAll(currentImages);
                     pc.shapes.addAll(currentShapes);
                     pc.arrows.addAll(currentArrows);
+                    pc.tables.addAll(currentTables);
+                    pc.textBoxes.addAll(currentTextBoxes);
                     pages.add(pc);
                     current = new ArrayList<>();
                     currentImages = new ArrayList<>();
                     currentShapes = new ArrayList<>();
                     currentArrows = new ArrayList<>();
+                    currentTables = new ArrayList<>();
+                    currentTextBoxes = new ArrayList<>();
                 }
             }
 
             CTBody body = doc.getDocument().getBody();
             CTSectPr bodySectPr = body.isSetSectPr() ? body.getSectPr() : null;
-            if (!current.isEmpty() || !currentImages.isEmpty() || pages.isEmpty()) {
+            if (!current.isEmpty() || !currentImages.isEmpty() || !currentShapes.isEmpty()
+                    || !currentArrows.isEmpty() || !currentTables.isEmpty() || pages.isEmpty()) {
                 PageContent pc = finish(current, bodySectPr);
                 pc.images.addAll(currentImages);
                 pc.shapes.addAll(currentShapes);
                 pc.arrows.addAll(currentArrows);
+                pc.tables.addAll(currentTables);
+                pc.textBoxes.addAll(currentTextBoxes);
+                pc.textBoxes.addAll(currentTextBoxes);
                 pages.add(pc);
             }
-
-            boolean numbered = readPageNumbersFlag(doc);
-            for (PageContent pc : pages)
-                pc.showPageNumbers = numbered;
+            if (!pages.isEmpty() && readPageNumbersFlag(doc))
+                pages.get(0).showPageNumbers = true;
         }
+
         return pages;
     }
 
@@ -359,8 +440,11 @@ public final class DocxDocumentWriter {
 
         String raw = obj.getRaw();
         int sep = raw.indexOf('|');
-        return new PageContent.FloatingImageContent(pos[0], pos[1], pos[2], pos[3],
+        PageContent.FloatingImageContent image = new PageContent.FloatingImageContent(pos[0], pos[1], pos[2], pos[3],
                 raw.substring(0, sep), raw.substring(sep + 1), pos[4]);
+        image.level = (int) pos[5];
+        image.opacity = pos[6];
+        return image;
     }
 
     private PageContent finish(List<ParagraphContent> paragraphs, CTSectPr sectPr) {
@@ -411,8 +495,9 @@ public final class DocxDocumentWriter {
                 .withStrikethrough(run.isStrikeThrough())
                 .withCodeBlock(codeBlock);
 
+        boolean isLink = run instanceof XWPFHyperlinkRun;
         UnderlinePatterns underline = run.getUnderline();
-        if (underline != null && underline != UnderlinePatterns.NONE) {
+        if (!isLink && underline != null && underline != UnderlinePatterns.NONE) {
             style = style.withUnderline(true).withUnderlineDotted(underline == UnderlinePatterns.DOTTED);
             String uColor = null;
             if (run.getCTR().isSetRPr() && run.getCTR().getRPr().sizeOfUArray() > 0) {
@@ -427,7 +512,7 @@ public final class DocxDocumentWriter {
             style = style.withHighlight(ColorUtil.fromHex(shadingHex));
 
         String color = run.getColor();
-        if (color != null && !(codeBlock && CODE_BLOCK_FG.equalsIgnoreCase(color)))
+        if (!isLink && color != null && !(codeBlock && CODE_BLOCK_FG.equalsIgnoreCase(color)))
             style = style.withTextColor(ColorUtil.fromHex(color));
 
         Double fontSize = run.getFontSizeAsDouble();

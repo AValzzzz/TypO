@@ -35,6 +35,7 @@ public class ShapeFormatMenu extends ContextMenu {
                 sliderRow("Épaisseur de la bordure", new Slider(0, 30, shape.getStrokeWidth()),
                         shape::setStrokeWidth),
                 new SeparatorMenuItem());
+        getItems().addAll(LayerMenu.items(shape));
     }
 
     private static Color opaque(Color c) {

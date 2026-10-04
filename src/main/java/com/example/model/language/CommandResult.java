@@ -14,6 +14,7 @@ public class CommandResult {
     private MathObject mathObject;
     private ShapeType shape;
     private boolean arrow = false;
+    private boolean table = false;
 
     public CommandResult(String text) {
         this(text, 0, 0, null, null);
@@ -46,8 +47,18 @@ public class CommandResult {
         return r;
     }
 
+    public static CommandResult ofTable() {
+        CommandResult r = new CommandResult("");
+        r.table = true;
+        return r;
+    }
+
     public boolean isArrow() {
         return arrow;
+    }
+
+    public boolean isTable() {
+        return table;
     }
 
     public String getText() {
