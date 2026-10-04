@@ -1,7 +1,9 @@
 package com.example.model.io;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
 
 import org.fxmisc.richtext.model.Paragraph;
 import org.fxmisc.richtext.model.StyledSegment;
@@ -9,6 +11,8 @@ import org.reactfx.util.Either;
 
 import com.example.model.ParagraphStyle;
 import com.example.model.TextStyle;
+import com.example.model.io.PageContent.ParagraphContent;
+import com.example.model.io.PageContent.RunContent;
 import com.example.model.language.maths.MathObject;
 import com.example.view.RichTextArea;
 
@@ -79,6 +83,108 @@ public final class CellCodec {
         }
     }
 
+    public static List<ParagraphContent> parse(String encoded) {
+        List<ParagraphContent> out = new ArrayList<>();
+        if (encoded == null || encoded.isEmpty())
+            return out;
+        try {
+            for (String p : encoded.split("!", -1)) {
+                int hash = p.indexOf('#');
+                TextAlignment align = hash > 0 ? alignFrom(p.charAt(0)) : TextAlignment.LEFT;
+                String runsPart = hash >= 0 ? p.substring(hash + 1) : p;
+                ParagraphContent pc = new ParagraphContent(false, align);
+                for (String run : runsPart.split("&")) {
+                    if (run.isEmpty())
+                        continue;
+                    String[] parts = run.split(":", 3);
+                    TextStyle style = decodeStyle(parts[1]);
+                    String payload = parts.length > 2 ? unb64(parts[2]) : "";
+                    if (parts[0].equals("M")) {
+                        if (MathObjectCodec.isToken(payload))
+                            pc.runs.add(RunContent.math(MathObjectCodec.decode(payload), style));
+                    } else if (!payload.isEmpty()) {
+                        pc.runs.add(RunContent.text(payload, style));
+                    }
+                }
+                out.add(pc);
+            }
+        } catch (RuntimeException e) {
+            out.clear();
+        }
+        return out;
+    }
+
+    public static String serialize(List<ParagraphContent> paragraphs) {
+        if (paragraphs == null || paragraphs.isEmpty())
+            return "L#";
+        StringBuilder sb = new StringBuilder();
+        boolean firstParagraph = true;
+        for (ParagraphContent p : paragraphs) {
+            if (!firstParagraph)
+                sb.append('!');
+            firstParagraph = false;
+            sb.append(alignChar(p.alignment)).append('#');
+            boolean firstRun = true;
+            for (RunContent r : p.runs) {
+                if (!r.isMath() && (r.text == null || r.text.isEmpty()))
+                    continue;
+                if (!firstRun)
+                    sb.append('&');
+                firstRun = false;
+                String style = encodeStyle(r.style == null ? TextStyle.DEFAULT : r.style);
+                if (r.isMath())
+                    sb.append("M:").append(style).append(':').append(b64(MathObjectCodec.encode(r.math)));
+                else
+                    sb.append("T:").append(style).append(':').append(b64(r.text));
+            }
+        }
+        return sb.toString();
+    }
+
+    public static String normalize(String encoded) {
+        List<ParagraphContent> out = new ArrayList<>();
+        for (ParagraphContent p : parse(encoded)) {
+            ParagraphContent np = new ParagraphContent(false, p.alignment);
+            for (RunContent r : p.runs) {
+                TextStyle st = canonical(r.style);
+                if (r.isMath()) {
+                    np.runs.add(RunContent.math(r.math, st));
+                    continue;
+                }
+                if (r.text == null || r.text.isEmpty())
+                    continue;
+                int n = np.runs.size();
+                if (n > 0 && !np.runs.get(n - 1).isMath() && np.runs.get(n - 1).style.equals(st))
+                    np.runs.set(n - 1, RunContent.text(np.runs.get(n - 1).text + r.text, st));
+                else
+                    np.runs.add(RunContent.text(r.text, st));
+            }
+            out.add(np);
+        }
+        return serialize(out);
+    }
+
+    private static TextStyle canonical(TextStyle s) {
+        if (s == null)
+            s = TextStyle.DEFAULT;
+        Color ul = s.underline() ? canonColor(s.underlineColor()) : null;
+        boolean dotted = s.underline() && s.underlineDotted();
+        Integer size = s.fontSize() == null ? Integer.valueOf(12) : s.fontSize();
+        Double shift = null;
+        if (s.baselineShift() != null) {
+            long pos = Math.round(-s.baselineShift() * 2);
+            if (pos != 0)
+                shift = -pos / 2.0;
+        }
+        return s.withUnderlineColor(ul).withUnderlineDotted(dotted).withFontSize(size).withBaselineShift(shift)
+                .withTextColor(canonColor(s.textColor())).withHighlight(canonColor(s.highlight()))
+                .withCodeTheme(null).withLink(null);
+    }
+
+    private static Color canonColor(Color c) {
+        return c == null ? null : ColorUtil.fromHex(ColorUtil.toHex(c));
+    }
+
     private static String encodeStyle(TextStyle s) {
         return String.join(",",
                 flag(s.bold()), flag(s.italic()), flag(s.strikethrough()), flag(s.underline()),
@@ -115,7 +221,7 @@ public final class CellCodec {
     }
 
     private static char alignChar(TextAlignment a) {
-        return switch (a) {
+        return switch (a == null ? TextAlignment.LEFT : a) {
             case CENTER -> 'C';
             case RIGHT -> 'R';
             case JUSTIFY -> 'J';
