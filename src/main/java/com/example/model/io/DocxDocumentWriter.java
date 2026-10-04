@@ -38,7 +38,9 @@ import com.example.model.TextStyle;
 import com.example.model.io.PageContent.ParagraphContent;
 import com.example.model.io.PageContent.RunContent;
 import com.example.model.language.maths.MathObject;
+import com.example.model.settings.CodeTheme;
 
+import javafx.scene.paint.Color;
 import javafx.scene.text.TextAlignment;
 
 public final class DocxDocumentWriter {
@@ -285,10 +287,12 @@ public final class DocxDocumentWriter {
         }
 
         if (style.textColor() != null) {
-            run.setColor(ColorUtil.toHex(style.textColor()));
+            Color exported = mono ? CodeTheme.toDarkPalette(style.textColor()) : style.textColor();
+            run.setColor(ColorUtil.toHex(exported));
         } else if (mono) {
             run.setColor(CODE_BLOCK_FG);
         }
+
         if (style.fontSize() != null) {
             run.setFontSize(style.fontSize());
         }
