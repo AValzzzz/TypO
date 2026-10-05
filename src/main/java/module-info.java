@@ -4,13 +4,13 @@ module com.example.javafx {
     requires com.gluonhq.charm.glisten;
     requires com.gluonhq.attach.util;
     requires org.fxmisc.richtext;
-    requires javafx.graphics;
+    requires transitive javafx.graphics;
     requires reactfx;
     requires org.fxmisc.flowless;
 
     requires javafx.swing;
     requires java.desktop;
-    
+
     requires java.xml;
 
     requires org.apache.poi.ooxml;
@@ -19,9 +19,12 @@ module com.example.javafx {
     requires javafx.base;
     requires org.apache.poi.poi;
 
+    requires com.google.gson;
+
     opens com.example to javafx.graphics, javafx.fxml;
     opens com.example.controller to javafx.fxml;
     opens com.example.view to javafx.fxml;
+    opens com.example.model.help to com.google.gson;
 
     exports com.example;
     exports com.example.view;
