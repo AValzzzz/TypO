@@ -7,6 +7,7 @@ import java.util.TreeSet;
 import java.util.function.Consumer;
 
 import com.example.model.TextStyle;
+import com.example.model.i18n.I18n;
 import com.example.model.io.CellCodec;
 
 import javafx.application.Platform;
@@ -437,7 +438,7 @@ public class TableOverlay extends Pane implements Layerable {
         List<MenuItem> extra = new ArrayList<>();
         if (cellSel != null && countUnits(cellSel) > 1) {
             int[] snapshot = cellSel.clone();
-            MenuItem merge = new MenuItem("Fusionner les cellules");
+            MenuItem merge = new MenuItem(I18n.t("table.merge"));
             merge.setOnAction(e -> mergeCells(snapshot));
             extra.add(merge);
         }
@@ -445,7 +446,7 @@ public class TableOverlay extends Pane implements Layerable {
             int[] pos = positionOf(ctxCell);
             int[] m = pos == null ? null : mergeContaining(pos[0], pos[1]);
             if (m != null) {
-                MenuItem split = new MenuItem("Séparer les cellules");
+                MenuItem split = new MenuItem(I18n.t("table.split"));
                 split.setOnAction(e -> unmerge(m));
                 extra.add(split);
             }

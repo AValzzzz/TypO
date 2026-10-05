@@ -2,6 +2,8 @@ package com.example.view;
 
 import java.util.function.Consumer;
 
+import com.example.model.i18n.I18n;
+
 import javafx.geometry.Pos;
 import javafx.scene.control.ColorPicker;
 import javafx.scene.control.ContextMenu;
@@ -19,20 +21,20 @@ public class ShapeFormatMenu extends ContextMenu {
         Slider strokeOpacity = new Slider(0, 100, shape.getStrokeOpacity() * 100);
 
         getItems().addAll(
-                colorRow("Couleur du fond", shape.getFillColor(), shape.getFillOpacity(), c -> {
+                colorRow(I18n.t("shape.fillColor"), shape.getFillColor(), shape.getFillOpacity(), c -> {
                     shape.setFillColor(opaque(c));
                     if (c.getOpacity() < 1)
                         fillOpacity.setValue(c.getOpacity() * 100);
                 }),
-                sliderRow("Opacité du fond", fillOpacity, v -> shape.setFillOpacity(v / 100)),
+                sliderRow(I18n.t("shape.fillOpacity"), fillOpacity, v -> shape.setFillOpacity(v / 100)),
                 new SeparatorMenuItem(),
-                colorRow("Couleur de la bordure", shape.getStrokeColor(), shape.getStrokeOpacity(), c -> {
+                colorRow(I18n.t("shape.borderColor"), shape.getStrokeColor(), shape.getStrokeOpacity(), c -> {
                     shape.setStrokeColor(opaque(c));
                     if (c.getOpacity() < 1)
                         strokeOpacity.setValue(c.getOpacity() * 100);
                 }),
-                sliderRow("Opacité de la bordure", strokeOpacity, v -> shape.setStrokeOpacity(v / 100)),
-                sliderRow("Épaisseur de la bordure", new Slider(0, 30, shape.getStrokeWidth()),
+                sliderRow(I18n.t("shape.borderOpacity"), strokeOpacity, v -> shape.setStrokeOpacity(v / 100)),
+                sliderRow(I18n.t("shape.borderWidth"), new Slider(0, 30, shape.getStrokeWidth()),
                         shape::setStrokeWidth),
                 new SeparatorMenuItem());
         getItems().addAll(LayerMenu.items(shape));

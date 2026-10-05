@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import com.example.model.Page;
+import com.example.model.i18n.I18n;
 
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
@@ -13,8 +14,8 @@ public class DeletePage implements AppAction {
     private final Page page;
     private final VBox pagesContainer;
     private final List<Page> pages;
-    
-    public DeletePage (Page page, VBox pagesContainer, List<Page> pages) {
+
+    public DeletePage(Page page, VBox pagesContainer, List<Page> pages) {
         this.page = page;
         this.pagesContainer = pagesContainer;
         this.pages = pages;
@@ -24,14 +25,14 @@ public class DeletePage implements AppAction {
     public void execute() {
         String text = page.getText();
 
-        if(text != null && !text.isBlank()) {
+        if (text != null && !text.isBlank()) {
             Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-            alert.setTitle("Delete Page");
-            alert.setHeaderText("This page contains text.");
-            alert.setContentText("Are you sure you want to delete it? This cannot be undone");
+            alert.setTitle(I18n.t("dialog.deletePage.title"));
+            alert.setHeaderText(I18n.t("dialog.deletePage.header"));
+            alert.setContentText(I18n.t("dialog.deletePage.content"));
             
             Optional<ButtonType> result = alert.showAndWait();
-            if(result.isEmpty() || result.get() != ButtonType.OK) {
+            if (result.isEmpty() || result.get() != ButtonType.OK) {
                 return;
             }
         }

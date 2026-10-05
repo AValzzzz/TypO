@@ -2,6 +2,8 @@ package com.example.view;
 
 import java.util.function.Consumer;
 
+import com.example.model.i18n.I18n;
+
 import javafx.geometry.Pos;
 import javafx.scene.control.ColorPicker;
 import javafx.scene.control.ContextMenu;
@@ -18,13 +20,13 @@ public class ArrowFormatMenu extends ContextMenu {
         Slider opacity = new Slider(0, 100, arrow.getStrokeOpacity() * 100);
 
         getItems().addAll(
-                colorRow("Couleur", arrow.getStrokeColor(), arrow.getStrokeOpacity(), c -> {
+                colorRow(I18n.t("arrow.color"), arrow.getStrokeColor(), arrow.getStrokeOpacity(), c -> {
                     arrow.setStrokeColor(Color.color(c.getRed(), c.getGreen(), c.getBlue()));
                     if (c.getOpacity() < 1)
                         opacity.setValue(c.getOpacity() * 100);
                 }),
-                sliderRow("Opacité", opacity, v -> arrow.setStrokeOpacity(v / 100)),
-                sliderRow("Épaisseur", new Slider(1, 20, arrow.getStrokeWidth()), arrow::setStrokeWidth));
+                sliderRow(I18n.t("common.opacity"), opacity, v -> arrow.setStrokeOpacity(v / 100)),
+                sliderRow(I18n.t("arrow.thickness"), new Slider(1, 20, arrow.getStrokeWidth()), arrow::setStrokeWidth));
         getItems().add(new SeparatorMenuItem());
         getItems().addAll(LayerMenu.items(arrow));
     }

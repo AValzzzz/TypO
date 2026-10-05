@@ -3,6 +3,8 @@ package com.example.view;
 import java.util.Arrays;
 import java.util.Locale;
 
+import com.example.model.i18n.AppLanguage;
+import com.example.model.i18n.I18n;
 import com.example.model.settings.AppSettings;
 import com.example.model.settings.CodeTheme;
 
@@ -23,7 +25,7 @@ public class SettingsMenu extends ContextMenu {
     private static final int LEFT = 0, TOP = 1, RIGHT = 2, BOTTOM = 3;
 
     private final TextField[] marginFields = new TextField[4];
-    private final CheckBox linkBox = new CheckBox("Lier les quatre");
+    private final CheckBox linkBox = new CheckBox(I18n.t("settings.linkMargins"));
 
     public SettingsMenu() {
         setAutoHide(true);
@@ -43,7 +45,7 @@ public class SettingsMenu extends ContextMenu {
         themeChoice.setValue(settings.codeThemeProperty().get());
         themeChoice.valueProperty().addListener((obs, o, n) -> settings.codeThemeProperty().set(n));
 
-        CheckBox pageNumberBox = new CheckBox("Numéroter les pages");
+        CheckBox pageNumberBox = new CheckBox(I18n.t("settings.pageNumbers"));
         pageNumberBox.setStyle("-fx-text-fill: BLACK;");
         pageNumberBox.selectedProperty().bindBidirectional(settings.showPageNumbersProperty());
 
@@ -53,22 +55,38 @@ public class SettingsMenu extends ContextMenu {
 
         linkBox.setStyle("-fx-text-fill: BLACK;");
 
-        Menu menu = new Menu("Marges (cm)");
+        Menu menu = new Menu(I18n.t("settings.margins"));
         menu.getItems().addAll(
-                row("Gauche", marginFields[LEFT]),
-                row("Haut", marginFields[TOP]),
-                row("Droite", marginFields[RIGHT]),
-                row("Bas", marginFields[BOTTOM]),
+                row(I18n.t("settings.marginLeft"), marginFields[LEFT]),
+                row(I18n.t("settings.marginTop"), marginFields[TOP]),
+                row(I18n.t("settings.marginRight"), marginFields[RIGHT]),
+                row(I18n.t("settings.marginBottom"), marginFields[BOTTOM]),
                 new CustomMenuItem(linkBox, false));
 
+        ChoiceBox<AppLanguage> languageChoice = new ChoiceBox<>();
+        languageChoice.getItems().addAll(AppLanguage.values());
+        languageChoice.setValue(I18n.selected());
+        languageChoice.valueProperty().addListener((obs, o, n) -> {
+            if (n != null)
+                I18n.setSelected(n);
+        });
+
+        Label restartNote = new Label(I18n.t("settings.restartNote"));
+        restartNote.setStyle("-fx-text-fill: #b35c00; -fx-font-size: 11px;");
+        restartNote.visibleProperty().bind(languageChoice.valueProperty().isNotEqualTo(I18n.active()));
+        restartNote.managedProperty().bind(restartNote.visibleProperty());
+
         getItems().addAll(
-                row("Couleur de fond", bgPicker),
-                row("Couleur de sélection", selectionPicker),
+                row(I18n.t("settings.backgroundColor"), bgPicker),
+                row(I18n.t("settings.selectionColor"), selectionPicker),
                 new SeparatorMenuItem(),
-                row("Thème des blocs de code", themeChoice),
+                row(I18n.t("settings.codeTheme"), themeChoice),
                 new SeparatorMenuItem(),
                 new CustomMenuItem(pageNumberBox, false),
-                menu);
+                menu,
+                new SeparatorMenuItem(),
+                row(I18n.t("settings.language"), languageChoice),
+                new CustomMenuItem(restartNote, false));
     }
 
     private TextField createMarginField(int index) {

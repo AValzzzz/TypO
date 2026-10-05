@@ -9,6 +9,7 @@ import java.util.Locale;
 import com.example.model.help.HelpData;
 import com.example.model.help.HelpNode;
 import com.example.model.help.HelpSearch;
+import com.example.model.i18n.I18n;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -47,7 +48,7 @@ public class HelpWindow {
             instance.stage.show();
         } catch (IOException e) {
             instance = null;
-            new Alert(Alert.AlertType.ERROR, "Unable to load the help: " + e.getMessage()).showAndWait();
+            new Alert(Alert.AlertType.ERROR, I18n.t("help.loadError", e.getMessage())).showAndWait();
         }
     }
 
@@ -67,7 +68,7 @@ public class HelpWindow {
     private HelpData data;
 
     private HelpWindow(Window owner) throws IOException {
-        lang = Locale.getDefault().getLanguage().equals("fr") ? "fr" : "en";
+        lang = I18n.active().code();
         data = HelpData.load(lang);
 
         ToggleGroup group = new ToggleGroup();
@@ -120,7 +121,7 @@ public class HelpWindow {
             data = HelpData.load(newLang);
             lang = newLang;
         } catch (IOException e) {
-            new Alert(Alert.AlertType.ERROR, "Unable to load the help: " + e.getMessage()).showAndWait();
+            new Alert(Alert.AlertType.ERROR, I18n.t("help.loadError", e.getMessage())).showAndWait();
             (lang.equals("fr") ? frButton : enButton).setSelected(true);
             return;
         }

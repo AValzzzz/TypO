@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.util.Base64;
 
 import com.example.model.Page;
+import com.example.model.i18n.I18n;
 
 import javafx.scene.image.Image;
 import javafx.stage.FileChooser;
@@ -24,15 +25,16 @@ public class ImportImage implements AppAction {
     @Override
     public void execute() {
         FileChooser chooser = new FileChooser();
-        chooser.setTitle("Importer une image");
+        chooser.setTitle(I18n.t("file.import.title"));
         chooser.getExtensionFilters().addAll(
-            new FileChooser.ExtensionFilter("Images", "*.png", "*.jpg", "*.jpeg", "*.gif", "*.bmp"),
-            new FileChooser.ExtensionFilter("PNG", "*.png"),
-            new FileChooser.ExtensionFilter("JPEG", "*.jpg", "*.jpeg")
-        );
+                new FileChooser.ExtensionFilter(I18n.t("file.filter.images"), "*.png", "*.jpg", "*.jpeg", "*.gif",
+                        "*.bmp"),
+                new FileChooser.ExtensionFilter("PNG", "*.png"),
+                new FileChooser.ExtensionFilter("JPEG", "*.jpg", "*.jpeg"));
 
         File file = chooser.showOpenDialog(owner);
-        if (file == null) return;
+        if (file == null)
+            return;
 
         try {
             byte[] bytes = Files.readAllBytes(file.toPath());

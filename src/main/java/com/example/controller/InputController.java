@@ -30,6 +30,7 @@ import com.example.model.actions.Save;
 import com.example.model.actions.SaveAs;
 import com.example.model.actions.Settings;
 import com.example.model.actions.ToggleOrientation;
+import com.example.model.i18n.I18n;
 import com.example.model.io.ColorUtil;
 import com.example.model.io.DocumentSession;
 import com.example.model.io.PageContent;
@@ -191,13 +192,13 @@ public class InputController {
         ContextMenu pageMenu = new ContextMenu();
         pageMenu.setAutoHide(true);
 
-        MenuItem toggleOrientationItem = new MenuItem("Toggle Orientation (Portrait/Landscape)");
+        MenuItem toggleOrientationItem = new MenuItem(I18n.t("page.toggleOrientation"));
         toggleOrientationItem.setOnAction(e -> {
             new ToggleOrientation(page).execute();
             scheduleReflow(page);
         });
 
-        MenuItem deletePageItem = new MenuItem("Delete Page");
+        MenuItem deletePageItem = new MenuItem(I18n.t("page.delete"));
         deletePageItem.setOnAction(e -> {
             new DeletePage(page, pagesContainer, pages).execute();
             for (int i = 0; i < pages.size(); i++)
@@ -205,7 +206,7 @@ public class InputController {
             clampTranslate();
         });
 
-        MenuItem importImageItem = new MenuItem("Importer une image");
+        MenuItem importImageItem = new MenuItem(I18n.t("page.importImage"));
         importImageItem.setOnAction(e -> {
             Window owner = page.getPane().getScene().getWindow();
             new ImportImage(page, owner).execute();
@@ -318,7 +319,8 @@ public class InputController {
         } finally {
             loading = false;
         }
-        for (Page p : new ArrayList<>(pages)) scheduleReflow(p);
+        for (Page p : new ArrayList<>(pages))
+            scheduleReflow(p);
     }
 
     private void doLoadDocument(List<PageContent> loadedPages, Path source) {
@@ -382,7 +384,6 @@ public class InputController {
                 levels.put(o, t.level);
             }
             page.orderLayers(levels);
-
 
             if (content.landscape != (page.getPane().getWidth() > page.getPane().getHeight())) {
                 new ToggleOrientation(page).execute();

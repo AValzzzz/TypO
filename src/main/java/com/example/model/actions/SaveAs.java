@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.example.model.Page;
+import com.example.model.i18n.I18n;
 import com.example.model.io.DocumentSession;
 import com.example.model.io.DocxDocumentWriter;
 import com.example.model.io.PageContent;
@@ -46,9 +47,9 @@ public class SaveAs implements AppAction {
     @Override
     public void execute() {
         FileChooser chooser = new FileChooser();
-        chooser.setTitle("Enregistrer sous");
-        ExtensionFilter docxFilter = new ExtensionFilter("Document Word (*.docx)", "*.docx");
-        ExtensionFilter pdfFilter = new ExtensionFilter("Document PDF (*.pdf)", "*.pdf");
+        chooser.setTitle(I18n.t("file.saveAs.title"));
+        ExtensionFilter docxFilter = new ExtensionFilter(I18n.t("file.filter.docx"), "*.docx");
+        ExtensionFilter pdfFilter = new ExtensionFilter(I18n.t("file.filter.pdf"), "*.pdf");
         chooser.getExtensionFilters().addAll(docxFilter, pdfFilter);
         chooser.setSelectedExtensionFilter(docxFilter);
 
@@ -68,7 +69,7 @@ public class SaveAs implements AppAction {
                 session.setCurrentFile(target);
             }
         } catch (IOException e) {
-            new Alert(AlertType.ERROR, "Échec de l'enregistrement : " + e.getMessage()).showAndWait();
+            new Alert(AlertType.ERROR, I18n.t("file.error.save", e.getMessage())).showAndWait();
         }
     }
 

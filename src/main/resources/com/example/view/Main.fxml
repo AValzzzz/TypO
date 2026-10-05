@@ -43,13 +43,12 @@
 
       <HBox spacing="10.0" AnchorPane.topAnchor="15.0" AnchorPane.leftAnchor="15.0">
          <children>
-            <Button fx:id="openButton" text="Open" onAction="#handleOpenFile" />
-            <Button fx:id="saveButton" text="Save" onAction="#handleSave" />
-            <Button fx:id="saveAsButton" text="Save As" onAction="#handleSaveAs" />
-            <Button fx:id="newPageButton" text="New Page" onAction="#handleNewPage" />
-            <Button fx:id="helpButton" text="Help" onAction="#handleHelp" />
-            <Button fx:id="settingsButton" text="Settings" onAction="#handleSettings" />
-         </children>
+            <Button fx:id="openButton" text="%toolbar.open" onAction="#handleOpenFile" />
+            <Button fx:id="saveButton" text="%toolbar.save" onAction="#handleSave" />
+            <Button fx:id="saveAsButton" text="%toolbar.saveAs" onAction="#handleSaveAs" />
+            <Button fx:id="newPageButton" text="%toolbar.newPage" onAction="#handleNewPage" />
+            <Button fx:id="helpButton" text="%toolbar.help" onAction="#handleHelp" />
+            <Button fx:id="settingsButton" text="%toolbar.settings" onAction="#handleSettings" />         </children>
       </HBox>
    </children>
 </AnchorPane>

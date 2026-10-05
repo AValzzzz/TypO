@@ -10,6 +10,7 @@ import com.example.model.Page;
 import com.example.model.code.run.CodeBlocks;
 import com.example.model.code.run.CodeBlocks.Block;
 import com.example.model.code.run.CodeRunner;
+import com.example.model.i18n.I18n;
 
 import javafx.application.Platform;
 import javafx.geometry.Bounds;
@@ -78,8 +79,8 @@ public class CodeRunController {
 
         String name = CodeRunner.displayName(CodeBlocks.tag(editor, block));
         MenuItem item = new MenuItem(name != null
-                ? "Exécuter le code (" + name + ")"
-                : "Exécuter le code (langage non pris en charge)");
+                ? I18n.t("code.run", name)
+                : I18n.t("code.runUnsupported"));
         item.setDisable(name == null);
         item.setOnAction(e -> run(block));
         return List.of(new SeparatorMenuItem(), item);
@@ -133,14 +134,10 @@ public class CodeRunController {
     private boolean confirm() {
         if (approved)
             return true;
-        ButtonType run = new ButtonType("Exécuter", ButtonData.OK_DONE);
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION,
-                "Ce code va être exécuté sur votre ordinateur, avec les mêmes droits que cette application.\n\n"
-                        + "N'exécutez que du code que vous comprenez et en qui vous avez confiance, "
-                        + "surtout si le document vient de quelqu'un d'autre.",
-                run, ButtonType.CANCEL);
-        alert.setTitle("Exécuter du code");
-        alert.setHeaderText("Exécuter ce bloc de code ?");
+        ButtonType run = new ButtonType(I18n.t("code.confirm.button"), ButtonData.OK_DONE);
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION, I18n.t("code.confirm.content"), run, ButtonType.CANCEL);
+        alert.setTitle(I18n.t("code.confirm.title"));
+        alert.setHeaderText(I18n.t("code.confirm.header"));
         if (pane.getScene() != null)
             alert.initOwner(pane.getScene().getWindow());
         approved = alert.showAndWait().filter(b -> b == run).isPresent();

@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.function.BiConsumer;
 
+import com.example.model.i18n.I18n;
 import com.example.model.io.DocxDocumentWriter;
 import com.example.model.io.PageContent;
 
@@ -28,8 +29,8 @@ public class OpenFile implements AppAction {
     @Override
     public void execute() {
         FileChooser chooser = new FileChooser();
-        chooser.setTitle("Ouvrir");
-        chooser.getExtensionFilters().add(new ExtensionFilter("Document Word (*.docx)", "*.docx"));
+        chooser.setTitle(I18n.t("file.open.title"));
+        chooser.getExtensionFilters().add(new ExtensionFilter(I18n.t("file.filter.docx"), "*.docx"));
 
         File file = chooser.showOpenDialog(owner);
         if (file == null) {
@@ -40,7 +41,7 @@ public class OpenFile implements AppAction {
             List<PageContent> pages = new DocxDocumentWriter().read(file.toPath());
             onLoaded.accept(pages, file.toPath());
         } catch (IOException e) {
-            new Alert(AlertType.ERROR, "Échec de l'ouverture : " + e.getMessage()).showAndWait();
+            new Alert(AlertType.ERROR, I18n.t("file.error.open", e.getMessage())).showAndWait();
         }
     }
 }
