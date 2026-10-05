@@ -1,0 +1,421 @@
+{
+  "start": "q_root",
+  "nodes": [
+    {"id": "q_root", "type": "question", "yes": "q_math", "no": "q_table"},
+
+    {"id": "q_math", "type": "question", "yes": "math_fraction", "no": "q_math2"},
+    {"id": "q_math2", "type": "question", "yes": "q_math_pow", "no": "q_math3"},
+    {"id": "q_math_pow", "type": "question", "yes": "math_power", "no": "math_subscript"},
+    {"id": "q_math3", "type": "question", "yes": "math_sqrt", "no": "q_math4"},
+    {"id": "q_math4", "type": "question", "yes": "math_matrix", "no": "q_math5"},
+    {"id": "q_math5", "type": "question", "yes": "q_bigop", "no": "q_math6"},
+    {"id": "q_bigop", "type": "question", "yes": "math_sum", "no": "q_bigop2"},
+    {"id": "q_bigop2", "type": "question", "yes": "math_integral", "no": "math_product"},
+    {"id": "q_math6", "type": "question", "yes": "math_limit", "no": "q_math7"},
+    {"id": "q_math7", "type": "question", "yes": "math_symbols", "no": "cmd_general"},
+
+    {"id": "q_table", "type": "question", "yes": "q_table1", "no": "q_draw"},
+    {"id": "q_table1", "type": "question", "yes": "table_insert", "no": "q_table2"},
+    {"id": "q_table2", "type": "question", "yes": "table_rows_cols", "no": "q_table3"},
+    {"id": "q_table3", "type": "question", "yes": "table_merge", "no": "q_table4"},
+    {"id": "q_table4", "type": "question", "yes": "table_resize", "no": "table_move_delete"},
+
+    {"id": "q_draw", "type": "question", "yes": "q_draw1", "no": "q_text"},
+    {"id": "q_draw1", "type": "question", "yes": "q_image", "no": "q_draw2"},
+    {"id": "q_image", "type": "question", "yes": "image_import", "no": "image_edit"},
+    {"id": "q_draw2", "type": "question", "yes": "q_arrow", "no": "q_shape"},
+    {"id": "q_arrow", "type": "question", "yes": "arrow_insert", "no": "arrow_edit"},
+    {"id": "q_shape", "type": "question", "yes": "shape_insert", "no": "shape_edit"},
+
+    {"id": "q_text", "type": "question", "yes": "q_text1", "no": "q_textbox"},
+    {"id": "q_text1", "type": "question", "yes": "text_format", "no": "q_text2"},
+    {"id": "q_text2", "type": "question", "yes": "text_align", "no": "text_link"},
+    {"id": "q_textbox", "type": "question", "yes": "q_tb", "no": "q_arrange"},
+    {"id": "q_tb", "type": "question", "yes": "text_move", "no": "textbox_edit"},
+
+    {"id": "q_arrange", "type": "question", "yes": "q_arr1", "no": "q_code"},
+    {"id": "q_arr1", "type": "question", "yes": "layers", "no": "snap_guides"},
+
+    {"id": "q_code", "type": "question", "yes": "q_code1", "no": "q_file"},
+    {"id": "q_code1", "type": "question", "yes": "code_block", "no": "q_code2"},
+    {"id": "q_code2", "type": "question", "yes": "code_run", "no": "code_theme"},
+
+    {"id": "q_file", "type": "question", "yes": "q_file1", "no": "q_page"},
+    {"id": "q_file1", "type": "question", "yes": "file_save", "no": "q_file2"},
+    {"id": "q_file2", "type": "question", "yes": "file_open", "no": "file_saveas"},
+
+    {"id": "q_page", "type": "question", "yes": "q_page1", "no": "q_view"},
+    {"id": "q_page1", "type": "question", "yes": "page_new", "no": "page_manage"},
+    {"id": "q_view", "type": "question", "yes": "view_navigate", "no": "q_settings"},
+
+    {"id": "q_settings", "type": "question", "yes": "q_set1", "no": "not_found"},
+    {"id": "q_set1", "type": "question", "yes": "settings_margins", "no": "q_set2"},
+    {"id": "q_set2", "type": "question", "yes": "settings_page_numbers", "no": "settings_colors"},
+
+    {"id": "cmd_general", "type": "leaf", "demo": [
+      {"type": "caption", "cap": 0, "par": true},
+      {"type": "type", "text": "\\pi"},
+      {"type": "caption", "cap": 1, "par": true},
+      {"type": "type", "text": " "},
+      {"type": "show", "kind": "text", "text": "π", "size": 42, "ms": 1400},
+      {"type": "caption", "cap": 2, "par": true},
+      {"type": "key", "keys": "Backspace", "ms": 800},
+      {"type": "show", "kind": "none", "ms": 100},
+      {"type": "type", "text": "\\pi"},
+      {"type": "pause", "ms": 1200}
+    ]},
+
+    {"id": "math_fraction", "type": "leaf", "demo": [
+      {"type": "caption", "cap": 0, "par": true},
+      {"type": "type", "text": "\\3/4"},
+      {"type": "type", "text": " "},
+      {"type": "show", "kind": "math", "fn": "fraction", "args": ["3", "4"], "ms": 900},
+      {"type": "caption", "cap": 1, "ms": 1800}
+    ]},
+    {"id": "math_power", "type": "leaf", "demo": [
+      {"type": "caption", "cap": 0, "par": true},
+      {"type": "type", "text": "\\x^2"},
+      {"type": "type", "text": " "},
+      {"type": "show", "kind": "math", "fn": "exponent", "args": ["x", "2"], "ms": 1000},
+      {"type": "show", "kind": "none", "ms": 100},
+      {"type": "type", "text": "\\x^(n+1)"},
+      {"type": "type", "text": " "},
+      {"type": "show", "kind": "math", "fn": "exponent", "args": ["x", "n+1"], "ms": 900},
+      {"type": "caption", "cap": 1, "ms": 1800}
+    ]},
+    {"id": "math_subscript", "type": "leaf", "demo": [
+      {"type": "caption", "cap": 0, "par": true},
+      {"type": "type", "text": "\\x_i"},
+      {"type": "type", "text": " "},
+      {"type": "show", "kind": "math", "fn": "subscript", "args": ["x", "i"], "ms": 1000},
+      {"type": "show", "kind": "none", "ms": 100},
+      {"type": "type", "text": "\\x_(i+1)"},
+      {"type": "type", "text": " "},
+      {"type": "show", "kind": "math", "fn": "subscript", "args": ["x", "i+1"], "ms": 900},
+      {"type": "caption", "cap": 1, "ms": 1800}
+    ]},
+    {"id": "math_sqrt", "type": "leaf", "demo": [
+      {"type": "caption", "cap": 0, "par": true},
+      {"type": "type", "text": "\\sqrt(x+1)"},
+      {"type": "type", "text": " "},
+      {"type": "show", "kind": "math", "fn": "sqrt", "args": ["x+1"], "ms": 900},
+      {"type": "caption", "cap": 1, "ms": 1800}
+    ]},
+    {"id": "math_matrix", "type": "leaf", "demo": [
+      {"type": "caption", "cap": 0, "par": true},
+      {"type": "type", "text": "\\matrix(1,2;3,4)"},
+      {"type": "type", "text": " "},
+      {"type": "show", "kind": "math", "fn": "matrix", "args": ["1,2;3,4"], "ms": 900},
+      {"type": "caption", "cap": 1, "ms": 1800}
+    ]},
+    {"id": "math_sum", "type": "leaf", "demo": [
+      {"type": "caption", "cap": 0, "par": true},
+      {"type": "type", "text": "\\sum_(i=0)^(n)(i)"},
+      {"type": "type", "text": " "},
+      {"type": "show", "kind": "math", "fn": "sum", "args": ["i=0", "n", "i"], "ms": 900},
+      {"type": "caption", "cap": 1, "ms": 1800}
+    ]},
+    {"id": "math_integral", "type": "leaf", "demo": [
+      {"type": "caption", "cap": 0, "par": true},
+      {"type": "type", "text": "\\int_0^1(x)"},
+      {"type": "type", "text": " "},
+      {"type": "show", "kind": "math", "fn": "integral", "args": ["0", "1", "x"], "ms": 900},
+      {"type": "caption", "cap": 1, "ms": 1800}
+    ]},
+    {"id": "math_product", "type": "leaf", "demo": [
+      {"type": "caption", "cap": 0, "par": true},
+      {"type": "type", "text": "\\prod_(i=1)^(n)(i)"},
+      {"type": "type", "text": " "},
+      {"type": "show", "kind": "math", "fn": "product", "args": ["i=1", "n", "i"], "ms": 900},
+      {"type": "caption", "cap": 1, "ms": 1800}
+    ]},
+    {"id": "math_limit", "type": "leaf", "demo": [
+      {"type": "caption", "cap": 0, "par": true},
+      {"type": "type", "text": "\\lim_(x->infinity)(1/x)"},
+      {"type": "type", "text": " "},
+      {"type": "show", "kind": "math", "fn": "limit", "args": ["x→∞", "1/x"], "ms": 900},
+      {"type": "caption", "cap": 1, "ms": 1800}
+    ]},
+    {"id": "math_symbols", "type": "leaf", "demo": [
+      {"type": "caption", "cap": 0, "par": true},
+      {"type": "type", "text": "\\pi"},
+      {"type": "type", "text": " "},
+      {"type": "show", "kind": "text", "text": "π", "size": 42, "ms": 900},
+      {"type": "show", "kind": "none", "ms": 100},
+      {"type": "type", "text": "\\<="},
+      {"type": "type", "text": " "},
+      {"type": "show", "kind": "text", "text": "≤", "size": 42, "ms": 900},
+      {"type": "show", "kind": "none", "ms": 100},
+      {"type": "type", "text": "\\RR"},
+      {"type": "type", "text": " "},
+      {"type": "show", "kind": "text", "text": "ℝ", "size": 42, "ms": 900},
+      {"type": "caption", "cap": 1, "ms": 1800}
+    ]},
+
+    {"id": "shape_insert", "type": "leaf", "demo": [
+      {"type": "caption", "cap": 0, "par": true},
+      {"type": "type", "text": "\\circle"},
+      {"type": "type", "text": " "},
+      {"type": "show", "kind": "circle", "ms": 1000},
+      {"type": "show", "kind": "none", "ms": 100},
+      {"type": "type", "text": "\\triangle"},
+      {"type": "type", "text": " "},
+      {"type": "show", "kind": "triangle", "ms": 1000},
+      {"type": "caption", "cap": 1, "ms": 2000}
+    ]},
+    {"id": "shape_edit", "type": "leaf", "demo": [
+      {"type": "show", "kind": "square", "handles": true},
+      {"type": "caption", "cap": 0, "par": true},
+      {"type": "cursor", "x": 230, "y": 155},
+      {"type": "cursor", "x": 255, "y": 180, "ms": 800, "par": true},
+      {"type": "anim", "scale": 1.6, "ms": 800},
+      {"type": "caption", "cap": 1, "par": true},
+      {"type": "cursor", "x": 190, "y": 5, "ms": 700},
+      {"type": "cursor", "x": 260, "y": 30, "ms": 700, "par": true},
+      {"type": "anim", "angle": 35, "ms": 700},
+      {"type": "caption", "cap": 2, "par": true},
+      {"type": "cursor", "x": 190, "y": 120, "ms": 700},
+      {"type": "cursor", "x": 130, "y": 140, "ms": 800, "par": true},
+      {"type": "anim", "dx": -60, "dy": 20, "ms": 800},
+      {"type": "caption", "cap": 3, "par": true},
+      {"type": "menu", "caps": [4, 5, 6, 7, 8, 9], "hl": 0, "x": 200, "y": 70, "ms": 2000}
+    ]},
+
+    {"id": "arrow_insert", "type": "leaf", "demo": [
+      {"type": "caption", "cap": 0, "par": true},
+      {"type": "type", "text": "\\arrow"},
+      {"type": "type", "text": " "},
+      {"type": "show", "kind": "arrow", "ms": 1000},
+      {"type": "caption", "cap": 1, "ms": 2000}
+    ]},
+    {"id": "arrow_edit", "type": "leaf", "demo": [
+      {"type": "show", "kind": "arrow", "handles": true},
+      {"type": "caption", "cap": 0, "par": true},
+      {"type": "cursor", "x": 190, "y": 115},
+      {"type": "cursor", "x": 140, "y": 60, "ms": 800},
+      {"type": "show", "kind": "arrow", "curve": true, "handles": true, "ms": 600},
+      {"type": "caption", "cap": 1, "par": true},
+      {"type": "menu", "caps": [2, 3, 4], "hl": 0, "x": 230, "y": 90, "ms": 2000}
+    ]},
+
+    {"id": "table_insert", "type": "leaf", "demo": [
+      {"type": "caption", "cap": 0, "par": true},
+      {"type": "type", "text": "\\tab"},
+      {"type": "type", "text": " "},
+      {"type": "show", "kind": "table", "rows": 2, "cols": 2, "handles": true, "ms": 900},
+      {"type": "caption", "cap": 1, "ms": 2000}
+    ]},
+    {"id": "table_rows_cols", "type": "leaf", "demo": [
+      {"type": "show", "kind": "table", "rows": 2, "cols": 2},
+      {"type": "caption", "cap": 0, "par": true},
+      {"type": "menu", "caps": [1, 2], "hl": 0, "x": 250, "y": 70, "ms": 1800},
+      {"type": "closeMenu"},
+      {"type": "show", "kind": "table", "rows": 3, "cols": 4, "ms": 1500}
+    ]},
+    {"id": "table_merge", "type": "leaf", "demo": [
+      {"type": "show", "kind": "table", "rows": 3, "cols": 3},
+      {"type": "caption", "cap": 0, "par": true},
+      {"type": "cursor", "x": 115, "y": 85},
+      {"type": "cursor", "x": 190, "y": 85, "ms": 700},
+      {"type": "show", "kind": "table", "rows": 3, "cols": 3, "shade": [0, 0, 0, 1], "ms": 400},
+      {"type": "caption", "cap": 1, "par": true},
+      {"type": "menu", "caps": [2], "hl": 0, "x": 200, "y": 95, "ms": 1400},
+      {"type": "closeMenu"},
+      {"type": "show", "kind": "table", "rows": 3, "cols": 3, "merge": [0, 0, 0, 1], "ms": 600},
+      {"type": "caption", "cap": 3, "ms": 2200}
+    ]},
+    {"id": "table_resize", "type": "leaf", "demo": [
+      {"type": "show", "kind": "table", "rows": 2, "cols": 3},
+      {"type": "caption", "cap": 0, "par": true},
+      {"type": "cursor", "x": 155, "y": 115},
+      {"type": "cursor", "x": 172, "y": 115, "ms": 700},
+      {"type": "show", "kind": "table", "rows": 2, "cols": 3, "w": [105, 70, 70], "ms": 600},
+      {"type": "caption", "cap": 1, "par": true},
+      {"type": "key", "keys": "Ctrl + drag", "ms": 2000}
+    ]},
+    {"id": "table_move_delete", "type": "leaf", "demo": [
+      {"type": "show", "kind": "table", "rows": 2, "cols": 2, "handles": true},
+      {"type": "caption", "cap": 0, "par": true},
+      {"type": "cursor", "x": 114, "y": 79},
+      {"type": "cursor", "x": 174, "y": 119, "ms": 800, "par": true},
+      {"type": "anim", "dx": 60, "dy": 40, "ms": 800},
+      {"type": "caption", "cap": 1, "par": true},
+      {"type": "key", "keys": "Delete", "ms": 1000},
+      {"type": "show", "kind": "none", "ms": 800}
+    ]},
+
+    {"id": "image_import", "type": "leaf", "demo": [
+      {"type": "caption", "cap": 0, "par": true},
+      {"type": "menu", "caps": [1, 2, 3], "hl": 2, "x": 150, "y": 70, "ms": 1800},
+      {"type": "closeMenu"},
+      {"type": "show", "kind": "image", "ms": 600},
+      {"type": "caption", "cap": 4, "ms": 2000}
+    ]},
+    {"id": "image_edit", "type": "leaf", "demo": [
+      {"type": "show", "kind": "image", "handles": true},
+      {"type": "caption", "cap": 1, "par": true},
+      {"type": "cursor", "x": 250, "y": 155},
+      {"type": "cursor", "x": 268, "y": 167, "ms": 800, "par": true},
+      {"type": "anim", "scale": 1.3, "ms": 800},
+      {"type": "caption", "cap": 2, "par": true},
+      {"type": "menu", "caps": [3, 4, 5], "hl": 0, "x": 210, "y": 100, "ms": 2000}
+    ]},
+
+    {"id": "text_format", "type": "leaf", "demo": [
+      {"type": "show", "kind": "text", "text": "Hello world", "size": 26, "selected": true},
+      {"type": "caption", "cap": 0, "par": true},
+      {"type": "pause", "ms": 1000},
+      {"type": "menu", "caps": [1, 2, 3, 4, 5, 6, 7, 8], "hl": 2, "x": 230, "y": 100, "ms": 1000},
+      {"type": "closeMenu"},
+      {"type": "style", "add": ["bold"], "ms": 600},
+      {"type": "menu", "caps": [1, 2, 3, 4, 5, 6, 7, 8], "hl": 6, "x": 230, "y": 100, "ms": 1000},
+      {"type": "closeMenu"},
+      {"type": "style", "add": ["underline"], "ms": 600},
+      {"type": "menu", "caps": [1, 2, 3, 4, 5, 6, 7, 8], "hl": 7, "x": 230, "y": 100, "ms": 1000},
+      {"type": "closeMenu"},
+      {"type": "style", "add": ["highlight"], "deselect": true, "ms": 600},
+      {"type": "caption", "cap": 9, "ms": 2400}
+    ]},
+    {"id": "text_align", "type": "leaf", "demo": [
+      {"type": "show", "kind": "text", "text": "Hello world", "size": 22, "align": "left"},
+      {"type": "caption", "cap": 0, "par": true},
+      {"type": "pause", "ms": 1000},
+      {"type": "menu", "caps": [1, 2, 3, 4], "hl": 1, "x": 200, "y": 90, "ms": 1000},
+      {"type": "closeMenu"},
+      {"type": "style", "align": "center", "ms": 800},
+      {"type": "menu", "caps": [1, 2, 3, 4], "hl": 2, "x": 200, "y": 90, "ms": 1000},
+      {"type": "closeMenu"},
+      {"type": "style", "align": "right", "ms": 1200}
+    ]},
+    {"id": "text_link", "type": "leaf", "demo": [
+      {"type": "caption", "cap": 0, "par": true},
+      {"type": "type", "text": "https://example.com"},
+      {"type": "caption", "cap": 1, "par": true},
+      {"type": "show", "kind": "text", "text": "https://example.com", "size": 20, "styles": ["link"], "ms": 1000},
+      {"type": "caption", "cap": 2, "par": true},
+      {"type": "key", "keys": "Ctrl + click", "ms": 2200}
+    ]},
+    {"id": "text_move", "type": "leaf", "demo": [
+      {"type": "show", "kind": "text", "text": "Hello world", "size": 26, "selected": true},
+      {"type": "caption", "cap": 0, "par": true},
+      {"type": "pause", "ms": 1200},
+      {"type": "caption", "cap": 1, "par": true},
+      {"type": "cursor", "x": 112, "y": 92},
+      {"type": "cursor", "x": 200, "y": 170, "ms": 900},
+      {"type": "show", "kind": "textbox", "text": "Hello world", "handles": true, "ms": 300},
+      {"type": "anim", "dx": 10, "dy": 50, "ms": 500},
+      {"type": "caption", "cap": 2, "ms": 2000}
+    ]},
+    {"id": "textbox_edit", "type": "leaf", "demo": [
+      {"type": "show", "kind": "textbox", "text": "Hello", "handles": true},
+      {"type": "caption", "cap": 0, "par": true},
+      {"type": "pause", "ms": 1500},
+      {"type": "caption", "cap": 1, "par": true},
+      {"type": "pause", "ms": 1500},
+      {"type": "caption", "cap": 2, "par": true},
+      {"type": "menu", "caps": [3, 4, 5, 6], "hl": 0, "x": 200, "y": 125, "ms": 1200},
+      {"type": "closeMenu"},
+      {"type": "show", "kind": "textbox", "text": "Hello", "handles": true, "styles": ["border"], "ms": 500},
+      {"type": "menu", "caps": [3, 4, 5, 6], "hl": 2, "x": 200, "y": 125, "ms": 1200},
+      {"type": "closeMenu"},
+      {"type": "show", "kind": "textbox", "text": "Hello", "handles": true, "styles": ["border", "fill"], "ms": 1500}
+    ]},
+
+    {"id": "layers", "type": "leaf", "demo": [
+      {"type": "show", "kind": "layers", "front": "circle"},
+      {"type": "caption", "cap": 0, "par": true},
+      {"type": "pause", "ms": 1400},
+      {"type": "caption", "cap": 1, "par": true},
+      {"type": "menu", "caps": [2, 3], "hl": 0, "x": 230, "y": 100, "ms": 1500},
+      {"type": "closeMenu"},
+      {"type": "show", "kind": "layers", "front": "square", "ms": 1800}
+    ]},
+    {"id": "snap_guides", "type": "leaf", "demo": [
+      {"type": "show", "kind": "guides"},
+      {"type": "caption", "cap": 0, "par": true},
+      {"type": "pause", "ms": 1200},
+      {"type": "show", "kind": "guides", "selected": true, "ms": 1400},
+      {"type": "caption", "cap": 1, "par": true},
+      {"type": "key", "keys": "Alt", "ms": 1800}
+    ]},
+
+    {"id": "code_block", "type": "leaf", "demo": [
+      {"type": "caption", "cap": 0, "par": true},
+      {"type": "type", "text": "```python"},
+      {"type": "caption", "cap": 1, "par": true},
+      {"type": "show", "kind": "code", "lines": ["```python", "print(\"Hello\")", "```"], "ms": 800},
+      {"type": "caption", "cap": 2, "ms": 2200}
+    ]},
+    {"id": "code_run", "type": "leaf", "demo": [
+      {"type": "show", "kind": "code", "lines": ["```python", "print(\"Hello\")", "```"]},
+      {"type": "caption", "cap": 0, "par": true},
+      {"type": "pause", "ms": 1000},
+      {"type": "menu", "caps": [1], "hl": 0, "x": 220, "y": 80, "ms": 1200},
+      {"type": "closeMenu"},
+      {"type": "caption", "cap": 2, "par": true},
+      {"type": "pause", "ms": 1500},
+      {"type": "show", "kind": "code", "lines": ["```python", "print(\"Hello\")", "```"], "output": ["Hello"], "ms": 600},
+      {"type": "caption", "cap": 3, "ms": 2600}
+    ]},
+    {"id": "code_theme", "type": "leaf", "demo": [
+      {"type": "show", "kind": "code", "lines": ["```python", "print(\"Hello\")", "```"]},
+      {"type": "caption", "cap": 0, "par": true},
+      {"type": "menu", "caps": [1, 2, 3, 4, 5], "hl": 2, "x": 200, "y": 20, "ms": 2400}
+    ]},
+
+    {"id": "file_save", "type": "leaf", "demo": [
+      {"type": "show", "kind": "page", "count": 1},
+      {"type": "caption", "cap": 0, "par": true},
+      {"type": "key", "keys": "Ctrl + S", "ms": 1600},
+      {"type": "caption", "cap": 1, "ms": 2400}
+    ]},
+    {"id": "file_open", "type": "leaf"},
+    {"id": "file_saveas", "type": "leaf"},
+
+    {"id": "page_new", "type": "leaf", "demo": [
+      {"type": "show", "kind": "page", "count": 1},
+      {"type": "caption", "cap": 0, "ms": 1600},
+      {"type": "show", "kind": "page", "count": 2, "ms": 600},
+      {"type": "caption", "cap": 1, "ms": 2400}
+    ]},
+    {"id": "page_manage", "type": "leaf", "demo": [
+      {"type": "show", "kind": "page", "count": 1},
+      {"type": "caption", "cap": 0, "par": true},
+      {"type": "menu", "caps": [1, 2, 3], "hl": 0, "x": 230, "y": 60, "ms": 1600},
+      {"type": "closeMenu"},
+      {"type": "show", "kind": "page", "count": 1, "landscape": true, "ms": 600},
+      {"type": "caption", "cap": 4, "ms": 2000}
+    ]},
+    {"id": "view_navigate", "type": "leaf", "demo": [
+      {"type": "show", "kind": "page", "count": 1},
+      {"type": "caption", "cap": 0, "par": true},
+      {"type": "key", "keys": "Ctrl + scroll", "ms": 300, "par": true},
+      {"type": "transform", "scale": 1.5, "ms": 1000},
+      {"type": "caption", "cap": 1, "par": true},
+      {"type": "key", "keys": "Scroll", "ms": 300, "par": true},
+      {"type": "transform", "scale": 1.5, "dy": -30, "ms": 900},
+      {"type": "caption", "cap": 2, "par": true},
+      {"type": "key", "keys": "Shift + scroll", "ms": 300, "par": true},
+      {"type": "transform", "scale": 1.5, "dx": -50, "dy": -30, "ms": 900},
+      {"type": "pause", "ms": 600}
+    ]},
+
+    {"id": "settings_margins", "type": "leaf", "demo": [
+      {"type": "caption", "cap": 0, "par": true},
+      {"type": "menu", "caps": [1, 2, 3, 4, 5], "hl": 4, "x": 200, "y": 20, "ms": 1800},
+      {"type": "caption", "cap": 6, "ms": 2600},
+      {"type": "caption", "cap": 7, "ms": 2600}
+    ]},
+    {"id": "settings_page_numbers", "type": "leaf", "demo": [
+      {"type": "caption", "cap": 0, "par": true},
+      {"type": "menu", "caps": [1, 2, 3, 4, 5], "hl": 3, "x": 200, "y": 20, "ms": 2600}
+    ]},
+    {"id": "settings_colors", "type": "leaf", "demo": [
+      {"type": "caption", "cap": 0, "par": true},
+      {"type": "menu", "caps": [1, 2, 3, 4, 5], "hl": 0, "x": 200, "y": 20, "ms": 1400},
+      {"type": "menu", "caps": [1, 2, 3, 4, 5], "hl": 1, "x": 200, "y": 20, "ms": 1400}
+    ]},
+
+    {"id": "not_found", "type": "leaf"}
+  ]
+}

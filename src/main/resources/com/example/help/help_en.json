@@ -1,0 +1,587 @@
+{
+  "ui": {
+    "windowTitle": "TypO Help",
+    "searchPrompt": "Ask a question, e.g. \"insert a table\"…",
+    "search": "Search",
+    "back": "Back",
+    "yes": "Yes",
+    "no": "No",
+    "skip": "I don't know",
+    "showMe": "Show me",
+    "replay": "Replay",
+    "intro": "Type what you want to do in the box above, or just answer the questions below.",
+    "noMatch": "I couldn't match your words, so let's find it step by step.",
+    "resultsTitle": "Best matches:",
+    "guideMe": "Guide me with questions instead",
+    "missing": "Missing help entry:"
+  },
+
+  "stopwords": ["a", "an", "the", "to", "of", "for", "in", "on", "at", "by", "with", "and", "or", "how", "do", "does",
+    "did", "can", "could", "i", "me", "my", "you", "your", "we", "want", "need", "would", "like", "what", "where",
+    "when", "which", "is", "are", "be", "it", "its", "this", "that", "there", "some", "into", "from", "as", "about",
+    "make", "get", "use", "using", "please", "help", "should", "way", "possible"],
+
+  "nodes": {
+    "q_root": {"question": "Do you want to write a mathematical formula or symbol?"},
+    "q_math": {"question": "Is it a fraction (one value over another)?"},
+    "q_math2": {"question": "Is it an exponent or a subscript (like x² or xᵢ)?"},
+    "q_math_pow": {"question": "Is it an exponent (x²)?"},
+    "q_math3": {"question": "Is it a square root?"},
+    "q_math4": {"question": "Is it a matrix?"},
+    "q_math5": {"question": "Is it a sum (Σ), an integral (∫) or a product (Π)?"},
+    "q_bigop": {"question": "Is it a sum (Σ)?"},
+    "q_bigop2": {"question": "Is it an integral (∫)?"},
+    "q_math6": {"question": "Is it a limit (lim)?"},
+    "q_math7": {"question": "Is it a special symbol (Greek letter, ≤, ∞, ℝ…)?"},
+
+    "q_table": {"question": "Is it about tables?"},
+    "q_table1": {"question": "Do you want to create a new table?"},
+    "q_table2": {"question": "Do you want to change the number of rows or columns?"},
+    "q_table3": {"question": "Do you want to merge or split cells?"},
+    "q_table4": {"question": "Do you want to resize rows or columns?"},
+
+    "q_draw": {"question": "Is it about a shape, an arrow or an image?"},
+    "q_draw1": {"question": "Is it about an image?"},
+    "q_image": {"question": "Do you want to add an image to the page?"},
+    "q_draw2": {"question": "Is it about an arrow?"},
+    "q_arrow": {"question": "Do you want to create a new arrow?"},
+    "q_shape": {"question": "Do you want to create a new shape (circle, square, triangle)?"},
+
+    "q_text": {"question": "Do you want to format text (style, alignment, links)?"},
+    "q_text1": {"question": "Do you want to change the look of characters (bold, size, color, underline, highlight)?"},
+    "q_text2": {"question": "Do you want to align a paragraph (left, center, right, justify)?"},
+    "q_textbox": {"question": "Do you want to place text freely on the page (text box)?"},
+    "q_tb": {"question": "Do you want to turn text you already wrote into a free text box?"},
+
+    "q_arrange": {"question": "Do you want to arrange objects (layers or alignment guides)?"},
+    "q_arr1": {"question": "Do you want to put an object in front of or behind another one?"},
+
+    "q_code": {"question": "Is it about code?"},
+    "q_code1": {"question": "Do you want to write a code block?"},
+    "q_code2": {"question": "Do you want to run a code block?"},
+
+    "q_file": {"question": "Is it about saving, opening or exporting a document?"},
+    "q_file1": {"question": "Do you want to save your document?"},
+    "q_file2": {"question": "Do you want to open an existing document?"},
+
+    "q_page": {"question": "Is it about pages (add, delete, orientation)?"},
+    "q_page1": {"question": "Do you want to add a page?"},
+    "q_view": {"question": "Do you want to move around the document (zoom, scroll)?"},
+
+    "q_settings": {"question": "Do you want to change the settings (colors, margins, page numbers)?"},
+    "q_set1": {"question": "Do you want to change the page margins?"},
+    "q_set2": {"question": "Do you want to show page numbers?"},
+
+    "cmd_general": {
+      "title": "How typing commands works",
+      "body": [
+        "Many things are created by typing a command: a backslash (\\), the command name, then Space.",
+        "> \\pi  then Space  →  π",
+        "- Math: \\a/b, \\x^2, \\x_i, \\sqrt(x), \\matrix(1,2;3,4), \\sum, \\int, \\prod, \\lim and symbols like \\pi or \\<=",
+        "- Objects: \\circle, \\square, \\triangle, \\arrow and \\tab (table)",
+        "- Press Backspace right after a conversion to get the raw command back and edit it.",
+        "- To write a real backslash, type it twice (\\\\)."
+      ],
+      "keywords": ["command", "commands", "backslash", "slash command", "shortcut", "how commands work", "convert", "escape", "type command", "space"],
+      "captions": ["Type a backslash and a command name…", "…then press Space: the command is converted.", "Press Backspace right after to get the raw command back and edit it."]
+    },
+
+    "math_fraction": {
+      "title": "Insert a fraction",
+      "body": [
+        "Type a backslash, the numerator, a slash and the denominator, then press Space:",
+        "> \\a/b",
+        "- Each side can contain letters, digits and underscores only (no spaces or operators).",
+        "- Example: \\3/4 gives 3 over 4.",
+        "- Press Backspace right after the conversion to edit the raw command."
+      ],
+      "keywords": ["fraction", "fractions", "divide", "division", "over", "numerator", "denominator", "ratio", "quotient"],
+      "captions": ["Type \\ then numerator/denominator, then Space.", "The fraction is created."]
+    },
+    "math_power": {
+      "title": "Insert an exponent (power)",
+      "body": [
+        "Type a backslash, the base, ^ and the exponent, then press Space:",
+        "> \\x^2",
+        "> \\x^(n+1)",
+        "- The base is made of letters and digits.",
+        "- The exponent is a single word or number, or anything inside parentheses.",
+        "- Use parentheses for longer exponents, e.g. \\e^(-x)."
+      ],
+      "keywords": ["exponent", "exponents", "power", "powers", "squared", "cubed", "superscript", "raise", "to the power"],
+      "captions": ["Type \\ then base^exponent, then Space.", "The exponent is created."]
+    },
+    "math_subscript": {
+      "title": "Insert a subscript",
+      "body": [
+        "Type a backslash, the base, _ and the subscript, then press Space:",
+        "> \\x_i",
+        "> \\x_(i+1)",
+        "- The base is made of letters and digits.",
+        "- The subscript is a single word or number, or anything inside parentheses."
+      ],
+      "keywords": ["subscript", "subscripts", "index", "indices", "lower", "sub", "underscore"],
+      "captions": ["Type \\ then base_subscript, then Space.", "The subscript is created."]
+    },
+    "math_sqrt": {
+      "title": "Insert a square root",
+      "body": [
+        "Type a backslash, sqrt, then the content in parentheses, and press Space:",
+        "> \\sqrt(x+1)",
+        "- Anything between the parentheses goes under the root sign."
+      ],
+      "keywords": ["square root", "root", "sqrt", "radical", "root sign"],
+      "captions": ["Type \\sqrt(content), then Space.", "The root is created."]
+    },
+    "math_matrix": {
+      "title": "Insert a matrix",
+      "body": [
+        "Type a backslash, matrix, then the values in parentheses, and press Space:",
+        "> \\matrix(1,2;3,4)",
+        "- Separate the columns with commas and the rows with semicolons.",
+        "- The example gives a 2×2 matrix drawn with brackets."
+      ],
+      "keywords": ["matrix", "matrices", "array", "grid of numbers", "determinant", "vector", "table of numbers"],
+      "captions": ["Type \\matrix(1,2;3,4), then Space.", "The matrix is created."]
+    },
+    "math_sum": {
+      "title": "Insert a sum (Σ)",
+      "body": [
+        "Type a backslash, sum, then the expression in parentheses, and press Space:",
+        "> \\sum(i)",
+        "To add bounds, give the lower bound, then ^ and the upper bound, then the expression:",
+        "> \\sum_(i=0)^(n)(i)",
+        "- A bound is either a single word (\\sum_1^n(i)) or anything in parentheses.",
+        "- The expression always goes in parentheses."
+      ],
+      "keywords": ["sum", "sums", "sigma", "summation", "series", "total"],
+      "captions": ["Type \\sum_(lower)^(upper)(expression), then Space.", "The sum is created."]
+    },
+    "math_integral": {
+      "title": "Insert an integral (∫)",
+      "body": [
+        "Type a backslash, int, then the expression in parentheses, and press Space:",
+        "> \\int(x)",
+        "To add bounds, give the lower bound, then ^ and the upper bound, then the expression:",
+        "> \\int_0^1(x)",
+        "- A bound is either a single word or anything in parentheses, e.g. \\int_(-1)^(1)(x).",
+        "- The expression always goes in parentheses."
+      ],
+      "keywords": ["integral", "integrals", "integrate", "integration", "calculus", "antiderivative", "area under curve"],
+      "captions": ["Type \\int_(lower)^(upper)(expression), then Space.", "The integral is created."]
+    },
+    "math_product": {
+      "title": "Insert a product (Π)",
+      "body": [
+        "Type a backslash, prod, then the expression in parentheses, and press Space:",
+        "> \\prod(i)",
+        "To add bounds:",
+        "> \\prod_(i=1)^(n)(i)",
+        "- A bound is either a single word or anything in parentheses.",
+        "- The expression always goes in parentheses."
+      ],
+      "keywords": ["product", "products", "prod", "capital pi", "big pi", "multiply series", "productorial"],
+      "captions": ["Type \\prod_(lower)^(upper)(expression), then Space.", "The product is created."]
+    },
+    "math_limit": {
+      "title": "Insert a limit",
+      "body": [
+        "Type a backslash, lim, then the expression in parentheses, and press Space:",
+        "> \\lim(x)",
+        "To show what the variable tends to:",
+        "> \\lim_(x->infinity)(1/x)",
+        "- Write -> for the arrow. The word infinity becomes ∞.",
+        "- The condition and the expression both go in parentheses."
+      ],
+      "keywords": ["limit", "limits", "lim", "tends to", "approaches", "calculus", "infinity limit"],
+      "captions": ["Type \\lim_(x->a)(expression), then Space.", "The limit is created."]
+    },
+    "math_symbols": {
+      "title": "Insert a math symbol",
+      "body": [
+        "Type a backslash and the symbol name, then press Space:",
+        "- Greek letters: \\pi \\alpha \\beta \\theta \\lambda \\phi \\psi \\delta",
+        "- Comparison: \\<= (≤)  \\>= (≥)  \\~= (≈)  \\!= (≠)  \\in (∈)",
+        "- Operators: \\pm (±)  \\times (×)  \\inf or \\infinity (∞)",
+        "- Arrows: \\-> (→)  \\=> (⇒)  \\<=> (⇔)",
+        "- Number sets: \\NN (ℕ)  \\ZZ (ℤ)  \\QQ (ℚ)  \\RR (ℝ)  \\CC (ℂ)  \\PP (ℙ)  \\HH (ℍ)"
+      ],
+      "keywords": ["symbol", "symbols", "greek", "pi", "alpha", "beta", "theta", "lambda", "phi", "psi", "delta", "infinity",
+        "inequality", "less than or equal", "greater than or equal", "not equal", "approximately", "plus minus", "times",
+        "implies", "real numbers", "natural numbers", "integers", "rationals", "complex numbers", "math symbols", "arrow symbol"],
+      "captions": ["Type \\ and the symbol name, then Space.", "The symbol is inserted as text."]
+    },
+
+    "shape_insert": {
+      "title": "Insert a shape",
+      "body": [
+        "Type one of these commands, then press Space:",
+        "> \\circle",
+        "> \\square",
+        "> \\triangle",
+        "The shape appears in the middle of the page. Then you can:",
+        "- Click it to select it, drag it to move it.",
+        "- Drag the blue square at its corner to resize it (hold Ctrl to keep the proportions).",
+        "- Drag the green dot above it to rotate it (hold Ctrl to snap to 15° steps).",
+        "- Right-click it for fill color and opacity, border color, opacity and thickness, and layer order.",
+        "- Select it and press Delete to remove it."
+      ],
+      "keywords": ["shape", "shapes", "circle", "square", "triangle", "draw", "geometry", "figure", "rectangle", "ellipse", "insert shape", "add shape"],
+      "captions": ["Type \\circle, \\square or \\triangle, then Space.", "The shape appears in the middle of the page."]
+    },
+    "shape_edit": {
+      "title": "Move, resize and style a shape",
+      "body": [
+        "- Click the shape to select it. Drag it to move it.",
+        "- Blue square at the corner: drag to resize (hold Ctrl to keep the proportions).",
+        "- Green dot above: drag to rotate (hold Ctrl to snap to 15° steps).",
+        "- Right-click: fill color and opacity, border color, opacity and thickness (0 = no border).",
+        "- Right-click also lets you move the shape forward or back one level.",
+        "- Select it and press Delete (or Backspace) to remove it.",
+        "- Hold Alt while dragging to turn off the alignment guides."
+      ],
+      "keywords": ["shape", "resize", "rotate", "rotation", "move shape", "fill", "fill color", "border", "stroke", "opacity", "transparency", "thickness", "delete shape", "edit shape"],
+      "captions": ["Drag the blue square to resize (Ctrl keeps proportions).", "Drag the green dot to rotate (Ctrl snaps to 15°).", "Drag the shape itself to move it.", "Right-click: colors, opacity, border…", "Fill color", "Fill opacity", "Border color", "Border thickness", "Move forward one level", "Move back one level"]
+    },
+
+    "arrow_insert": {
+      "title": "Insert an arrow",
+      "body": [
+        "Type this command, then press Space:",
+        "> \\arrow",
+        "A straight arrow appears on the page. Then you can:",
+        "- Drag the blue dots at its ends to move the start or the end.",
+        "- Drag the green dot in the middle to curve the arrow.",
+        "- Drag the line itself to move the whole arrow.",
+        "- Right-click for color, opacity and thickness, and layer order.",
+        "- Select it and press Delete to remove it."
+      ],
+      "keywords": ["arrow", "arrows", "insert arrow", "add arrow", "line", "pointer", "connector"],
+      "captions": ["Type \\arrow, then Space.", "An arrow appears. Drag its dots to adjust it."]
+    },
+    "arrow_edit": {
+      "title": "Move, curve and style an arrow",
+      "body": [
+        "- Click the arrow to select it. Drag the line to move the whole arrow.",
+        "- Blue dots: drag to move the start or the end.",
+        "- Green dot: drag to curve the arrow.",
+        "- Right-click: color, opacity (0-100) and thickness (1-20), plus layer order.",
+        "- Select it and press Delete (or Backspace) to remove it."
+      ],
+      "keywords": ["arrow", "curve", "curved", "bend", "move arrow", "arrow color", "arrow thickness", "edit arrow", "control point"],
+      "captions": ["Drag the blue dots to move the ends, the green dot to curve it.", "Right-click: color, opacity, thickness.", "Color", "Opacity", "Thickness"]
+    },
+
+    "table_insert": {
+      "title": "Insert a table",
+      "body": [
+        "Type this command, then press Space:",
+        "> \\tab",
+        "A 2×2 table appears (up to 20 rows × 20 columns). Then you can:",
+        "- Click a cell and type. Cells support formatting and \\ commands too.",
+        "- Change the number of rows and columns: right-click the table, type a number in Rows or Columns and press Enter.",
+        "- Merge cells: drag across several cells to select them, right-click, then Merge cells. Right-click a merged cell and choose Split cells to undo.",
+        "- Resize: drag a divider between cells. Hold Ctrl while dragging to move a single divider, and Alt to turn off snapping.",
+        "- Move the table: drag the blue square at its top-left corner.",
+        "- Delete it: select the table (click its border or the blue square) and press Delete.",
+        "- Right-click also has layer options (move forward / back one level)."
+      ],
+      "keywords": ["table", "tables", "tab", "grid", "insert table", "add table", "create table", "spreadsheet", "cells", "rows columns"],
+      "captions": ["Type \\tab, then Space.", "A 2×2 table appears. Click a cell and type."]
+    },
+    "table_rows_cols": {
+      "title": "Change the number of rows and columns",
+      "body": [
+        "- Right-click the table (not on selected text).",
+        "- Type a number in Rows (1-20) and/or Columns (1-20), then press Enter.",
+        "- Extra rows and columns are added at the end; removing them deletes the last ones and their content.",
+        "- Merges that no longer fit are removed."
+      ],
+      "keywords": ["rows", "columns", "row", "column", "add row", "add column", "remove row", "remove column", "number of rows", "number of columns", "resize table", "table size"],
+      "captions": ["Right-click the table: set Rows and Columns (1-20), then press Enter.", "Rows (1-20)", "Columns (1-20)"]
+    },
+    "table_merge": {
+      "title": "Merge and split table cells",
+      "body": [
+        "- Drag across several cells to select them (they turn blue).",
+        "- Right-click and choose Merge cells. The text of the merged cells is combined.",
+        "- To undo: right-click the merged cell and choose Split cells.",
+        "- Merged cells can still be resized with the dividers."
+      ],
+      "keywords": ["merge", "merge cells", "split", "split cells", "combine cells", "unmerge", "join cells", "spanning", "colspan", "rowspan"],
+      "captions": ["Drag across several cells to select them.", "Right-click: Merge cells.", "Merge cells", "Right-click a merged cell and choose Split cells to undo."]
+    },
+    "table_resize": {
+      "title": "Resize table rows and columns",
+      "body": [
+        "- Drag a divider between two columns or rows to resize them.",
+        "- Hold Ctrl while dragging to move a single divider (only that part of the border).",
+        "- Hold Alt to turn off snapping to nearby objects.",
+        "- Rows grow automatically when the text inside needs more room."
+      ],
+      "keywords": ["resize", "column width", "row height", "divider", "drag", "width", "height", "adjust", "snap", "table border"],
+      "captions": ["Drag a divider to resize a column or a row.", "Ctrl+drag moves a single divider. Alt turns off snapping."]
+    },
+    "table_move_delete": {
+      "title": "Move or delete a table",
+      "body": [
+        "- Move: drag the blue square at the top-left corner of the table.",
+        "- Delete: select the table (click its border or the blue square) and press Delete.",
+        "- Right-click the table to bring it forward or send it back one level."
+      ],
+      "keywords": ["move table", "delete table", "remove table", "table position", "handle", "drag table", "erase table"],
+      "captions": ["Drag the blue square (top-left corner) to move the table.", "Select the table and press Delete to remove it."]
+    },
+
+    "image_import": {
+      "title": "Import an image",
+      "body": [
+        "- Right-click an empty area of the page (with no text selected).",
+        "- Choose Import an image and pick a file.",
+        "- The image is placed on the page. Click it to move it; the blue square resizes it and the green dot rotates it.",
+        "- Right-click the image for opacity and layer order. Select it and press Delete to remove it."
+      ],
+      "keywords": ["image", "images", "picture", "photo", "import", "import image", "insert image", "add image", "png", "jpg", "jpeg", "logo"],
+      "captions": ["Right-click an empty area of the page.", "Toggle Orientation (Portrait/Landscape)", "Delete Page", "Import an image", "Pick a file: the image is inserted on the page."]
+    },
+    "image_edit": {
+      "title": "Move, resize and rotate an image",
+      "body": [
+        "- Click the image to select it. Drag it to move it.",
+        "- Blue square at the corner: drag to resize (hold Ctrl to keep the proportions).",
+        "- Green dot above: drag to rotate (hold Ctrl to snap to 15° steps).",
+        "- Right-click: opacity (0-100) and layer order.",
+        "- Hold Alt while dragging to turn off the alignment guides."
+      ],
+      "keywords": ["image", "picture", "resize image", "rotate image", "image opacity", "transparency", "move image", "delete image"],
+      "captions": ["Click the image to select it. Drag it to move it.", "Blue square: resize (Ctrl keeps proportions). Green dot: rotate.", "Right-click: opacity and layers.", "Opacity", "Move forward one level", "Move back one level"]
+    },
+
+    "text_format": {
+      "title": "Format text (bold, size, color…)",
+      "body": [
+        "Select the text, then right-click it. The menu offers:",
+        "- Size: pick a preset or type your own (1-400) and press Enter.",
+        "- Color.",
+        "- Bold, Italic, Strikethrough.",
+        "- Underline, Dotted underline and Underline color.",
+        "- Highlight and Highlight color.",
+        "- Alignment (see the alignment topic)."
+      ],
+      "keywords": ["bold", "italic", "underline", "strikethrough", "highlight", "color", "colour", "font size", "size", "format", "formatting", "style", "text color", "dotted", "marker", "strike"],
+      "captions": ["Select some text, then right-click.", "Size", "Color", "Bold", "Italic", "Strikethrough", "Underline", "Highlight", "Alignment", "Also available: dotted underline, underline color and highlight color."]
+    },
+    "text_align": {
+      "title": "Align a paragraph",
+      "body": [
+        "- Select the text of the paragraph (or click in it), then right-click.",
+        "- Open Alignment and choose Align left, Center, Align right or Justify.",
+        "- Alignment is not available inside code blocks.",
+        "- It works in table cells and text boxes too."
+      ],
+      "keywords": ["align", "alignment", "center", "centre", "left", "right", "justify", "justified", "paragraph"],
+      "captions": ["Select the paragraph, right-click and open Alignment.", "Align left", "Center", "Align right", "Justify"]
+    },
+    "text_link": {
+      "title": "Add a link",
+      "body": [
+        "- Type or paste an address starting with http:// or https://.",
+        "- It is turned into a link automatically (trailing punctuation is left out).",
+        "- Ctrl+click (Cmd+click on Mac) opens the link in your browser.",
+        "- Links are not detected inside code blocks."
+      ],
+      "keywords": ["link", "links", "hyperlink", "url", "website", "http", "https", "web address", "open link", "click link"],
+      "captions": ["Type or paste an address starting with http:// or https://", "It turns into a link automatically.", "Ctrl+click (Cmd+click on Mac) opens it."]
+    },
+    "text_move": {
+      "title": "Move text anywhere on the page",
+      "body": [
+        "- Select the text you want to move: a blue handle appears at the top-left corner of the selection.",
+        "- Drag that handle: the text becomes a free text box, placed where you drop it.",
+        "- The original place is left blank, so the rest of the text does not move.",
+        "- See the text box topic to edit, resize and style it."
+      ],
+      "keywords": ["move text", "free text", "text box", "textbox", "drag text", "float text", "place text", "anywhere"],
+      "captions": ["Select some text: a blue handle appears at its top-left corner.", "Drag the handle: the text becomes a free text box.", "The text box can be placed anywhere on the page."]
+    },
+    "textbox_edit": {
+      "title": "Edit and style a text box",
+      "body": [
+        "- Click the box to select it and drag it to move it (or use the blue square at its top-left corner).",
+        "- Double-click to edit the text inside; press Escape to stop editing.",
+        "- Drag the blue handle on the right edge to change the width. The height follows the text.",
+        "- Right-click: Border visible and Border color, Background visible and Background color (its opacity follows the color picker), plus layer order.",
+        "- Select text inside and right-click for the usual text formatting.",
+        "- Select the box and press Delete to remove it. An empty box disappears by itself."
+      ],
+      "keywords": ["text box", "textbox", "border", "background", "edit text box", "width", "frame", "box", "fill"],
+      "captions": ["Drag a text box to move it; double-click to edit its text.", "Drag the blue handle on the right to change its width.", "Right-click: border and background.", "Border visible", "Border color", "Background visible", "Background color"]
+    },
+
+    "layers": {
+      "title": "Bring objects forward or send them back",
+      "body": [
+        "Shapes, arrows, images, tables and text boxes are stacked in layers.",
+        "- Right-click an object and choose Move forward one level or Move back one level.",
+        "- Each click moves it one step in the stack."
+      ],
+      "keywords": ["layer", "layers", "front", "back", "forward", "backward", "behind", "order", "stack", "overlap", "bring to front", "send to back"],
+      "captions": ["Overlapping objects are stacked in layers.", "Right-click an object: move it forward or back one level.", "Move forward one level", "Move back one level"]
+    },
+    "snap_guides": {
+      "title": "Alignment guides (snapping)",
+      "body": [
+        "- While you move or resize an object, pink guides appear when it lines up with the page edges, the page center or another object.",
+        "- The object snaps to the guide when it is close.",
+        "- Hold Alt while dragging to turn off snapping."
+      ],
+      "keywords": ["guide", "guides", "snap", "snapping", "align objects", "alignment guides", "pink line", "magnet", "center", "distribute"],
+      "captions": ["While moving or resizing, pink guides show alignment with the page and other objects.", "Hold Alt to turn off snapping."]
+    },
+
+    "code_block": {
+      "title": "Write a code block",
+      "body": [
+        "Start a line with three backticks and the language, write your code, and close with three backticks:",
+        "> ```python",
+        "> print(\"Hello\")",
+        "> ```",
+        "- The block gets a code background and syntax highlighting.",
+        "- Highlighted languages: Java, Python, JavaScript/TypeScript, C, C++, C#, HTML/XML, CSS, JSON, SQL, Bash, OCaml. Others get generic highlighting.",
+        "- The fence lines are dimmed when your cursor is outside the block.",
+        "- The color theme is chosen in Settings.",
+        "- You can run some languages: right-click inside the block (see the run topic)."
+      ],
+      "keywords": ["code", "code block", "backticks", "syntax", "highlight code", "programming", "python", "java", "javascript", "language", "fence", "snippet", "triple backtick"],
+      "captions": ["Type three backticks followed by the language (python, java, js, c, sql…).", "Write your code, then close the block with three backticks.", "The block is styled and syntax-highlighted."]
+    },
+    "code_run": {
+      "title": "Run a code block",
+      "body": [
+        "- Right-click inside a code block and choose Run code.",
+        "- Runnable languages: Python, JavaScript, Bash, Java, OCaml and C (the interpreter or compiler must be installed and in your PATH).",
+        "- The first time, a confirmation asks you to trust the code: it runs on your computer with the app's rights.",
+        "- The output appears under the block. Use ■ to stop, ▾ to collapse and ✕ to close.",
+        "- A run is stopped after 10 seconds, and the output is limited to 20,000 characters."
+      ],
+      "keywords": ["run", "execute", "code output", "run code", "output", "console", "interpreter", "stop", "timeout", "compile", "python run"],
+      "captions": ["Right-click inside a code block.", "Run code (Python)", "First time only: confirm that you trust the code.", "The output appears under the block. Stop (■) or close (✕) it from there."]
+    },
+    "code_theme": {
+      "title": "Change the code block theme",
+      "body": [
+        "- Click the Settings button.",
+        "- Choose a theme in Code block theme.",
+        "- All code blocks update immediately."
+      ],
+      "keywords": ["code theme", "theme", "dark", "light", "code colors", "syntax colors", "code appearance"],
+      "captions": ["Open Settings and choose the code block theme.", "Background color", "Selection color", "Code block theme", "Number the pages", "Margins (cm)"]
+    },
+
+    "file_save": {
+      "title": "Save your document",
+      "body": [
+        "- Press Ctrl+S (Cmd+S on Mac) or click the Save button.",
+        "- The first time, you choose a file name; after that, it saves to the same file.",
+        "- Documents are saved as .docx files. TypO stores extra data in them, so reopening a file in TypO restores every object (tables, shapes, arrows, text boxes, images)."
+      ],
+      "keywords": ["save", "ctrl s", "saving", "store", "write file"],
+      "captions": ["Press Ctrl+S (or the Save button).", "The first time, you choose a file name; after that it saves to the same file."]
+    },
+    "file_open": {
+      "title": "Open a document",
+      "body": [
+        "- Click the Open button and choose a .docx file.",
+        "- Only .docx files can be opened.",
+        "- Documents saved by TypO come back with all their objects, margins and page settings."
+      ],
+      "keywords": ["open", "load", "open file", "open document", "docx", "reopen", "import document"]
+    },
+    "file_saveas": {
+      "title": "Save as .docx or export to PDF",
+      "body": [
+        "- Click the Save As button and choose a name and a type.",
+        "- Word document (.docx): can be reopened in TypO and opened in Word.",
+        "- PDF: a picture of each page. It cannot be reopened for editing, and code output panels are not included.",
+        "- After a .docx Save As, Ctrl+S saves to that file."
+      ],
+      "keywords": ["save as", "export", "pdf", "docx", "word", "export pdf", "convert", "rename", "new file", "format"]
+    },
+
+    "page_new": {
+      "title": "Add a page",
+      "body": [
+        "- Click the New Page button to add a blank page at the end.",
+        "- A new page is also created automatically when your text no longer fits on the page.",
+        "- New pages follow the margins and page numbering set in Settings."
+      ],
+      "keywords": ["new page", "add page", "page", "another page", "next page", "overflow", "pagination", "page break"],
+      "captions": ["Click New Page to add a blank page.", "A page is also added automatically when the text overflows."]
+    },
+    "page_manage": {
+      "title": "Delete a page or change its orientation",
+      "body": [
+        "- Right-click an empty area of the page (with no text selected).",
+        "- Toggle Orientation (Portrait/Landscape) switches that page.",
+        "- Delete Page removes it; the remaining pages are renumbered.",
+        "- Import an image is in the same menu."
+      ],
+      "keywords": ["delete page", "remove page", "orientation", "landscape", "portrait", "rotate page", "page menu", "page layout"],
+      "captions": ["Right-click an empty area of the page.", "Toggle Orientation (Portrait/Landscape)", "Delete Page", "Import an image", "The page switches to landscape."]
+    },
+    "view_navigate": {
+      "title": "Zoom and move around",
+      "body": [
+        "- Zoom: Ctrl + mouse wheel (from 0.8× to 3×).",
+        "- Move up and down: mouse wheel or the vertical scrollbar.",
+        "- Move left and right: Shift + mouse wheel or the horizontal scrollbar."
+      ],
+      "keywords": ["zoom", "scroll", "pan", "navigate", "move view", "zoom in", "zoom out", "scrollbar", "magnify", "shift scroll", "ctrl scroll"],
+      "captions": ["Ctrl + mouse wheel: zoom in or out.", "Mouse wheel: move up and down.", "Shift + mouse wheel: move left and right."]
+    },
+
+    "settings_margins": {
+      "title": "Change the page margins",
+      "body": [
+        "- Click the Settings button and open Margins (cm).",
+        "- Type a value in centimeters for Left, Top, Right or Bottom, then press Enter.",
+        "- Tick Link all four to apply the same margin to the four sides.",
+        "- Left + Right and Top + Bottom must each stay within 19 cm. A field turns red when the value is not valid."
+      ],
+      "keywords": ["margin", "margins", "page margins", "padding", "white space", "link margins"],
+      "captions": ["Click Settings, then open Margins (cm).", "Background color", "Selection color", "Code block theme", "Number the pages", "Margins (cm)", "Type a value in cm for Left, Top, Right or Bottom and press Enter.", "Link all four applies the same margin to the four sides."]
+    },
+    "settings_page_numbers": {
+      "title": "Show page numbers",
+      "body": [
+        "- Click the Settings button.",
+        "- Tick Number the pages.",
+        "- The number appears at the bottom of each page, in the document and in the exports."
+      ],
+      "keywords": ["page number", "page numbers", "numbering", "number pages", "footer", "pagination numbers"],
+      "captions": ["Click Settings and tick Number the pages.", "Background color", "Selection color", "Code block theme", "Number the pages", "Margins (cm)"]
+    },
+    "settings_colors": {
+      "title": "Change colors and appearance",
+      "body": [
+        "- Click the Settings button.",
+        "- Background color: the color behind the pages.",
+        "- Selection color: the color of selected text.",
+        "- Code block theme: the look of code blocks.",
+        "- Number the pages and Margins (cm) are in the same menu."
+      ],
+      "keywords": ["background", "background color", "selection color", "colors", "colours", "settings", "preferences", "theme", "appearance", "code theme"],
+      "captions": ["Click Settings to change colors.", "Background color", "Selection color", "Code block theme", "Number the pages", "Margins (cm)"]
+    },
+
+    "not_found": {
+      "title": "I couldn't pinpoint it",
+      "body": [
+        "Sorry, I couldn't work out what you are looking for.",
+        "- Use the Back button and answer differently, or use I don't know.",
+        "- Try the search box with other words (for example: table, fraction, bold, zoom).",
+        "- Commands typed with a backslash are explained in 'How typing commands works'."
+      ]
+    }
+  }
+}
