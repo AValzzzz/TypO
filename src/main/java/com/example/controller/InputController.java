@@ -46,6 +46,7 @@ import com.example.view.CodeOutputOverlay;
 import com.example.view.CodeRunController;
 import com.example.view.ImageOverlay;
 import com.example.view.Layerable;
+import com.example.view.Motion;
 import com.example.view.RichTextArea;
 import com.example.view.ShapeOverlay;
 import com.example.view.TableOverlay;
@@ -123,8 +124,16 @@ public class InputController {
         commandRegistry.register(new TableCommand());
         Page firstPage = new Page(whitePane, textEditor);
         setupPage(firstPage);
-        AppSettings.getInstance().backgroundColorProperty().addListener((obs, o, n) -> applyBackgroundColor(n));
-        applyBackgroundColor(AppSettings.getInstance().backgroundColorProperty().get());
+
+        rootPane.setStyle("");
+        rootPane.getStyleClass().add("app-root");
+
+        Node help = rootPane.lookup("#helpButton");
+        if (help != null && help.getParent() instanceof Pane bar) {
+            bar.getStyleClass().add("toolbar");
+            for (Node b : bar.getChildren())
+                Motion.interactive(b);
+        }
 
         AppSettings.getInstance().selectionColorProperty().addListener((obs, o, n) -> applySelectionColorToAllPages());
         applySelectionColorToAllPages();
@@ -477,10 +486,6 @@ public class InputController {
         return created;
     }
 
-    private void applyBackgroundColor(Color color) {
-        rootPane.setStyle("-fx-background-color: " + ColorUtil.toCssHex(color) + ";");
-    }
-
     private void applySelectionColorToAllPages() {
         for (Page p : pages)
             applySelectionColor(p.getEditor());
@@ -531,7 +536,7 @@ public class InputController {
 
     @FXML
     private void handleHelp() {
-        new Help().execute();
+        new Help(stackPane.getScene().getWindow()).execute();
     }
 
     @FXML

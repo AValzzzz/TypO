@@ -1,0 +1,412 @@
+/* ==========================================================================
+   TypO theme — Rosé Pine Dawn (light)
+   Palette: https://rosepinetheme.com/palette  (dawn variant)
+   ========================================================================== */
+
+.root {
+    -rp-base: #faf4ed;
+    -rp-surface: #fffaf3;
+    -rp-overlay: #f2e9e1;
+    -rp-muted: #9893a5;
+    -rp-subtle: #797593;
+    -rp-text: #575279;
+    -rp-love: #b4637a;
+    -rp-gold: #ea9d34;
+    -rp-rose: #d7827e;
+    -rp-pine: #286983;
+    -rp-foam: #56949f;
+    -rp-iris: #907aa9;
+    -rp-hl-low: #f4ede8;
+    -rp-hl-med: #dfdad9;
+    -rp-hl-high: #cecacd;
+
+    -fx-font-family: "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    -fx-font-size: 13px;
+
+    -fx-base: -rp-overlay;
+    -fx-background: -rp-base;
+    -fx-control-inner-background: -rp-surface;
+    -fx-control-inner-background-alt: -rp-hl-low;
+    -fx-accent: -rp-iris;
+    -fx-focus-color: -rp-iris;
+    -fx-faint-focus-color: rgba(144, 122, 169, 0.18);
+    -fx-text-base-color: -rp-text;
+    -fx-text-background-color: -rp-text;
+    -fx-text-inner-color: -rp-text;
+    -fx-selection-bar: -rp-iris;
+    -fx-selection-bar-non-focused: -rp-hl-high;
+}
+
+.app-root {
+    -fx-background-color: linear-gradient(to bottom, #efe7df, #e6dcd2);
+}
+
+.styled-text-area {
+    -fx-background-color: transparent;
+}
+
+.toolbar {
+    -fx-background-color: rgba(255, 250, 243, 0.88);
+    -fx-background-radius: 16;
+    -fx-border-color: rgba(206, 202, 205, 0.7);
+    -fx-border-radius: 16;
+    -fx-padding: 6 8 6 8;
+    -fx-spacing: 4;
+    -fx-effect: dropshadow(gaussian, rgba(87, 82, 121, 0.20), 22, 0.05, 0, 6);
+}
+
+.toolbar .button {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-effect: null;
+    -fx-text-fill: -rp-text;
+}
+
+.toolbar .button:hover {
+    -fx-background-color: -rp-overlay;
+}
+
+.toolbar .button:pressed {
+    -fx-background-color: -rp-hl-med;
+}
+
+.button {
+    -fx-background-color: -rp-surface;
+    -fx-background-insets: 0;
+    -fx-background-radius: 10;
+    -fx-border-color: -rp-hl-med;
+    -fx-border-radius: 10;
+    -fx-padding: 7 16 7 16;
+    -fx-text-fill: -rp-text;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(87, 82, 121, 0.08), 6, 0, 0, 1);
+}
+
+.button:hover {
+    -fx-background-color: -rp-hl-low;
+    -fx-border-color: -rp-hl-high;
+}
+
+.button:pressed {
+    -fx-background-color: -rp-overlay;
+}
+
+.button:disabled {
+    -fx-opacity: 0.45;
+}
+
+.btn-primary,
+.button:default {
+    -fx-background-color: -rp-iris;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-border-color: transparent;
+    -fx-effect: dropshadow(gaussian, rgba(144, 122, 169, 0.45), 12, 0.05, 0, 3);
+}
+
+.btn-primary:hover,
+.button:default:hover {
+    -fx-background-color: derive(-rp-iris, 12%);
+    -fx-border-color: transparent;
+}
+
+.btn-primary:pressed,
+.button:default:pressed {
+    -fx-background-color: derive(-rp-iris, -8%);
+}
+
+.btn-secondary {
+    -fx-background-color: -rp-surface;
+}
+
+.btn-ghost {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-text-fill: -rp-subtle;
+    -fx-effect: null;
+}
+
+.btn-ghost:hover {
+    -fx-background-color: -rp-hl-low;
+    -fx-text-fill: -rp-text;
+    -fx-border-color: transparent;
+}
+
+.toggle-button {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-background-radius: 9;
+    -fx-padding: 5 11 5 11;
+    -fx-text-fill: -rp-subtle;
+    -fx-cursor: hand;
+}
+
+.toggle-button:hover {
+    -fx-background-color: -rp-hl-low;
+}
+
+.toggle-button:selected {
+    -fx-background-color: -rp-iris;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+.text-field,
+.text-area,
+.combo-box-base,
+.choice-box {
+    -fx-background-color: -rp-surface;
+    -fx-background-insets: 0;
+    -fx-background-radius: 10;
+    -fx-border-color: -rp-hl-med;
+    -fx-border-radius: 10;
+    -fx-padding: 6 10 6 10;
+}
+
+.text-field:focused,
+.text-area:focused {
+    -fx-border-color: -rp-iris;
+    -fx-effect: dropshadow(gaussian, rgba(144, 122, 169, 0.40), 10, 0.15, 0, 0);
+}
+
+.search-field {
+    -fx-background-radius: 22;
+    -fx-border-radius: 22;
+    -fx-padding: 9 18 9 18;
+    -fx-font-size: 14px;
+}
+
+.check-box .box {
+    -fx-background-color: -rp-surface;
+    -fx-background-insets: 0;
+    -fx-background-radius: 5;
+    -fx-border-color: -rp-hl-high;
+    -fx-border-radius: 5;
+}
+
+.check-box:selected .box {
+    -fx-background-color: -rp-iris;
+    -fx-border-color: -rp-iris;
+}
+
+.check-box:selected .mark {
+    -fx-background-color: white;
+}
+
+.slider .track {
+    -fx-background-color: -rp-hl-med;
+    -fx-background-radius: 4;
+    -fx-pref-height: 4;
+}
+
+.slider .thumb {
+    -fx-background-color: -rp-iris;
+    -fx-background-insets: 0;
+    -fx-effect: dropshadow(gaussian, rgba(144, 122, 169, 0.5), 6, 0.1, 0, 1);
+}
+
+.color-picker {
+    -fx-color-label-visible: false;
+}
+
+.context-menu {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-border-color: transparent;
+    -fx-padding: 10;
+    -fx-effect: null;
+}
+
+.context-menu .context-menu {
+    -fx-background-color: rgb(255, 250, 243);
+    -fx-background-insets: 0;
+    -fx-background-radius: 14;
+    -fx-border-color: -rp-hl-med;
+    -fx-border-radius: 14;
+    -fx-padding: 6;
+    -fx-effect: dropshadow(gaussian, rgba(87, 82, 121, 0.28), 16, 0.05, 0, 5);
+}
+
+.menu-item {
+    -fx-background-insets: 0 2 0 2;
+    -fx-background-radius: 9;
+    -fx-padding: 6 14 6 14;
+}
+
+.menu-item .label {
+    -fx-text-fill: -rp-text;
+}
+
+.menu-item:focused {
+    -fx-background-color: -rp-iris;
+}
+
+.menu-item:focused .label {
+    -fx-text-fill: white;
+}
+
+.custom-menu-item:focused {
+    -fx-background-color: transparent;
+}
+
+.custom-menu-item:focused .label {
+    -fx-text-fill: -rp-text;
+}
+
+.menu-item:disabled .label {
+    -fx-text-fill: -rp-muted;
+}
+
+.separator .line {
+    -fx-border-color: -rp-hl-med;
+    -fx-border-width: 1 0 0 0;
+}
+
+.scroll-bar {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+}
+
+.scroll-bar .track,
+.scroll-bar .track-background {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+.scroll-bar .thumb {
+    -fx-background-color: rgba(87, 82, 121, 0.28);
+    -fx-background-insets: 3;
+    -fx-background-radius: 8;
+}
+
+.scroll-bar .thumb:hover,
+.scroll-bar .thumb:pressed {
+    -fx-background-color: rgba(144, 122, 169, 0.75);
+}
+
+.scroll-bar > .increment-button,
+.scroll-bar > .decrement-button {
+    -fx-padding: 0;
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+.scroll-bar > .increment-button > .increment-arrow,
+.scroll-bar > .decrement-button > .decrement-arrow {
+    -fx-padding: 0;
+    -fx-shape: "";
+}
+
+.scroll-pane,
+.scroll-pane > .viewport {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+}
+
+.scroll-pane > .corner {
+    -fx-background-color: transparent;
+}
+
+.dialog-pane {
+    -fx-background-color: -rp-base;
+}
+
+.dialog-pane .header-panel {
+    -fx-background-color: -rp-overlay;
+}
+
+.dialog-pane .header-panel .label {
+    -fx-text-fill: -rp-text;
+    -fx-font-weight: bold;
+}
+
+.tooltip {
+    -fx-background-color: -rp-text;
+    -fx-text-fill: white;
+    -fx-background-radius: 8;
+    -fx-padding: 6 10 6 10;
+}
+
+.help-root {
+    -fx-background-color: -rp-base;
+}
+
+.help-top {
+    -fx-padding: 16 18 10 18;
+    -fx-spacing: 8;
+    -fx-alignment: center-left;
+}
+
+.help-bottom {
+    -fx-padding: 4 16 14 16;
+}
+
+.help-content {
+    -fx-padding: 8 18 18 18;
+}
+
+.lang-pills {
+    -fx-background-color: -rp-overlay;
+    -fx-background-radius: 12;
+    -fx-padding: 3;
+    -fx-spacing: 2;
+}
+
+.help-card {
+    -fx-background-color: white;
+    -fx-background-radius: 20;
+    -fx-padding: 24;
+    -fx-effect: dropshadow(gaussian, rgba(87, 82, 121, 0.14), 24, 0.05, 0, 8);
+}
+
+.help-title {
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -rp-text;
+}
+
+.help-question {
+    -fx-font-size: 19px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -rp-text;
+}
+
+.help-note {
+    -fx-text-fill: -rp-subtle;
+    -fx-font-style: italic;
+}
+
+.help-body {
+    -fx-text-fill: -rp-text;
+    -fx-line-spacing: 3;
+}
+
+.help-bullet {
+    -fx-text-fill: -rp-text;
+    -fx-padding: 0 0 0 6;
+    -fx-line-spacing: 3;
+}
+
+.help-code {
+    -fx-font-family: "JetBrains Mono", "Consolas", "Menlo", monospace;
+    -fx-font-size: 13px;
+    -fx-background-color: -rp-hl-low;
+    -fx-background-radius: 9;
+    -fx-text-fill: -rp-pine;
+    -fx-padding: 7 12 7 12;
+}
+
+.result-button {
+    -fx-alignment: center-left;
+    -fx-padding: 14 18 14 18;
+    -fx-background-radius: 14;
+    -fx-border-radius: 14;
+    -fx-font-size: 14px;
+    -fx-background-color: white;
+}
+
+.result-button:hover {
+    -fx-background-color: -rp-hl-low;
+    -fx-border-color: -rp-iris;
+}

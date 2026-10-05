@@ -32,10 +32,6 @@ public class SettingsMenu extends ContextMenu {
 
         AppSettings settings = AppSettings.getInstance();
 
-        ColorPicker bgPicker = new ColorPicker(settings.backgroundColorProperty().get());
-        bgPicker.valueProperty().bindBidirectional(settings.backgroundColorProperty());
-        keepOpenWhilePickerActive(bgPicker);
-
         ColorPicker selectionPicker = new ColorPicker(settings.selectionColorProperty().get());
         selectionPicker.valueProperty().bindBidirectional(settings.selectionColorProperty());
         keepOpenWhilePickerActive(selectionPicker);
@@ -77,7 +73,6 @@ public class SettingsMenu extends ContextMenu {
         restartNote.managedProperty().bind(restartNote.visibleProperty());
 
         getItems().addAll(
-                row(I18n.t("settings.backgroundColor"), bgPicker),
                 row(I18n.t("settings.selectionColor"), selectionPicker),
                 new SeparatorMenuItem(),
                 row(I18n.t("settings.codeTheme"), themeChoice),

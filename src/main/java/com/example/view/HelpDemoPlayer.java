@@ -98,15 +98,21 @@ public class HelpDemoPlayer extends VBox {
         page.setPrefSize(W, H);
         page.setMinSize(W, H);
         page.setMaxSize(W, H);
-        page.setStyle("-fx-background-color: white; -fx-border-color: #b0b0b0;");
-        page.setClip(new Rectangle(W, H));
+        page.setStyle("-fx-background-color: white; -fx-background-radius: 12; -fx-border-color: #dfdad9; "
+                + "-fx-border-radius: 12; -fx-effect: dropshadow(gaussian, rgba(87,82,121,0.15), 14, 0.05, 0, 4);");
+        Rectangle clip = new Rectangle(W, H);
+        clip.setArcWidth(24);
+        clip.setArcHeight(24);
+        page.setClip(clip);
 
         caption.setWrapText(true);
         caption.setPrefWidth(W);
         caption.setMinHeight(44);
-        caption.setStyle("-fx-font-size: 13px; -fx-text-fill: #333;");
+        caption.setStyle("-fx-font-size: 13px; -fx-text-fill: #575279;");
 
-        Button replay = new Button(replayLabel);
+        Button replay = new Button("\u21BB  " + replayLabel);
+        replay.getStyleClass().add("btn-ghost");
+        Motion.interactive(replay);
         replay.setOnAction(e -> play());
 
         setPadding(new Insets(6, 0, 6, 0));
