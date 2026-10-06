@@ -4,12 +4,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
+import javafx.util.Duration;
 
 public class SnapGuides {
     public record Rect(double x, double y, double w, double h) {
@@ -21,6 +25,7 @@ public class SnapGuides {
     private final Pane pane;
     private final Function<Node, List<Rect>> others;
     private final Group layer = new Group();
+    private Timeline fade;
 
     public SnapGuides(Pane pane, Function<Node, List<Rect>> others) {
         this.pane = pane;
@@ -29,7 +34,7 @@ public class SnapGuides {
         layer.setManaged(false);
         layer.getProperties().put("noExport", Boolean.TRUE);
         pane.getChildren().add(layer);
-        pane.addEventFilter(MouseEvent.MOUSE_RELEASED, e -> clear());
+        pane.addEventFilter(MouseEvent.MOUSE_RELEASED, e -> release());
     }
 
     public void toFront() {
@@ -37,8 +42,35 @@ public class SnapGuides {
     }
 
     public void clear() {
+        stopFade();
         if (!layer.getChildren().isEmpty())
             layer.getChildren().clear();
+    }
+
+    private void stopFade() {
+        if (fade != null) {
+            fade.stop();
+            fade = null;
+        }
+        layer.setOpacity(1);
+    }
+
+    private void release() {
+        if (layer.getChildren().isEmpty())
+            return;
+        if (Motion.isReduced()) {
+            clear();
+            return;
+        }
+        stopFade();
+        fade = new Timeline(new KeyFrame(Duration.millis(200),
+                new KeyValue(layer.opacityProperty(), 0, Motion.EASE_OUT)));
+        fade.setOnFinished(e -> {
+            fade = null;
+            layer.getChildren().clear();
+            layer.setOpacity(1);
+        });
+        fade.play();
     }
 
     public static Rect rectOf(Node n) {

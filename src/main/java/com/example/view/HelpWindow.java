@@ -20,20 +20,17 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 
 public class HelpWindow {
-    private static final String QUESTION_STYLE = "-fx-font-size: 17px; -fx-font-weight: bold;";
-    private static final String TITLE_STYLE = "-fx-font-size: 20px; -fx-font-weight: bold;";
-    private static final String NOTE_STYLE = "-fx-text-fill: #666; -fx-font-style: italic;";
-    private static final String CODE_STYLE = "-fx-font-family: 'Monospaced'; -fx-background-color: #f0f0f0; "
-            + "-fx-padding: 4 8 4 8;";
-
     private static HelpWindow instance;
 
     public static void open(Window owner) {
@@ -45,6 +42,7 @@ public class HelpWindow {
         try {
             instance = new HelpWindow(owner);
             instance.stage.show();
+            Motion.popIn(instance.root);
         } catch (IOException e) {
             instance = null;
             new Alert(Alert.AlertType.ERROR, "Unable to load the help: " + e.getMessage()).showAndWait();
@@ -52,8 +50,9 @@ public class HelpWindow {
     }
 
     private final Stage stage = new Stage();
+    private final BorderPane root = new BorderPane();
     private final ScrollPane scroll = new ScrollPane();
-    private final VBox content = new VBox(12);
+    private final VBox content = new VBox(16);
     private final TextField searchField = new TextField();
     private final Button searchButton = new Button();
     private final Button backButton = new Button();
@@ -63,6 +62,8 @@ public class HelpWindow {
 
     private Runnable current;
     private HelpDemoPlayer player;
+    private Runnable onYes, onNo, onSkip;
+    private boolean closing;
     private String lang;
     private HelpData data;
 
@@ -82,30 +83,47 @@ public class HelpWindow {
             setLanguage(now == frButton ? "fr" : "en");
         });
 
+        searchField.getStyleClass().add("search-field");
+        searchButton.getStyleClass().add("btn-primary");
+        backButton.getStyleClass().add("btn-ghost");
+        Motion.interactive(searchButton);
+        Motion.interactive(backButton);
         searchField.setOnAction(e -> search());
         searchButton.setOnAction(e -> search());
         backButton.setOnAction(e -> back());
 
-        HBox top = new HBox(8, searchField, searchButton, enButton, frButton);
-        top.setAlignment(Pos.CENTER_LEFT);
-        top.setPadding(new Insets(10));
+        HBox pills = new HBox(enButton, frButton);
+        pills.getStyleClass().add("lang-pills");
+
+        HBox top = new HBox(8, searchField, searchButton, pills);
+        top.getStyleClass().add("help-top");
         HBox.setHgrow(searchField, Priority.ALWAYS);
 
-        content.setPadding(new Insets(16));
+        content.getStyleClass().add("help-content");
         scroll.setContent(content);
         scroll.setFitToWidth(true);
         scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
 
         HBox bottom = new HBox(backButton);
-        bottom.setPadding(new Insets(8, 10, 8, 10));
+        bottom.getStyleClass().add("help-bottom");
 
-        BorderPane root = new BorderPane(scroll);
+        root.getStyleClass().add("help-root");
         root.setTop(top);
+        root.setCenter(scroll);
         root.setBottom(bottom);
 
-        stage.setScene(new Scene(root, 600, 680));
+        Scene scene = new Scene(root, 660, 720);
+        scene.setFill(Color.web("#faf4ed"));
+        Theme.apply(scene);
+        installKeys(scene);
+
+        stage.setScene(scene);
         if (owner != null)
             stage.initOwner(owner);
+        stage.setOnCloseRequest(e -> {
+            e.consume();
+            close();
+        });
         stage.setOnHidden(e -> {
             stopPlayer();
             instance = null;
@@ -113,6 +131,47 @@ public class HelpWindow {
 
         applyUiTexts();
         navigate(() -> renderNode(data.start(), data.ui("intro")));
+    }
+
+    private void close() {
+        if (closing)
+            return;
+        closing = true;
+        Motion.fadeOutThen(root, stage::hide);
+    }
+
+    private void installKeys(Scene scene) {
+        KeyCombination ctrlF = KeyCombination.keyCombination("Shortcut+F");
+        scene.setOnKeyPressed(e -> {
+            if (e.getCode() == KeyCode.ESCAPE) {
+                close();
+                e.consume();
+                return;
+            }
+            if (ctrlF.match(e) || (e.getCode() == KeyCode.SLASH && !(scene.getFocusOwner() instanceof TextField))) {
+                searchField.requestFocus();
+                searchField.selectAll();
+                e.consume();
+                return;
+            }
+            if (scene.getFocusOwner() instanceof TextField)
+                return;
+            switch (e.getCode()) {
+                case Y -> run(onYes);
+                case N -> run(onNo);
+                case S -> run(onSkip);
+                case BACK_SPACE, LEFT -> back();
+                default -> {
+                    return;
+                }
+            }
+            e.consume();
+        });
+    }
+
+    private static void run(Runnable r) {
+        if (r != null)
+            r.run();
     }
 
     private void setLanguage(String newLang) {
@@ -133,7 +192,7 @@ public class HelpWindow {
         stage.setTitle(data.ui("windowTitle"));
         searchField.setPromptText(data.ui("searchPrompt"));
         searchButton.setText(data.ui("search"));
-        backButton.setText(data.ui("back"));
+        backButton.setText("\u2190  " + data.ui("back"));
     }
 
     private void navigate(Runnable view) {
@@ -177,6 +236,7 @@ public class HelpWindow {
 
     private void resetContent() {
         stopPlayer();
+        onYes = onNo = onSkip = null;
         content.getChildren().clear();
         scroll.setVvalue(0);
     }
@@ -185,7 +245,9 @@ public class HelpWindow {
         resetContent();
         HelpNode n = data.node(id);
         if (n == null) {
-            content.getChildren().add(label(data.ui("missing") + " " + id, null));
+            VBox card = card();
+            card.getChildren().add(label(data.ui("missing") + " " + id, "help-body"));
+            present(card);
             return;
         }
         if (n.isLeaf())
@@ -195,19 +257,27 @@ public class HelpWindow {
     }
 
     private void renderQuestion(HelpNode n, String note) {
+        VBox card = card();
         if (note != null && !note.isEmpty())
-            content.getChildren().add(label(note, NOTE_STYLE));
-        content.getChildren().add(label(data.question(n.id), QUESTION_STYLE));
+            card.getChildren().add(label(note, "help-note"));
+        card.getChildren().add(label(data.question(n.id), "help-question"));
 
-        Button yes = new Button(data.ui("yes"));
-        Button no = new Button(data.ui("no"));
-        Button skip = new Button(data.ui("skip"));
-        for (Button b : List.of(yes, no, skip))
-            b.setMinWidth(90);
+        Button yes = button(data.ui("yes"), "btn-primary");
+        Button no = button(data.ui("no"), "btn-secondary");
+        Button skip = button(data.ui("skip"), "btn-ghost");
         yes.setOnAction(e -> go(n.yes));
         no.setOnAction(e -> go(n.no));
         skip.setOnAction(e -> go(n.skip != null ? n.skip : n.no));
-        content.getChildren().add(new HBox(10, yes, no, skip));
+        onYes = yes::fire;
+        onNo = no::fire;
+        onSkip = skip::fire;
+
+        for (Button b : List.of(yes, no))
+            b.setMinWidth(96);
+        HBox row = new HBox(10, yes, no, skip);
+        row.setPadding(new Insets(8, 0, 0, 0));
+        card.getChildren().add(row);
+        present(card);
     }
 
     private void renderResults(String query) {
@@ -217,52 +287,78 @@ public class HelpWindow {
             renderNode(data.start(), data.ui("noMatch"));
             return;
         }
-        content.getChildren().add(label(data.ui("resultsTitle"), QUESTION_STYLE));
+        content.getChildren().add(label(data.ui("resultsTitle"), "help-note"));
         for (HelpSearch.Hit hit : hits) {
-            Button b = new Button(data.title(hit.id()));
+            Button b = button(data.title(hit.id()) + "   \u2192", "result-button");
             b.setMaxWidth(Double.MAX_VALUE);
-            b.setAlignment(Pos.CENTER_LEFT);
             b.setOnAction(e -> go(hit.id()));
             content.getChildren().add(b);
         }
-        Button guide = new Button(data.ui("guideMe"));
+        Button guide = button(data.ui("guideMe"), "btn-ghost");
         guide.setOnAction(e -> go(data.start()));
         content.getChildren().add(guide);
+        Motion.stagger(content.getChildren(), 28);
     }
 
     private void renderLeaf(HelpNode n) {
-        content.getChildren().add(label(data.title(n.id), TITLE_STYLE));
+        VBox card = card();
+        card.getChildren().add(label(data.title(n.id), "help-title"));
         for (String line : data.body(n.id))
-            content.getChildren().add(bodyLine(line));
+            card.getChildren().add(bodyLine(line));
 
         if (n.demo != null && !n.demo.isEmpty()) {
-            Button show = new Button(data.ui("showMe"));
+            Button show = button(data.ui("showMe"), "btn-primary");
             show.setOnAction(e -> {
                 if (player == null) {
                     player = new HelpDemoPlayer(n.demo, i -> data.caption(n.id, i), data.ui("replay"));
-                    content.getChildren().add(player);
+                    VBox demoCard = card();
+                    demoCard.setAlignment(Pos.CENTER);
+                    demoCard.getChildren().add(player);
+                    content.getChildren().add(demoCard);
+                    Motion.popIn(demoCard);
                     show.setDisable(true);
                 }
                 player.play();
             });
-            content.getChildren().add(show);
+            HBox row = new HBox(show);
+            row.setPadding(new Insets(10, 0, 0, 0));
+            card.getChildren().add(row);
         }
+        present(card);
+    }
+
+    private void present(VBox card) {
+        content.getChildren().add(card);
+        Motion.popIn(card);
+        Motion.stagger(card.getChildren(), 24);
+    }
+
+    private static VBox card() {
+        VBox card = new VBox(12);
+        card.getStyleClass().add("help-card");
+        return card;
+    }
+
+    private static Button button(String text, String styleClass) {
+        Button b = new Button(text);
+        b.getStyleClass().add(styleClass);
+        Motion.interactive(b);
+        return b;
     }
 
     private Label bodyLine(String line) {
         if (line.startsWith("> "))
-            return label(line.substring(2), CODE_STYLE);
+            return label(line.substring(2), "help-code");
         if (line.startsWith("- "))
-            return label("\u2022  " + line.substring(2), "-fx-padding: 0 0 0 8;");
-        return label(line, null);
+            return label("\u2022  " + line.substring(2), "help-bullet");
+        return label(line, "help-body");
     }
 
-    private static Label label(String text, String style) {
+    private static Label label(String text, String styleClass) {
         Label l = new Label(text);
         l.setWrapText(true);
         l.setMaxWidth(Double.MAX_VALUE);
-        if (style != null)
-            l.setStyle(style);
+        l.getStyleClass().add(styleClass);
         return l;
     }
 }

@@ -3,6 +3,7 @@ package com.example.view;
 import java.util.List;
 
 import com.example.model.code.run.CodeRunner;
+import com.example.model.i18n.I18n;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -21,7 +22,7 @@ public class CodeOutputOverlay extends VBox {
     private final Label title = new Label();
     private final Label status = new Label();
     private final Button toggle = new Button("▾");
-    private final Button stop = new Button("■ Arrêter");
+    private final Button stop = new Button(I18n.t("code.stop"));
     private final Button close = new Button("✕");
     private final TextArea output = new TextArea();
 
@@ -85,7 +86,7 @@ public class CodeOutputOverlay extends VBox {
 
     public void begin(String language) {
         title.setText(language);
-        status.setText("En cours…");
+        output.setPromptText(I18n.t("code.noOutput"));
         output.clear();
         output.setPrefRowCount(2);
         stop.setVisible(true);
@@ -102,12 +103,13 @@ public class CodeOutputOverlay extends VBox {
         stop.setVisible(false);
         stop.setManaged(false);
         if (result.truncated())
-            append("\n[sortie tronquée]");
+            append("\n" + I18n.t("code.truncated"));
         status.setText(switch (result.status()) {
-            case FINISHED -> result.exitCode() == 0 ? "Terminé" : "Code de sortie " + result.exitCode();
-            case TIMEOUT -> "Délai dépassé (" + CodeRunner.TIMEOUT_SECONDS + " s)";
-            case STOPPED -> "Arrêté";
-            case FAILED_TO_START -> "Échec du lancement";
+            case FINISHED ->
+                result.exitCode() == 0 ? I18n.t("code.finished") : I18n.t("code.exitCode", result.exitCode());
+            case TIMEOUT -> I18n.t("code.timeout", CodeRunner.TIMEOUT_SECONDS);
+            case STOPPED -> I18n.t("code.stopped");
+            case FAILED_TO_START -> I18n.t("code.failed");
         });
     }
 }

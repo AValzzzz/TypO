@@ -2,6 +2,8 @@ package com.example.view;
 
 import java.util.function.Consumer;
 
+import com.example.model.i18n.I18n;
+
 import javafx.geometry.Pos;
 import javafx.scene.control.CheckMenuItem;
 import javafx.scene.control.ColorPicker;
@@ -15,24 +17,22 @@ import javafx.scene.paint.Color;
 
 public class TextBoxFormatMenu extends ContextMenu {
     public TextBoxFormatMenu(TextBoxOverlay box) {
-        CheckMenuItem border = new CheckMenuItem("Bordure visible");
+        CheckMenuItem border = new CheckMenuItem(I18n.t("textbox.borderVisible"));
         border.setSelected(box.isBorderVisible());
-        border.setOnAction(e -> box.setBorderVisible(border.isSelected()));
-
-        CheckMenuItem fill = new CheckMenuItem("Fond visible");
+        CheckMenuItem fill = new CheckMenuItem(I18n.t("textbox.bgVisible"));
         fill.setSelected(box.isBackgroundVisible());
         fill.setOnAction(e -> box.setBackgroundVisible(fill.isSelected()));
 
         getItems().addAll(
                 border,
-                colorRow("Couleur de la bordure", box.getBorderColor(), 1.0, c -> {
+                colorRow(I18n.t("textbox.borderColor"), box.getBorderColor(), 1.0, c -> {
                     box.setBorderColor(opaque(c));
                     box.setBorderVisible(true);
                     border.setSelected(true);
                 }),
                 new SeparatorMenuItem(),
                 fill,
-                colorRow("Couleur du fond", box.getBackgroundColor(), box.getBackgroundOpacity(), c -> {
+                colorRow(I18n.t("textbox.bgColor"), box.getBackgroundColor(), box.getBackgroundOpacity(), c -> {
                     box.setBackgroundColor(opaque(c));
                     box.setBackgroundOpacity(c.getOpacity());
                     box.setBackgroundVisible(true);

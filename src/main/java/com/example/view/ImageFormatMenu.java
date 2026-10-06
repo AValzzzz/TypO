@@ -2,6 +2,8 @@ package com.example.view;
 
 import java.util.function.Consumer;
 
+import com.example.model.i18n.I18n;
+
 import javafx.geometry.Pos;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.CustomMenuItem;
@@ -15,7 +17,7 @@ public class ImageFormatMenu extends ContextMenu {
     public ImageFormatMenu(ImageOverlay image) {
         Slider opacity = new Slider(0, 100, image.getImageOpacity() * 100);
 
-        getItems().add(sliderRow("Opacité", opacity, v -> image.setImageOpacity(v / 100)));
+        getItems().add(sliderRow(I18n.t("common.opacity"), opacity, v -> image.setImageOpacity(v / 100)));
         getItems().add(new SeparatorMenuItem());
         getItems().addAll(LayerMenu.items(image));
     }

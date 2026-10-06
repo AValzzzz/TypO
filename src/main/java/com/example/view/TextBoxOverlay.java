@@ -246,9 +246,9 @@ public class TextBoxOverlay extends Pane implements Layerable {
 
     private void updateChrome() {
         boolean show = !handleSuppressed && (selected || editing);
-        outline.setVisible(show);
-        moveHandle.setVisible(show);
-        widthHandle.setVisible(show);
+        Motion.fadeVisible(outline, show, handleSuppressed);
+        Motion.fadeVisible(moveHandle, show, handleSuppressed);
+        Motion.fadeVisible(widthHandle, show, handleSuppressed);
     }
 
     public void setHandleSuppressed(boolean suppressed) {

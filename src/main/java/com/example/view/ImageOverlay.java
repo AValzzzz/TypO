@@ -156,9 +156,9 @@ public class ImageOverlay extends Group implements Layerable {
 
     private void updateHandleVisibility() {
         boolean show = !handleSuppressed && (selected || resizing || rotating);
-        resizeHandle.setVisible(show);
-        rotateHandle.setVisible(show);
-        rotateLine.setVisible(show);
+        Motion.fadeVisible(resizeHandle, show, handleSuppressed);
+        Motion.fadeVisible(rotateHandle, show, handleSuppressed);
+        Motion.fadeVisible(rotateLine, show, handleSuppressed);
     }
 
     public void setHandleSuppressed(boolean suppressed) {

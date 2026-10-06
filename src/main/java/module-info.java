@@ -10,6 +10,7 @@ module com.example.javafx {
 
     requires javafx.swing;
     requires java.desktop;
+    requires java.prefs;
 
     requires java.xml;
 

@@ -17,71 +17,85 @@ public record TextStyle(
         Color textColor,
         Integer fontSize,
         Double baselineShift, CodeTheme codeTheme,
-        String link) {
+        String link,
+        String fontFamily) {
 
     public static final String LINK_COLOR = "#0563C1";
 
     public static final TextStyle DEFAULT = new TextStyle(false, false, false, false, null, false, null, null, 12,
-            null, null, null);
+            null, null, null, null);
+
+    public TextStyle(boolean bold, boolean italic, boolean strikethrough, boolean underline, Color underlineColor,
+            boolean underlineDotted, Color highlight, Color textColor, Integer fontSize, Double baselineShift,
+            CodeTheme codeTheme, String link) {
+        this(bold, italic, strikethrough, underline, underlineColor, underlineDotted, highlight, textColor,
+                fontSize, baselineShift, codeTheme, link, null);
+    }
 
     public TextStyle withBold(boolean v) {
         return new TextStyle(v, italic, strikethrough, underline, underlineColor, underlineDotted, highlight, textColor,
-                fontSize, baselineShift, codeTheme, link);
+                fontSize, baselineShift, codeTheme, link, fontFamily);
     }
 
     public TextStyle withItalic(boolean v) {
         return new TextStyle(bold, v, strikethrough, underline, underlineColor, underlineDotted, highlight, textColor,
-                fontSize, baselineShift, codeTheme, link);
+                fontSize, baselineShift, codeTheme, link, fontFamily);
     }
 
     public TextStyle withStrikethrough(boolean v) {
         return new TextStyle(bold, italic, v, underline, underlineColor, underlineDotted, highlight, textColor,
-                fontSize, baselineShift, codeTheme, link);
+                fontSize, baselineShift, codeTheme, link, fontFamily);
     }
 
     public TextStyle withUnderline(boolean v) {
         return new TextStyle(bold, italic, strikethrough, v, underlineColor, underlineDotted, highlight, textColor,
-                fontSize, baselineShift, codeTheme, link);
+                fontSize, baselineShift, codeTheme, link, fontFamily);
     }
 
     public TextStyle withUnderlineColor(Color v) {
         return new TextStyle(bold, italic, strikethrough, underline, v, underlineDotted, highlight, textColor, fontSize,
-                baselineShift, codeTheme, link);
+                baselineShift, codeTheme, link, fontFamily);
     }
 
     public TextStyle withUnderlineDotted(boolean v) {
         return new TextStyle(bold, italic, strikethrough, underline, underlineColor, v, highlight, textColor, fontSize,
-                baselineShift, codeTheme, link);
+                baselineShift, codeTheme, link, fontFamily);
     }
 
     public TextStyle withHighlight(Color v) {
         return new TextStyle(bold, italic, strikethrough, underline, underlineColor, underlineDotted, v, textColor,
-                fontSize, baselineShift, codeTheme, link);
+                fontSize, baselineShift, codeTheme, link, fontFamily);
     }
 
     public TextStyle withTextColor(Color v) {
         return new TextStyle(bold, italic, strikethrough, underline, underlineColor, underlineDotted, highlight, v,
-                fontSize, baselineShift, codeTheme, link);
+                fontSize, baselineShift, codeTheme, link, fontFamily);
     }
 
     public TextStyle withFontSize(Integer v) {
         return new TextStyle(bold, italic, strikethrough, underline, underlineColor, underlineDotted, highlight,
-                textColor, v, baselineShift, codeTheme, link);
+                textColor, v, baselineShift, codeTheme, link, fontFamily);
     }
 
     public TextStyle withBaselineShift(Double v) {
         return new TextStyle(bold, italic, strikethrough, underline, underlineColor, underlineDotted, highlight,
-                textColor, fontSize, v, codeTheme, link);
+                textColor, fontSize, v, codeTheme, link, fontFamily);
     }
 
     public TextStyle withCodeTheme(CodeTheme v) {
         return new TextStyle(bold, italic, strikethrough, underline, underlineColor, underlineDotted, highlight,
-                textColor, fontSize, baselineShift, v, link);
+                textColor, fontSize, baselineShift, v, link, fontFamily);
     }
 
     public TextStyle withLink(String v) {
         return new TextStyle(bold, italic, strikethrough, underline, underlineColor, underlineDotted, highlight,
-                textColor, fontSize, baselineShift, codeTheme, v);
+                textColor, fontSize, baselineShift, codeTheme, v, fontFamily);
+    }
+
+    public TextStyle withFontFamily(String v) {
+        String family = (v == null || v.isBlank()) ? null : v.trim();
+        return new TextStyle(bold, italic, strikethrough, underline, underlineColor, underlineDotted, highlight,
+                textColor, fontSize, baselineShift, codeTheme, link, family);
     }
 
     public boolean codeBlock() {
@@ -122,6 +136,8 @@ public record TextStyle(
             css.append("-rtfx-background-radius: 3;");
             if (textColor == null)
                 css.append("-fx-fill: ").append(ColorUtil.toCssRgba(codeTheme.getTextColor())).append(";");
+        } else if (fontFamily != null) {
+            css.append("-fx-font-family: '").append(fontFamily.replace("'", "\\'")).append("';");
         }
         if (textColor != null)
             css.append("-fx-fill: ").append(ColorUtil.toCssRgba(textColor)).append(";");

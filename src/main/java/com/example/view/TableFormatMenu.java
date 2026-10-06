@@ -2,6 +2,8 @@ package com.example.view;
 
 import java.util.List;
 
+import com.example.model.i18n.I18n;
+
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
@@ -44,8 +46,8 @@ public class TableFormatMenu extends ContextMenu {
             getItems().add(new SeparatorMenuItem());
         }
         getItems().addAll(
-                row("Lignes (1-" + TableOverlay.MAX_ROWS + ")", rows),
-                row("Colonnes (1-" + TableOverlay.MAX_COLS + ")", cols));
+                row(I18n.t("table.rows", TableOverlay.MAX_ROWS), rows),
+                row(I18n.t("table.cols", TableOverlay.MAX_COLS), cols));
     }
 
     private static TextField field(int value) {

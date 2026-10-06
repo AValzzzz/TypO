@@ -1,5 +1,8 @@
 package com.example.view;
 
+import java.util.List;
+import java.util.Locale;
+import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -7,13 +10,18 @@ import java.util.function.UnaryOperator;
 
 import com.example.model.ParagraphStyle;
 import com.example.model.TextStyle;
+import com.example.model.i18n.I18n;
 
+import javafx.collections.FXCollections;
+import javafx.collections.transformation.FilteredList;
 import javafx.geometry.Pos;
 import javafx.scene.control.CheckMenuItem;
 import javafx.scene.control.ColorPicker;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.CustomMenuItem;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.RadioMenuItem;
@@ -22,6 +30,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
 import javafx.scene.text.TextAlignment;
 
 public class TextFormatMenu extends ContextMenu {
@@ -38,12 +47,13 @@ public class TextFormatMenu extends ContextMenu {
         this.onAlign = onAlign;
 
         getItems().addAll(
+                fontItem(),
                 sizeMenu(),
                 colorItem(),
                 new SeparatorMenuItem(),
-                toggleItem("Gras", TextStyle::bold, TextStyle::withBold),
-                toggleItem("Italique", TextStyle::italic, TextStyle::withItalic),
-                toggleItem("Barré", TextStyle::strikethrough, TextStyle::withStrikethrough),
+                toggleItem(I18n.t("fmt.bold"), TextStyle::bold, TextStyle::withBold),
+                toggleItem(I18n.t("fmt.italic"), TextStyle::italic, TextStyle::withItalic),
+                toggleItem(I18n.t("fmt.strike"), TextStyle::strikethrough, TextStyle::withStrikethrough),
                 underlineToggle(),
                 underlineStyleToggle(),
                 underlineColorItem(),
@@ -54,7 +64,7 @@ public class TextFormatMenu extends ContextMenu {
     }
 
     private Menu sizeMenu() {
-        Menu menu = new Menu("Taille");
+        Menu menu = new Menu(I18n.t("fmt.size"));
         Integer current = editor.commonValue(TextStyle::fontSize).orElse(null);
         ToggleGroup group = new ToggleGroup();
 
@@ -67,7 +77,7 @@ public class TextFormatMenu extends ContextMenu {
         }
 
         TextField field = new TextField(current != null ? String.valueOf(current) : "");
-        field.setPromptText("Taille");
+        field.setPromptText(I18n.t("fmt.sizePrompt"));
         field.setPrefColumnCount(4);
         field.setOnAction(e -> {
             try {
@@ -82,7 +92,7 @@ public class TextFormatMenu extends ContextMenu {
             }
         });
 
-        HBox custom = new HBox(6, new Label("Autre :"), field);
+        HBox custom = new HBox(6, new Label(I18n.t("fmt.otherSize")), field);
         custom.setAlignment(Pos.CENTER_LEFT);
 
         menu.getItems().addAll(new SeparatorMenuItem(), new CustomMenuItem(custom, false));
@@ -99,7 +109,7 @@ public class TextFormatMenu extends ContextMenu {
 
         keepMenuOpenWhilePickerActive(picker);
 
-        HBox row = new HBox(8, new Label("Couleur"), picker);
+        HBox row = new HBox(8, new Label(I18n.t("fmt.color")), picker);
         row.setAlignment(Pos.CENTER_LEFT);
 
         return new CustomMenuItem(row, false);
@@ -116,7 +126,7 @@ public class TextFormatMenu extends ContextMenu {
     }
 
     private MenuItem underlineStyleToggle() {
-        return toggleItem("Soulignement en pointillés", TextStyle::underlineDotted, TextStyle::withUnderlineDotted);
+        return toggleItem(I18n.t("fmt.underlineDotted"), TextStyle::underlineDotted, TextStyle::withUnderlineDotted);
     }
 
     private MenuItem toggleItem(String label, Function<TextStyle, Boolean> getter,
@@ -131,7 +141,7 @@ public class TextFormatMenu extends ContextMenu {
     }
 
     private MenuItem underlineToggle() {
-        return toggleItem("Souligné", TextStyle::underline, TextStyle::withUnderline);
+        return toggleItem(I18n.t("fmt.underline"), TextStyle::underline, TextStyle::withUnderline);
     }
 
     private MenuItem underlineColorItem() {
@@ -142,11 +152,11 @@ public class TextFormatMenu extends ContextMenu {
             onChange.accept(s -> s.withUnderline(true).withUnderlineColor(color));
             hide();
         });
-        return colorRow("Couleur du soulignement", picker);
+        return colorRow(I18n.t("fmt.underlineColor"), picker);
     }
 
     private MenuItem highlightToggle() {
-        CheckMenuItem item = new CheckMenuItem("Surligné");
+        CheckMenuItem item = new CheckMenuItem(I18n.t("fmt.highlight"));
         boolean active = editor.commonValue(TextStyle::highlight).isPresent();
         item.setSelected(active);
         item.setOnAction(e -> onChange.accept(s -> s.withHighlight(item.isSelected() ? Color.YELLOW : null)));
@@ -161,7 +171,7 @@ public class TextFormatMenu extends ContextMenu {
             onChange.accept(s -> s.withHighlight(color));
             hide();
         });
-        return colorRow("Couleur du surlignage", picker);
+        return colorRow(I18n.t("fmt.highlightColor"), picker);
     }
 
     private MenuItem colorRow(String label, ColorPicker picker) {
@@ -171,7 +181,7 @@ public class TextFormatMenu extends ContextMenu {
     }
 
     private Menu alignmentMenu() {
-        Menu menu = new Menu("Alignement");
+        Menu menu = new Menu(I18n.t("fmt.align"));
 
         boolean hasEditableParagraph = editor.selectedParagraphStyles().stream().anyMatch(s -> !s.codeBlock());
         menu.setDisable(!hasEditableParagraph);
@@ -180,10 +190,10 @@ public class TextFormatMenu extends ContextMenu {
         ToggleGroup group = new ToggleGroup();
 
         menu.getItems().addAll(
-                alignmentItem("Aligner à gauche", TextAlignment.LEFT, current, group),
-                alignmentItem("Centrer", TextAlignment.CENTER, current, group),
-                alignmentItem("Aligner à droite", TextAlignment.RIGHT, current, group),
-                alignmentItem("Justifier", TextAlignment.JUSTIFY, current, group));
+                alignmentItem(I18n.t("fmt.alignLeft"), TextAlignment.LEFT, current, group),
+                alignmentItem(I18n.t("fmt.alignCenter"), TextAlignment.CENTER, current, group),
+                alignmentItem(I18n.t("fmt.alignRight"), TextAlignment.RIGHT, current, group),
+                alignmentItem(I18n.t("fmt.alignJustify"), TextAlignment.JUSTIFY, current, group));
         return menu;
     }
 
@@ -193,5 +203,87 @@ public class TextFormatMenu extends ContextMenu {
         item.setSelected(value == current);
         item.setOnAction(e -> onAlign.accept(value));
         return item;
+    }
+
+    private MenuItem fontItem() {
+        Optional<Optional<String>> common = editor.commonValue(s -> Optional.ofNullable(s.fontFamily()));
+        String current = common.flatMap(o -> o).orElse(null);
+        boolean mixed = common.isEmpty();
+        String initialText = current == null ? "" : current;
+
+        List<String> fonts = FontCatalog.available();
+        FilteredList<String> filtered = new FilteredList<>(FXCollections.observableArrayList(fonts), f -> true);
+
+        ComboBox<String> combo = new ComboBox<>(filtered);
+        combo.setEditable(true);
+        combo.setPrefWidth(210);
+        combo.setVisibleRowCount(10);
+        combo.setPromptText(I18n.t(mixed ? "fmt.fontMixed" : "fmt.fontDefault"));
+        combo.getEditor().setText(initialText);
+
+        combo.setCellFactory(lv -> new ListCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                    setFont(Font.getDefault());
+                } else {
+                    setText(item);
+                    setFont(Font.font(item, 14));
+                }
+            }
+        });
+
+        combo.getEditor().textProperty().addListener((obs, old, text) -> {
+            combo.getEditor().setStyle("");
+            if (text != null && text.equals(combo.getValue()))
+                return; 
+            String q = text == null ? "" : text.trim().toLowerCase(Locale.ROOT);
+            filtered.setPredicate(f -> q.isEmpty() || f.toLowerCase(Locale.ROOT).contains(q));
+            if (filtered.isEmpty())
+                combo.hide();
+            else if (!combo.isShowing() && combo.getEditor().isFocused())
+                combo.show();
+        });
+
+        combo.setOnAction(e -> {
+            String picked = combo.getValue();
+            if (picked == null)
+                picked = combo.getEditor().getText();
+            picked = picked == null ? "" : picked.trim();
+
+            if (picked.equals(initialText))
+                return;
+
+            if (picked.isEmpty()) {
+                applyFont(null); 
+                return;
+            }
+            String match = null;
+            for (String f : fonts)
+                if (f.equalsIgnoreCase(picked)) {
+                    match = f;
+                    break;
+                }
+            if (match == null && !filtered.isEmpty())
+                match = filtered.get(0);
+            if (match == null) {
+                combo.getEditor().setStyle("-fx-border-color: red");
+                return;
+            }
+            applyFont(match);
+        });
+
+        combo.showingProperty().addListener((obs, was, is) -> setAutoHide(!is));
+
+        HBox row = new HBox(8, new Label(I18n.t("fmt.font")), combo);
+        row.setAlignment(Pos.CENTER_LEFT);
+        return new CustomMenuItem(row, false);
+    }
+
+    private void applyFont(String family) {
+        onChange.accept(s -> s.codeBlock() ? s : s.withFontFamily(family));
+        hide();
     }
 }

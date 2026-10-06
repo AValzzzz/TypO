@@ -186,11 +186,12 @@ public final class CellCodec {
     }
 
     private static String encodeStyle(TextStyle s) {
-        return String.join(",",
+        String base = String.join(",",
                 flag(s.bold()), flag(s.italic()), flag(s.strikethrough()), flag(s.underline()),
                 color(s.underlineColor()), flag(s.underlineDotted()), color(s.highlight()), color(s.textColor()),
                 s.fontSize() == null ? NULL : String.valueOf(s.fontSize()),
                 s.baselineShift() == null ? NULL : String.valueOf(s.baselineShift()));
+        return s.fontFamily() == null ? base : base + "," + b64(s.fontFamily());
     }
 
     private static TextStyle decodeStyle(String encoded) {
@@ -205,8 +206,9 @@ public final class CellCodec {
                 .withHighlight(parseColor(f[6]))
                 .withTextColor(parseColor(f[7]))
                 .withFontSize(f[8].equals(NULL) ? null : Integer.valueOf(f[8]))
-                .withBaselineShift(f[9].equals(NULL) ? null : Double.valueOf(f[9]));
-    }
+                .withBaselineShift(f[9].equals(NULL) ? null : Double.valueOf(f[9]))
+                .withFontFamily(f.length > 10 && !f[10].equals(NULL) ? unb64(f[10]) : null);
+        }
 
     private static String flag(boolean b) {
         return b ? "1" : "0";

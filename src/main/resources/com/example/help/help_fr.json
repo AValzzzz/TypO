@@ -1,586 +1,588 @@
 {
   "ui": {
-    "windowTitle": "TypO Help",
-    "searchPrompt": "Ask a question, e.g. \"insert a table\"…",
-    "search": "Search",
-    "back": "Back",
-    "yes": "Yes",
-    "no": "No",
-    "skip": "I don't know",
-    "showMe": "Show me",
-    "replay": "Replay",
-    "intro": "Type what you want to do in the box above, or just answer the questions below.",
-    "noMatch": "I couldn't match your words, so let's find it step by step.",
-    "resultsTitle": "Best matches:",
-    "guideMe": "Guide me with questions instead",
-    "missing": "Missing help entry:"
+    "windowTitle": "Aide de TypO",
+    "searchPrompt": "Posez une question, par ex. « insérer un tableau »…",
+    "search": "Rechercher",
+    "back": "Retour",
+    "yes": "Oui",
+    "no": "Non",
+    "skip": "Je ne sais pas",
+    "showMe": "Montre-moi",
+    "replay": "Rejouer",
+    "intro": "Tapez ce que vous voulez faire dans la zone ci-dessus, ou répondez simplement aux questions ci-dessous.",
+    "noMatch": "Je n'ai pas compris vos mots, cherchons donc pas à pas.",
+    "resultsTitle": "Meilleurs résultats :",
+    "guideMe": "Me guider avec des questions à la place",
+    "missing": "Entrée d'aide manquante :"
   },
 
-  "stopwords": ["a", "an", "the", "to", "of", "for", "in", "on", "at", "by", "with", "and", "or", "how", "do", "does",
-    "did", "can", "could", "i", "me", "my", "you", "your", "we", "want", "need", "would", "like", "what", "where",
-    "when", "which", "is", "are", "be", "it", "its", "this", "that", "there", "some", "into", "from", "as", "about",
-    "make", "get", "use", "using", "please", "help", "should", "way", "possible"],
+  "stopwords": ["le", "la", "les", "un", "une", "des", "du", "de", "au", "aux", "en", "dans", "sur", "pour", "par", "avec",
+    "et", "ou", "comment", "faire", "fait", "puis", "peux", "peut", "je", "me", "mon", "ma", "mes", "tu", "te", "ton",
+    "vous", "votre", "veux", "voudrais", "vouloir", "besoin", "ce", "cet", "cette", "ces", "est", "sont", "etre", "il",
+    "elle", "que", "qui", "quand", "quel", "quelle", "quoi", "utiliser", "aide", "aider", "svp", "possible", "moyen",
+    "maniere", "comme", "ainsi", "afin", "dois", "doit"],
 
   "nodes": {
-    "q_root": {"question": "Do you want to write a mathematical formula or symbol?"},
-    "q_math": {"question": "Is it a fraction (one value over another)?"},
-    "q_math2": {"question": "Is it an exponent or a subscript (like x² or xᵢ)?"},
-    "q_math_pow": {"question": "Is it an exponent (x²)?"},
-    "q_math3": {"question": "Is it a square root?"},
-    "q_math4": {"question": "Is it a matrix?"},
-    "q_math5": {"question": "Is it a sum (Σ), an integral (∫) or a product (Π)?"},
-    "q_bigop": {"question": "Is it a sum (Σ)?"},
-    "q_bigop2": {"question": "Is it an integral (∫)?"},
-    "q_math6": {"question": "Is it a limit (lim)?"},
-    "q_math7": {"question": "Is it a special symbol (Greek letter, ≤, ∞, ℝ…)?"},
+    "q_root": {"question": "Voulez-vous écrire une formule ou un symbole mathématique ?"},
+    "q_math": {"question": "Est-ce une fraction (une valeur au-dessus d'une autre) ?"},
+    "q_math2": {"question": "Est-ce un exposant ou un indice (comme x² ou xᵢ) ?"},
+    "q_math_pow": {"question": "Est-ce un exposant (x²) ?"},
+    "q_math3": {"question": "Est-ce une racine carrée ?"},
+    "q_math4": {"question": "Est-ce une matrice ?"},
+    "q_math5": {"question": "Est-ce une somme (Σ), une intégrale (∫) ou un produit (Π) ?"},
+    "q_bigop": {"question": "Est-ce une somme (Σ) ?"},
+    "q_bigop2": {"question": "Est-ce une intégrale (∫) ?"},
+    "q_math6": {"question": "Est-ce une limite (lim) ?"},
+    "q_math7": {"question": "Est-ce un symbole spécial (lettre grecque, ≤, ∞, ℝ…) ?"},
 
-    "q_table": {"question": "Is it about tables?"},
-    "q_table1": {"question": "Do you want to create a new table?"},
-    "q_table2": {"question": "Do you want to change the number of rows or columns?"},
-    "q_table3": {"question": "Do you want to merge or split cells?"},
-    "q_table4": {"question": "Do you want to resize rows or columns?"},
+    "q_table": {"question": "Est-ce à propos des tableaux ?"},
+    "q_table1": {"question": "Voulez-vous créer un nouveau tableau ?"},
+    "q_table2": {"question": "Voulez-vous changer le nombre de lignes ou de colonnes ?"},
+    "q_table3": {"question": "Voulez-vous fusionner ou séparer des cellules ?"},
+    "q_table4": {"question": "Voulez-vous redimensionner des lignes ou des colonnes ?"},
 
-    "q_draw": {"question": "Is it about a shape, an arrow or an image?"},
-    "q_draw1": {"question": "Is it about an image?"},
-    "q_image": {"question": "Do you want to add an image to the page?"},
-    "q_draw2": {"question": "Is it about an arrow?"},
-    "q_arrow": {"question": "Do you want to create a new arrow?"},
-    "q_shape": {"question": "Do you want to create a new shape (circle, square, triangle)?"},
+    "q_draw": {"question": "Est-ce à propos d'une forme, d'une flèche ou d'une image ?"},
+    "q_draw1": {"question": "Est-ce à propos d'une image ?"},
+    "q_image": {"question": "Voulez-vous ajouter une image à la page ?"},
+    "q_draw2": {"question": "Est-ce à propos d'une flèche ?"},
+    "q_arrow": {"question": "Voulez-vous créer une nouvelle flèche ?"},
+    "q_shape": {"question": "Voulez-vous créer une nouvelle forme (cercle, carré, triangle) ?"},
 
-    "q_text": {"question": "Do you want to format text (style, alignment, links)?"},
-    "q_text1": {"question": "Do you want to change the look of characters (bold, size, color, underline, highlight)?"},
-    "q_text2": {"question": "Do you want to align a paragraph (left, center, right, justify)?"},
-    "q_textbox": {"question": "Do you want to place text freely on the page (text box)?"},
-    "q_tb": {"question": "Do you want to turn text you already wrote into a free text box?"},
+    "q_text": {"question": "Voulez-vous mettre en forme du texte (style, alignement, liens) ?"},
+    "q_text1": {"question": "Voulez-vous changer l'apparence des caractères (gras, taille, couleur, soulignement, surlignage) ?"},
+    "q_text2": {"question": "Voulez-vous aligner un paragraphe (gauche, centré, droite, justifié) ?"},
+    "q_textbox": {"question": "Voulez-vous placer du texte librement sur la page (zone de texte) ?"},
+    "q_tb": {"question": "Voulez-vous transformer du texte déjà écrit en zone de texte libre ?"},
 
-    "q_arrange": {"question": "Do you want to arrange objects (layers or alignment guides)?"},
-    "q_arr1": {"question": "Do you want to put an object in front of or behind another one?"},
+    "q_arrange": {"question": "Voulez-vous organiser des objets (calques ou guides d'alignement) ?"},
+    "q_arr1": {"question": "Voulez-vous mettre un objet devant ou derrière un autre ?"},
 
-    "q_code": {"question": "Is it about code?"},
-    "q_code1": {"question": "Do you want to write a code block?"},
-    "q_code2": {"question": "Do you want to run a code block?"},
+    "q_code": {"question": "Est-ce à propos de code ?"},
+    "q_code1": {"question": "Voulez-vous écrire un bloc de code ?"},
+    "q_code2": {"question": "Voulez-vous exécuter un bloc de code ?"},
 
-    "q_file": {"question": "Is it about saving, opening or exporting a document?"},
-    "q_file1": {"question": "Do you want to save your document?"},
-    "q_file2": {"question": "Do you want to open an existing document?"},
+    "q_file": {"question": "Est-ce à propos d'enregistrer, d'ouvrir ou d'exporter un document ?"},
+    "q_file1": {"question": "Voulez-vous enregistrer votre document ?"},
+    "q_file2": {"question": "Voulez-vous ouvrir un document existant ?"},
 
-    "q_page": {"question": "Is it about pages (add, delete, orientation)?"},
-    "q_page1": {"question": "Do you want to add a page?"},
-    "q_view": {"question": "Do you want to move around the document (zoom, scroll)?"},
+    "q_page": {"question": "Est-ce à propos des pages (ajout, suppression, orientation) ?"},
+    "q_page1": {"question": "Voulez-vous ajouter une page ?"},
+    "q_view": {"question": "Voulez-vous vous déplacer dans le document (zoom, défilement) ?"},
 
-    "q_settings": {"question": "Do you want to change the settings (colors, margins, page numbers)?"},
-    "q_set1": {"question": "Do you want to change the page margins?"},
-    "q_set2": {"question": "Do you want to show page numbers?"},
+    "q_settings": {"question": "Voulez-vous modifier les paramètres (couleurs, marges, numéros de page) ?"},
+    "q_set1": {"question": "Voulez-vous modifier les marges de la page ?"},
+    "q_set2": {"question": "Voulez-vous afficher les numéros de page ?"},
 
     "cmd_general": {
-      "title": "How typing commands works",
+      "title": "Comment fonctionnent les commandes tapées",
       "body": [
-        "Many things are created by typing a command: a backslash (\\), the command name, then Space.",
-        "> \\pi  then Space  →  π",
-        "- Math: \\a/b, \\x^2, \\x_i, \\sqrt(x), \\matrix(1,2;3,4), \\sum, \\int, \\prod, \\lim and symbols like \\pi or \\<=",
-        "- Objects: \\circle, \\square, \\triangle, \\arrow and \\tab (table)",
-        "- Press Backspace right after a conversion to get the raw command back and edit it.",
-        "- To write a real backslash, type it twice (\\\\)."
+        "Beaucoup d'éléments se créent en tapant une commande : une barre oblique inverse (\\), le nom de la commande, puis Espace.",
+        "> \\pi  puis Espace  →  π",
+        "- Maths : \\a/b, \\x^2, \\x_i, \\sqrt(x), \\matrix(1,2;3,4), \\sum, \\int, \\prod, \\lim et des symboles comme \\pi ou \\\\<=",
+        "- Objets : \\circle, \\square, \\triangle, \\arrow et \\tab (tableau)",
+        "- Appuyez sur Retour arrière juste après une conversion pour retrouver la commande brute et la modifier.",
+        "- Pour écrire une vraie barre oblique inverse, tapez-la deux fois (\\\\)."
       ],
-      "keywords": ["command", "commands", "backslash", "slash command", "shortcut", "how commands work", "convert", "escape", "type command", "space"],
-      "captions": ["Type a backslash and a command name…", "…then press Space: the command is converted.", "Press Backspace right after to get the raw command back and edit it."]
+      "keywords": ["commande", "commandes", "backslash", "antislash", "barre oblique inverse", "raccourci", "fonctionnement des commandes", "convertir", "echapper", "taper une commande", "espace"],
+      "captions": ["Tapez une barre oblique inverse et un nom de commande…", "…puis appuyez sur Espace : la commande est convertie.", "Appuyez sur Retour arrière juste après pour retrouver la commande brute et la modifier."]
     },
 
     "math_fraction": {
-      "title": "Insert a fraction",
+      "title": "Insérer une fraction",
       "body": [
-        "Type a backslash, the numerator, a slash and the denominator, then press Space:",
+        "Tapez une barre oblique inverse, le numérateur, une barre oblique et le dénominateur, puis appuyez sur Espace :",
         "> \\a/b",
-        "- Each side can contain letters, digits and underscores only (no spaces or operators).",
-        "- Example: \\3/4 gives 3 over 4.",
-        "- Press Backspace right after the conversion to edit the raw command."
+        "- Chaque côté peut contenir uniquement des lettres, des chiffres et des tirets bas (pas d'espaces ni d'opérateurs).",
+        "- Exemple : \\3/4 donne 3 sur 4.",
+        "- Appuyez sur Retour arrière juste après la conversion pour modifier la commande brute."
       ],
-      "keywords": ["fraction", "fractions", "divide", "division", "over", "numerator", "denominator", "ratio", "quotient"],
-      "captions": ["Type \\ then numerator/denominator, then Space.", "The fraction is created."]
+      "keywords": ["fraction", "fractions", "diviser", "division", "sur", "numerateur", "denominateur", "rapport", "quotient"],
+      "captions": ["Tapez \\ puis numérateur/dénominateur, puis Espace.", "La fraction est créée."]
     },
     "math_power": {
-      "title": "Insert an exponent (power)",
+      "title": "Insérer un exposant (puissance)",
       "body": [
-        "Type a backslash, the base, ^ and the exponent, then press Space:",
+        "Tapez une barre oblique inverse, la base, ^ et l'exposant, puis appuyez sur Espace :",
         "> \\x^2",
         "> \\x^(n+1)",
-        "- The base is made of letters and digits.",
-        "- The exponent is a single word or number, or anything inside parentheses.",
-        "- Use parentheses for longer exponents, e.g. \\e^(-x)."
+        "- La base est composée de lettres et de chiffres.",
+        "- L'exposant est un seul mot ou nombre, ou n'importe quoi entre parenthèses.",
+        "- Utilisez des parenthèses pour les exposants plus longs, par ex. \\e^(-x)."
       ],
-      "keywords": ["exponent", "exponents", "power", "powers", "squared", "cubed", "superscript", "raise", "to the power"],
-      "captions": ["Type \\ then base^exponent, then Space.", "The exponent is created."]
+      "keywords": ["exposant", "exposants", "puissance", "puissances", "carre", "cube", "au carre", "au cube", "elever", "mettre en exposant"],
+      "captions": ["Tapez \\ puis base^exposant, puis Espace.", "L'exposant est créé."]
     },
     "math_subscript": {
-      "title": "Insert a subscript",
+      "title": "Insérer un indice",
       "body": [
-        "Type a backslash, the base, _ and the subscript, then press Space:",
+        "Tapez une barre oblique inverse, la base, _ et l'indice, puis appuyez sur Espace :",
         "> \\x_i",
         "> \\x_(i+1)",
-        "- The base is made of letters and digits.",
-        "- The subscript is a single word or number, or anything inside parentheses."
+        "- La base est composée de lettres et de chiffres.",
+        "- L'indice est un seul mot ou nombre, ou n'importe quoi entre parenthèses."
       ],
-      "keywords": ["subscript", "subscripts", "index", "indices", "lower", "sub", "underscore"],
-      "captions": ["Type \\ then base_subscript, then Space.", "The subscript is created."]
+      "keywords": ["indice", "indices", "bas", "tiret bas", "underscore", "sous"],
+      "captions": ["Tapez \\ puis base_indice, puis Espace.", "L'indice est créé."]
     },
     "math_sqrt": {
-      "title": "Insert a square root",
+      "title": "Insérer une racine carrée",
       "body": [
-        "Type a backslash, sqrt, then the content in parentheses, and press Space:",
+        "Tapez une barre oblique inverse, sqrt, puis le contenu entre parenthèses, et appuyez sur Espace :",
         "> \\sqrt(x+1)",
-        "- Anything between the parentheses goes under the root sign."
+        "- Tout ce qui est entre parenthèses se place sous le signe racine."
       ],
-      "keywords": ["square root", "root", "sqrt", "radical", "root sign"],
-      "captions": ["Type \\sqrt(content), then Space.", "The root is created."]
+      "keywords": ["racine carree", "racine", "sqrt", "radical", "signe racine"],
+      "captions": ["Tapez \\sqrt(contenu), puis Espace.", "La racine est créée."]
     },
     "math_matrix": {
-      "title": "Insert a matrix",
+      "title": "Insérer une matrice",
       "body": [
-        "Type a backslash, matrix, then the values in parentheses, and press Space:",
+        "Tapez une barre oblique inverse, matrix, puis les valeurs entre parenthèses, et appuyez sur Espace :",
         "> \\matrix(1,2;3,4)",
-        "- Separate the columns with commas and the rows with semicolons.",
-        "- The example gives a 2×2 matrix drawn with brackets."
+        "- Séparez les colonnes par des virgules et les lignes par des points-virgules.",
+        "- L'exemple donne une matrice 2×2 dessinée avec des crochets."
       ],
-      "keywords": ["matrix", "matrices", "array", "grid of numbers", "determinant", "vector", "table of numbers"],
-      "captions": ["Type \\matrix(1,2;3,4), then Space.", "The matrix is created."]
+      "keywords": ["matrice", "matrices", "tableau de nombres", "grille de nombres", "determinant", "vecteur"],
+      "captions": ["Tapez \\matrix(1,2;3,4), puis Espace.", "La matrice est créée."]
     },
     "math_sum": {
-      "title": "Insert a sum (Σ)",
+      "title": "Insérer une somme (Σ)",
       "body": [
-        "Type a backslash, sum, then the expression in parentheses, and press Space:",
+        "Tapez une barre oblique inverse, sum, puis l'expression entre parenthèses, et appuyez sur Espace :",
         "> \\sum(i)",
-        "To add bounds, give the lower bound, then ^ and the upper bound, then the expression:",
+        "Pour ajouter des bornes, donnez la borne inférieure, puis ^ et la borne supérieure, puis l'expression :",
         "> \\sum_(i=0)^(n)(i)",
-        "- A bound is either a single word (\\sum_1^n(i)) or anything in parentheses.",
-        "- The expression always goes in parentheses."
+        "- Une borne est soit un seul mot (\\sum_1^n(i)), soit n'importe quoi entre parenthèses.",
+        "- L'expression se place toujours entre parenthèses."
       ],
-      "keywords": ["sum", "sums", "sigma", "summation", "series", "total"],
-      "captions": ["Type \\sum_(lower)^(upper)(expression), then Space.", "The sum is created."]
+      "keywords": ["somme", "sommes", "sigma", "sommation", "serie", "total"],
+      "captions": ["Tapez \\sum_(inférieure)^(supérieure)(expression), puis Espace.", "La somme est créée."]
     },
     "math_integral": {
-      "title": "Insert an integral (∫)",
+      "title": "Insérer une intégrale (∫)",
       "body": [
-        "Type a backslash, int, then the expression in parentheses, and press Space:",
+        "Tapez une barre oblique inverse, int, puis l'expression entre parenthèses, et appuyez sur Espace :",
         "> \\int(x)",
-        "To add bounds, give the lower bound, then ^ and the upper bound, then the expression:",
+        "Pour ajouter des bornes, donnez la borne inférieure, puis ^ et la borne supérieure, puis l'expression :",
         "> \\int_0^1(x)",
-        "- A bound is either a single word or anything in parentheses, e.g. \\int_(-1)^(1)(x).",
-        "- The expression always goes in parentheses."
+        "- Une borne est soit un seul mot, soit n'importe quoi entre parenthèses, par ex. \\int_(-1)^(1)(x).",
+        "- L'expression se place toujours entre parenthèses."
       ],
-      "keywords": ["integral", "integrals", "integrate", "integration", "calculus", "antiderivative", "area under curve"],
-      "captions": ["Type \\int_(lower)^(upper)(expression), then Space.", "The integral is created."]
+      "keywords": ["integrale", "integrales", "integrer", "integration", "calcul", "primitive", "aire sous la courbe"],
+      "captions": ["Tapez \\int_(inférieure)^(supérieure)(expression), puis Espace.", "L'intégrale est créée."]
     },
     "math_product": {
-      "title": "Insert a product (Π)",
+      "title": "Insérer un produit (Π)",
       "body": [
-        "Type a backslash, prod, then the expression in parentheses, and press Space:",
+        "Tapez une barre oblique inverse, prod, puis l'expression entre parenthèses, et appuyez sur Espace :",
         "> \\prod(i)",
-        "To add bounds:",
+        "Pour ajouter des bornes :",
         "> \\prod_(i=1)^(n)(i)",
-        "- A bound is either a single word or anything in parentheses.",
-        "- The expression always goes in parentheses."
+        "- Une borne est soit un seul mot, soit n'importe quoi entre parenthèses.",
+        "- L'expression se place toujours entre parenthèses."
       ],
-      "keywords": ["product", "products", "prod", "capital pi", "big pi", "multiply series", "productorial"],
-      "captions": ["Type \\prod_(lower)^(upper)(expression), then Space.", "The product is created."]
+      "keywords": ["produit", "produits", "prod", "pi majuscule", "grand pi", "multiplication", "produit de termes"],
+      "captions": ["Tapez \\prod_(inférieure)^(supérieure)(expression), puis Espace.", "Le produit est créé."]
     },
     "math_limit": {
-      "title": "Insert a limit",
+      "title": "Insérer une limite",
       "body": [
-        "Type a backslash, lim, then the expression in parentheses, and press Space:",
+        "Tapez une barre oblique inverse, lim, puis l'expression entre parenthèses, et appuyez sur Espace :",
         "> \\lim(x)",
-        "To show what the variable tends to:",
+        "Pour indiquer vers quoi tend la variable :",
         "> \\lim_(x->infinity)(1/x)",
-        "- Write -> for the arrow. The word infinity becomes ∞.",
-        "- The condition and the expression both go in parentheses."
+        "- Écrivez -> pour la flèche. Le mot infinity devient ∞.",
+        "- La condition et l'expression se placent toutes deux entre parenthèses."
       ],
-      "keywords": ["limit", "limits", "lim", "tends to", "approaches", "calculus", "infinity limit"],
-      "captions": ["Type \\lim_(x->a)(expression), then Space.", "The limit is created."]
+      "keywords": ["limite", "limites", "lim", "tend vers", "approche", "calcul", "limite en l'infini"],
+      "captions": ["Tapez \\lim_(x->a)(expression), puis Espace.", "La limite est créée."]
     },
     "math_symbols": {
-      "title": "Insert a math symbol",
+      "title": "Insérer un symbole mathématique",
       "body": [
-        "Type a backslash and the symbol name, then press Space:",
-        "- Greek letters: \\pi \\alpha \\beta \\theta \\lambda \\phi \\psi \\delta",
-        "- Comparison: \\<= (≤)  \\>= (≥)  \\~= (≈)  \\!= (≠)  \\in (∈)",
-        "- Operators: \\pm (±)  \\times (×)  \\inf or \\infinity (∞)",
-        "- Arrows: \\-> (→)  \\=> (⇒)  \\<=> (⇔)",
-        "- Number sets: \\NN (ℕ)  \\ZZ (ℤ)  \\QQ (ℚ)  \\RR (ℝ)  \\CC (ℂ)  \\PP (ℙ)  \\HH (ℍ)"
+        "Tapez une barre oblique inverse et le nom du symbole, puis appuyez sur Espace :",
+        "- Lettres grecques : \\pi \\alpha \\beta \\theta \\lambda \\phi \\psi \\delta",
+        "- Comparaison : \\<= (≤)  \\>= (≥)  \\~= (≈)  \\!= (≠)  \\in (∈)",
+        "- Opérateurs : \\pm (±)  \\times (×)  \\inf ou \\infinity (∞)",
+        "- Flèches : \\-> (→)  \\=> (⇒)  \\<=> (⇔)",
+        "- Ensembles de nombres : \\NN (ℕ)  \\ZZ (ℤ)  \\QQ (ℚ)  \\RR (ℝ)  \\CC (ℂ)  \\PP (ℙ)  \\HH (ℍ)"
       ],
-      "keywords": ["symbol", "symbols", "greek", "pi", "alpha", "beta", "theta", "lambda", "phi", "psi", "delta", "infinity",
-        "inequality", "less than or equal", "greater than or equal", "not equal", "approximately", "plus minus", "times",
-        "implies", "real numbers", "natural numbers", "integers", "rationals", "complex numbers", "math symbols", "arrow symbol"],
-      "captions": ["Type \\ and the symbol name, then Space.", "The symbol is inserted as text."]
+      "keywords": ["symbole", "symboles", "grec", "lettre grecque", "pi", "alpha", "beta", "theta", "lambda", "phi", "psi", "delta", "infini",
+        "inegalite", "inferieur ou egal", "superieur ou egal", "different", "environ", "approximativement", "plus ou moins", "fois",
+        "implique", "nombres reels", "entiers naturels", "entiers", "rationnels", "nombres complexes", "symboles mathematiques", "fleche symbole"],
+      "captions": ["Tapez \\ et le nom du symbole, puis Espace.", "Le symbole est inséré comme du texte."]
     },
 
     "shape_insert": {
-      "title": "Insert a shape",
+      "title": "Insérer une forme",
       "body": [
-        "Type one of these commands, then press Space:",
+        "Tapez l'une de ces commandes, puis appuyez sur Espace :",
         "> \\circle",
         "> \\square",
         "> \\triangle",
-        "The shape appears in the middle of the page. Then you can:",
-        "- Click it to select it, drag it to move it.",
-        "- Drag the blue square at its corner to resize it (hold Ctrl to keep the proportions).",
-        "- Drag the green dot above it to rotate it (hold Ctrl to snap to 15° steps).",
-        "- Right-click it for fill color and opacity, border color, opacity and thickness, and layer order.",
-        "- Select it and press Delete to remove it."
+        "La forme apparaît au milieu de la page. Vous pouvez ensuite :",
+        "- Cliquer dessus pour la sélectionner, la faire glisser pour la déplacer.",
+        "- Faire glisser le carré bleu à son coin pour la redimensionner (maintenez Ctrl pour conserver les proportions).",
+        "- Faire glisser le point vert au-dessus pour la faire pivoter (maintenez Ctrl pour aimanter par pas de 15°).",
+        "- Faire un clic droit pour régler la couleur et l'opacité du fond, la couleur, l'opacité et l'épaisseur de la bordure, et l'ordre des calques.",
+        "- La sélectionner et appuyer sur Suppr pour la supprimer."
       ],
-      "keywords": ["shape", "shapes", "circle", "square", "triangle", "draw", "geometry", "figure", "rectangle", "ellipse", "insert shape", "add shape"],
-      "captions": ["Type \\circle, \\square or \\triangle, then Space.", "The shape appears in the middle of the page."]
+      "keywords": ["forme", "formes", "cercle", "carre", "triangle", "dessiner", "geometrie", "figure", "rectangle", "ellipse", "inserer une forme", "ajouter une forme"],
+      "captions": ["Tapez \\circle, \\square ou \\triangle, puis Espace.", "La forme apparaît au milieu de la page."]
     },
     "shape_edit": {
-      "title": "Move, resize and style a shape",
+      "title": "Déplacer, redimensionner et mettre en forme une forme",
       "body": [
-        "- Click the shape to select it. Drag it to move it.",
-        "- Blue square at the corner: drag to resize (hold Ctrl to keep the proportions).",
-        "- Green dot above: drag to rotate (hold Ctrl to snap to 15° steps).",
-        "- Right-click: fill color and opacity, border color, opacity and thickness (0 = no border).",
-        "- Right-click also lets you move the shape forward or back one level.",
-        "- Select it and press Delete (or Backspace) to remove it.",
-        "- Hold Alt while dragging to turn off the alignment guides."
+        "- Cliquez sur la forme pour la sélectionner. Faites-la glisser pour la déplacer.",
+        "- Carré bleu au coin : faites-le glisser pour redimensionner (maintenez Ctrl pour conserver les proportions).",
+        "- Point vert au-dessus : faites-le glisser pour faire pivoter (maintenez Ctrl pour aimanter par pas de 15°).",
+        "- Clic droit : couleur et opacité du fond, couleur, opacité et épaisseur de la bordure (0 = pas de bordure).",
+        "- Le clic droit permet aussi d'avancer ou de reculer la forme d'un niveau.",
+        "- Sélectionnez-la et appuyez sur Suppr (ou Retour arrière) pour la supprimer.",
+        "- Maintenez Alt pendant le glissement pour désactiver les guides d'alignement."
       ],
-      "keywords": ["shape", "resize", "rotate", "rotation", "move shape", "fill", "fill color", "border", "stroke", "opacity", "transparency", "thickness", "delete shape", "edit shape"],
-      "captions": ["Drag the blue square to resize (Ctrl keeps proportions).", "Drag the green dot to rotate (Ctrl snaps to 15°).", "Drag the shape itself to move it.", "Right-click: colors, opacity, border…", "Fill color", "Fill opacity", "Border color", "Border thickness", "Move forward one level", "Move back one level"]
+      "keywords": ["forme", "redimensionner", "pivoter", "rotation", "deplacer une forme", "remplissage", "couleur de fond", "bordure", "contour", "opacite", "transparence", "epaisseur", "supprimer une forme", "modifier une forme"],
+      "captions": ["Faites glisser le carré bleu pour redimensionner (Ctrl conserve les proportions).", "Faites glisser le point vert pour faire pivoter (Ctrl aimante à 15°).", "Faites glisser la forme elle-même pour la déplacer.", "Clic droit : couleurs, opacité, bordure…", "Couleur du fond", "Opacité du fond", "Couleur de la bordure", "Épaisseur de la bordure", "Avancer d'un niveau", "Reculer d'un niveau"]
     },
 
     "arrow_insert": {
-      "title": "Insert an arrow",
+      "title": "Insérer une flèche",
       "body": [
-        "Type this command, then press Space:",
+        "Tapez cette commande, puis appuyez sur Espace :",
         "> \\arrow",
-        "A straight arrow appears on the page. Then you can:",
-        "- Drag the blue dots at its ends to move the start or the end.",
-        "- Drag the green dot in the middle to curve the arrow.",
-        "- Drag the line itself to move the whole arrow.",
-        "- Right-click for color, opacity and thickness, and layer order.",
-        "- Select it and press Delete to remove it."
+        "Une flèche droite apparaît sur la page. Vous pouvez ensuite :",
+        "- Faire glisser les points bleus à ses extrémités pour déplacer le début ou la fin.",
+        "- Faire glisser le point vert au milieu pour courber la flèche.",
+        "- Faire glisser la ligne elle-même pour déplacer toute la flèche.",
+        "- Faire un clic droit pour la couleur, l'opacité, l'épaisseur et l'ordre des calques.",
+        "- La sélectionner et appuyer sur Suppr pour la supprimer."
       ],
-      "keywords": ["arrow", "arrows", "insert arrow", "add arrow", "line", "pointer", "connector"],
-      "captions": ["Type \\arrow, then Space.", "An arrow appears. Drag its dots to adjust it."]
+      "keywords": ["fleche", "fleches", "inserer une fleche", "ajouter une fleche", "ligne", "pointeur", "connecteur"],
+      "captions": ["Tapez \\arrow, puis Espace.", "Une flèche apparaît. Faites glisser ses points pour l'ajuster."]
     },
     "arrow_edit": {
-      "title": "Move, curve and style an arrow",
+      "title": "Déplacer, courber et mettre en forme une flèche",
       "body": [
-        "- Click the arrow to select it. Drag the line to move the whole arrow.",
-        "- Blue dots: drag to move the start or the end.",
-        "- Green dot: drag to curve the arrow.",
-        "- Right-click: color, opacity (0-100) and thickness (1-20), plus layer order.",
-        "- Select it and press Delete (or Backspace) to remove it."
+        "- Cliquez sur la flèche pour la sélectionner. Faites glisser la ligne pour déplacer toute la flèche.",
+        "- Points bleus : faites-les glisser pour déplacer le début ou la fin.",
+        "- Point vert : faites-le glisser pour courber la flèche.",
+        "- Clic droit : couleur, opacité (0-100) et épaisseur (1-20), plus l'ordre des calques.",
+        "- Sélectionnez-la et appuyez sur Suppr (ou Retour arrière) pour la supprimer."
       ],
-      "keywords": ["arrow", "curve", "curved", "bend", "move arrow", "arrow color", "arrow thickness", "edit arrow", "control point"],
-      "captions": ["Drag the blue dots to move the ends, the green dot to curve it.", "Right-click: color, opacity, thickness.", "Color", "Opacity", "Thickness"]
+      "keywords": ["fleche", "courbe", "courber", "plier", "deplacer une fleche", "couleur de fleche", "epaisseur de fleche", "modifier une fleche", "point de controle"],
+      "captions": ["Faites glisser les points bleus pour déplacer les extrémités, le point vert pour la courber.", "Clic droit : couleur, opacité, épaisseur.", "Couleur", "Opacité", "Épaisseur"]
     },
 
     "table_insert": {
-      "title": "Insert a table",
+      "title": "Insérer un tableau",
       "body": [
-        "Type this command, then press Space:",
+        "Tapez cette commande, puis appuyez sur Espace :",
         "> \\tab",
-        "A 2×2 table appears (up to 20 rows × 20 columns). Then you can:",
-        "- Click a cell and type. Cells support formatting and \\ commands too.",
-        "- Change the number of rows and columns: right-click the table, type a number in Rows or Columns and press Enter.",
-        "- Merge cells: drag across several cells to select them, right-click, then Merge cells. Right-click a merged cell and choose Split cells to undo.",
-        "- Resize: drag a divider between cells. Hold Ctrl while dragging to move a single divider, and Alt to turn off snapping.",
-        "- Move the table: drag the blue square at its top-left corner.",
-        "- Delete it: select the table (click its border or the blue square) and press Delete.",
-        "- Right-click also has layer options (move forward / back one level)."
+        "Un tableau 2×2 apparaît (jusqu'à 20 lignes × 20 colonnes). Vous pouvez ensuite :",
+        "- Cliquer dans une cellule et taper. Les cellules acceptent aussi la mise en forme et les commandes \\.",
+        "- Changer le nombre de lignes et de colonnes : clic droit sur le tableau, tapez un nombre dans Lignes ou Colonnes et appuyez sur Entrée.",
+        "- Fusionner des cellules : faites glisser sur plusieurs cellules pour les sélectionner, clic droit, puis Fusionner les cellules. Faites un clic droit sur une cellule fusionnée et choisissez Séparer les cellules pour annuler.",
+        "- Redimensionner : faites glisser un séparateur entre les cellules. Maintenez Ctrl pendant le glissement pour déplacer un seul séparateur, et Alt pour désactiver l'aimantation.",
+        "- Déplacer le tableau : faites glisser le carré bleu à son coin supérieur gauche.",
+        "- Le supprimer : sélectionnez le tableau (cliquez sur sa bordure ou sur le carré bleu) et appuyez sur Suppr.",
+        "- Le clic droit propose aussi les options de calques (avancer / reculer d'un niveau)."
       ],
-      "keywords": ["table", "tables", "tab", "grid", "insert table", "add table", "create table", "spreadsheet", "cells", "rows columns"],
-      "captions": ["Type \\tab, then Space.", "A 2×2 table appears. Click a cell and type."]
+      "keywords": ["tableau", "tableaux", "tab", "grille", "inserer un tableau", "ajouter un tableau", "creer un tableau", "cellules", "lignes colonnes"],
+      "captions": ["Tapez \\tab, puis Espace.", "Un tableau 2×2 apparaît. Cliquez dans une cellule et tapez."]
     },
     "table_rows_cols": {
-      "title": "Change the number of rows and columns",
+      "title": "Changer le nombre de lignes et de colonnes",
       "body": [
-        "- Right-click the table (not on selected text).",
-        "- Type a number in Rows (1-20) and/or Columns (1-20), then press Enter.",
-        "- Extra rows and columns are added at the end; removing them deletes the last ones and their content.",
-        "- Merges that no longer fit are removed."
+        "- Faites un clic droit sur le tableau (pas sur du texte sélectionné).",
+        "- Tapez un nombre dans Lignes (1-20) et/ou Colonnes (1-20), puis appuyez sur Entrée.",
+        "- Les lignes et colonnes en plus sont ajoutées à la fin ; en retirer supprime les dernières et leur contenu.",
+        "- Les fusions qui ne rentrent plus sont supprimées."
       ],
-      "keywords": ["rows", "columns", "row", "column", "add row", "add column", "remove row", "remove column", "number of rows", "number of columns", "resize table", "table size"],
-      "captions": ["Right-click the table: set Rows and Columns (1-20), then press Enter.", "Rows (1-20)", "Columns (1-20)"]
+      "keywords": ["lignes", "colonnes", "ligne", "colonne", "ajouter une ligne", "ajouter une colonne", "supprimer une ligne", "supprimer une colonne", "nombre de lignes", "nombre de colonnes", "redimensionner le tableau", "taille du tableau"],
+      "captions": ["Clic droit sur le tableau : réglez Lignes et Colonnes (1-20), puis appuyez sur Entrée.", "Lignes (1-20)", "Colonnes (1-20)"]
     },
     "table_merge": {
-      "title": "Merge and split table cells",
+      "title": "Fusionner et séparer des cellules de tableau",
       "body": [
-        "- Drag across several cells to select them (they turn blue).",
-        "- Right-click and choose Merge cells. The text of the merged cells is combined.",
-        "- To undo: right-click the merged cell and choose Split cells.",
-        "- Merged cells can still be resized with the dividers."
+        "- Faites glisser sur plusieurs cellules pour les sélectionner (elles deviennent bleues).",
+        "- Faites un clic droit et choisissez Fusionner les cellules. Le texte des cellules fusionnées est combiné.",
+        "- Pour annuler : clic droit sur la cellule fusionnée et choisissez Séparer les cellules.",
+        "- Les cellules fusionnées peuvent toujours être redimensionnées avec les séparateurs."
       ],
-      "keywords": ["merge", "merge cells", "split", "split cells", "combine cells", "unmerge", "join cells", "spanning", "colspan", "rowspan"],
-      "captions": ["Drag across several cells to select them.", "Right-click: Merge cells.", "Merge cells", "Right-click a merged cell and choose Split cells to undo."]
+      "keywords": ["fusionner", "fusionner les cellules", "separer", "separer les cellules", "combiner des cellules", "defusionner", "joindre des cellules", "cellules fusionnees"],
+      "captions": ["Faites glisser sur plusieurs cellules pour les sélectionner.", "Clic droit : Fusionner les cellules.", "Fusionner les cellules", "Faites un clic droit sur une cellule fusionnée et choisissez Séparer les cellules pour annuler."]
     },
     "table_resize": {
-      "title": "Resize table rows and columns",
+      "title": "Redimensionner les lignes et colonnes d'un tableau",
       "body": [
-        "- Drag a divider between two columns or rows to resize them.",
-        "- Hold Ctrl while dragging to move a single divider (only that part of the border).",
-        "- Hold Alt to turn off snapping to nearby objects.",
-        "- Rows grow automatically when the text inside needs more room."
+        "- Faites glisser un séparateur entre deux colonnes ou deux lignes pour les redimensionner.",
+        "- Maintenez Ctrl pendant le glissement pour déplacer un seul séparateur (seulement cette partie de la bordure).",
+        "- Maintenez Alt pour désactiver l'aimantation aux objets proches.",
+        "- Les lignes s'agrandissent automatiquement quand le texte a besoin de plus de place."
       ],
-      "keywords": ["resize", "column width", "row height", "divider", "drag", "width", "height", "adjust", "snap", "table border"],
-      "captions": ["Drag a divider to resize a column or a row.", "Ctrl+drag moves a single divider. Alt turns off snapping."]
+      "keywords": ["redimensionner", "largeur de colonne", "hauteur de ligne", "separateur", "glisser", "largeur", "hauteur", "ajuster", "aimanter", "aimantation", "bordure de tableau"],
+      "captions": ["Faites glisser un séparateur pour redimensionner une colonne ou une ligne.", "Ctrl+glisser déplace un seul séparateur. Alt désactive l'aimantation."]
     },
     "table_move_delete": {
-      "title": "Move or delete a table",
+      "title": "Déplacer ou supprimer un tableau",
       "body": [
-        "- Move: drag the blue square at the top-left corner of the table.",
-        "- Delete: select the table (click its border or the blue square) and press Delete.",
-        "- Right-click the table to bring it forward or send it back one level."
+        "- Déplacer : faites glisser le carré bleu au coin supérieur gauche du tableau.",
+        "- Supprimer : sélectionnez le tableau (cliquez sur sa bordure ou sur le carré bleu) et appuyez sur Suppr.",
+        "- Faites un clic droit sur le tableau pour l'avancer ou le reculer d'un niveau."
       ],
-      "keywords": ["move table", "delete table", "remove table", "table position", "handle", "drag table", "erase table"],
-      "captions": ["Drag the blue square (top-left corner) to move the table.", "Select the table and press Delete to remove it."]
+      "keywords": ["deplacer un tableau", "supprimer un tableau", "retirer un tableau", "position du tableau", "poignee", "glisser le tableau", "effacer un tableau"],
+      "captions": ["Faites glisser le carré bleu (coin supérieur gauche) pour déplacer le tableau.", "Sélectionnez le tableau et appuyez sur Suppr pour le supprimer."]
     },
 
     "image_import": {
-      "title": "Import an image",
+      "title": "Importer une image",
       "body": [
-        "- Right-click an empty area of the page (with no text selected).",
-        "- Choose Import an image and pick a file.",
-        "- The image is placed on the page. Click it to move it; the blue square resizes it and the green dot rotates it.",
-        "- Right-click the image for opacity and layer order. Select it and press Delete to remove it."
+        "- Faites un clic droit sur une zone vide de la page (sans texte sélectionné).",
+        "- Choisissez Importer une image et sélectionnez un fichier.",
+        "- L'image est placée sur la page. Cliquez dessus pour la déplacer ; le carré bleu la redimensionne et le point vert la fait pivoter.",
+        "- Faites un clic droit sur l'image pour l'opacité et l'ordre des calques. Sélectionnez-la et appuyez sur Suppr pour la supprimer."
       ],
-      "keywords": ["image", "images", "picture", "photo", "import", "import image", "insert image", "add image", "png", "jpg", "jpeg", "logo"],
-      "captions": ["Right-click an empty area of the page.", "Toggle Orientation (Portrait/Landscape)", "Delete Page", "Import an image", "Pick a file: the image is inserted on the page."]
+      "keywords": ["image", "images", "photo", "importer", "importer une image", "inserer une image", "ajouter une image", "png", "jpg", "jpeg", "logo"],
+      "captions": ["Faites un clic droit sur une zone vide de la page.", "Basculer l'orientation (Portrait/Paysage)", "Supprimer la page", "Importer une image", "Choisissez un fichier : l'image est insérée dans la page."]
     },
     "image_edit": {
-      "title": "Move, resize and rotate an image",
+      "title": "Déplacer, redimensionner et faire pivoter une image",
       "body": [
-        "- Click the image to select it. Drag it to move it.",
-        "- Blue square at the corner: drag to resize (hold Ctrl to keep the proportions).",
-        "- Green dot above: drag to rotate (hold Ctrl to snap to 15° steps).",
-        "- Right-click: opacity (0-100) and layer order.",
-        "- Hold Alt while dragging to turn off the alignment guides."
+        "- Cliquez sur l'image pour la sélectionner. Faites-la glisser pour la déplacer.",
+        "- Carré bleu au coin : faites-le glisser pour redimensionner (maintenez Ctrl pour conserver les proportions).",
+        "- Point vert au-dessus : faites-le glisser pour faire pivoter (maintenez Ctrl pour aimanter par pas de 15°).",
+        "- Clic droit : opacité (0-100) et ordre des calques.",
+        "- Maintenez Alt pendant le glissement pour désactiver les guides d'alignement."
       ],
-      "keywords": ["image", "picture", "resize image", "rotate image", "image opacity", "transparency", "move image", "delete image"],
-      "captions": ["Click the image to select it. Drag it to move it.", "Blue square: resize (Ctrl keeps proportions). Green dot: rotate.", "Right-click: opacity and layers.", "Opacity", "Move forward one level", "Move back one level"]
+      "keywords": ["image", "photo", "redimensionner une image", "pivoter une image", "opacite de l'image", "transparence", "deplacer une image", "supprimer une image"],
+      "captions": ["Cliquez sur l'image pour la sélectionner. Faites-la glisser pour la déplacer.", "Carré bleu : redimensionner (Ctrl conserve les proportions). Point vert : pivoter.", "Clic droit : opacité et calques.", "Opacité", "Avancer d'un niveau", "Reculer d'un niveau"]
     },
 
     "text_format": {
-      "title": "Format text (bold, size, color…)",
+      "title": "Mettre en forme du texte (gras, taille, couleur…)",
       "body": [
-        "Select the text, then right-click it. The menu offers:",
-        "- Size: pick a preset or type your own (1-400) and press Enter.",
-        "- Color.",
-        "- Bold, Italic, Strikethrough.",
-        "- Underline, Dotted underline and Underline color.",
-        "- Highlight and Highlight color.",
-        "- Alignment (see the alignment topic)."
+        "Sélectionnez le texte, puis faites un clic droit dessus. Le menu propose :",
+        "- Taille : choisissez une valeur prédéfinie ou tapez la vôtre (1-400) et appuyez sur Entrée.",
+        "- Couleur.",
+        "- Gras, Italique, Barré.",
+        "- Souligné, Soulignement en pointillés et Couleur du soulignement.",
+        "- Surligné et Couleur du surlignage.",
+        "- Alignement (voir la rubrique sur l'alignement)."
       ],
-      "keywords": ["bold", "italic", "underline", "strikethrough", "highlight", "color", "colour", "font size", "size", "format", "formatting", "style", "text color", "dotted", "marker", "strike"],
-      "captions": ["Select some text, then right-click.", "Size", "Color", "Bold", "Italic", "Strikethrough", "Underline", "Highlight", "Alignment", "Also available: dotted underline, underline color and highlight color."]
+      "keywords": ["gras", "italique", "souligne", "souligner", "barre", "barrer", "surligne", "surligner", "couleur", "taille", "police", "mise en forme", "formater", "style", "couleur du texte", "pointilles", "marqueur", "rayer"],
+      "captions": ["Sélectionnez du texte, puis faites un clic droit.", "Taille", "Couleur", "Gras", "Italique", "Barré", "Souligné", "Surligné", "Alignement", "Également disponibles : soulignement en pointillés, couleur du soulignement et couleur du surlignage."]
     },
     "text_align": {
-      "title": "Align a paragraph",
+      "title": "Aligner un paragraphe",
       "body": [
-        "- Select the text of the paragraph (or click in it), then right-click.",
-        "- Open Alignment and choose Align left, Center, Align right or Justify.",
-        "- Alignment is not available inside code blocks.",
-        "- It works in table cells and text boxes too."
+        "- Sélectionnez le texte du paragraphe (ou cliquez dedans), puis faites un clic droit.",
+        "- Ouvrez Alignement et choisissez Aligner à gauche, Centrer, Aligner à droite ou Justifier.",
+        "- L'alignement n'est pas disponible dans les blocs de code.",
+        "- Il fonctionne aussi dans les cellules de tableau et les zones de texte."
       ],
-      "keywords": ["align", "alignment", "center", "centre", "left", "right", "justify", "justified", "paragraph"],
-      "captions": ["Select the paragraph, right-click and open Alignment.", "Align left", "Center", "Align right", "Justify"]
+      "keywords": ["aligner", "alignement", "centrer", "centre", "gauche", "droite", "justifier", "justifie", "paragraphe"],
+      "captions": ["Sélectionnez le paragraphe, faites un clic droit et ouvrez Alignement.", "Aligner à gauche", "Centrer", "Aligner à droite", "Justifier"]
     },
     "text_link": {
-      "title": "Add a link",
+      "title": "Ajouter un lien",
       "body": [
-        "- Type or paste an address starting with http:// or https://.",
-        "- It is turned into a link automatically (trailing punctuation is left out).",
-        "- Ctrl+click (Cmd+click on Mac) opens the link in your browser.",
-        "- Links are not detected inside code blocks."
+        "- Tapez ou collez une adresse commençant par http:// ou https://.",
+        "- Elle est transformée automatiquement en lien (la ponctuation finale est exclue).",
+        "- Ctrl+clic (Cmd+clic sur Mac) ouvre le lien dans votre navigateur.",
+        "- Les liens ne sont pas détectés dans les blocs de code."
       ],
-      "keywords": ["link", "links", "hyperlink", "url", "website", "http", "https", "web address", "open link", "click link"],
-      "captions": ["Type or paste an address starting with http:// or https://", "It turns into a link automatically.", "Ctrl+click (Cmd+click on Mac) opens it."]
+      "keywords": ["lien", "liens", "hyperlien", "url", "site web", "http", "https", "adresse web", "ouvrir un lien", "cliquer sur un lien"],
+      "captions": ["Tapez ou collez une adresse commençant par http:// ou https://", "Elle se transforme automatiquement en lien.", "Ctrl+clic (Cmd+clic sur Mac) l'ouvre."]
     },
     "text_move": {
-      "title": "Move text anywhere on the page",
+      "title": "Déplacer du texte n'importe où sur la page",
       "body": [
-        "- Select the text you want to move: a blue handle appears at the top-left corner of the selection.",
-        "- Drag that handle: the text becomes a free text box, placed where you drop it.",
-        "- The original place is left blank, so the rest of the text does not move.",
-        "- See the text box topic to edit, resize and style it."
+        "- Sélectionnez le texte à déplacer : une poignée bleue apparaît au coin supérieur gauche de la sélection.",
+        "- Faites glisser cette poignée : le texte devient une zone de texte libre, placée là où vous la déposez.",
+        "- L'emplacement d'origine reste vide, donc le reste du texte ne bouge pas.",
+        "- Voir la rubrique sur les zones de texte pour les modifier, les redimensionner et les mettre en forme."
       ],
-      "keywords": ["move text", "free text", "text box", "textbox", "drag text", "float text", "place text", "anywhere"],
-      "captions": ["Select some text: a blue handle appears at its top-left corner.", "Drag the handle: the text becomes a free text box.", "The text box can be placed anywhere on the page."]
+      "keywords": ["deplacer du texte", "texte libre", "zone de texte", "boite de texte", "glisser du texte", "texte flottant", "placer du texte", "n'importe ou"],
+      "captions": ["Sélectionnez du texte : une poignée bleue apparaît à son coin supérieur gauche.", "Faites glisser la poignée : le texte devient une zone de texte libre.", "La zone de texte peut être placée n'importe où sur la page."]
     },
     "textbox_edit": {
-      "title": "Edit and style a text box",
+      "title": "Modifier et mettre en forme une zone de texte",
       "body": [
-        "- Click the box to select it and drag it to move it (or use the blue square at its top-left corner).",
-        "- Double-click to edit the text inside; press Escape to stop editing.",
-        "- Drag the blue handle on the right edge to change the width. The height follows the text.",
-        "- Right-click: Border visible and Border color, Background visible and Background color (its opacity follows the color picker), plus layer order.",
-        "- Select text inside and right-click for the usual text formatting.",
-        "- Select the box and press Delete to remove it. An empty box disappears by itself."
+        "- Cliquez sur la zone pour la sélectionner et faites-la glisser pour la déplacer (ou utilisez le carré bleu à son coin supérieur gauche).",
+        "- Double-cliquez pour modifier le texte à l'intérieur ; appuyez sur Échap pour arrêter la modification.",
+        "- Faites glisser la poignée bleue du bord droit pour changer la largeur. La hauteur suit le texte.",
+        "- Clic droit : Bordure visible et Couleur de la bordure, Fond visible et Couleur du fond (son opacité suit le sélecteur de couleur), plus l'ordre des calques.",
+        "- Sélectionnez du texte à l'intérieur et faites un clic droit pour la mise en forme habituelle du texte.",
+        "- Sélectionnez la zone et appuyez sur Suppr pour la supprimer. Une zone vide disparaît d'elle-même."
       ],
-      "keywords": ["text box", "textbox", "border", "background", "edit text box", "width", "frame", "box", "fill"],
-      "captions": ["Drag a text box to move it; double-click to edit its text.", "Drag the blue handle on the right to change its width.", "Right-click: border and background.", "Border visible", "Border color", "Background visible", "Background color"]
+      "keywords": ["zone de texte", "boite de texte", "bordure", "fond", "modifier une zone de texte", "largeur", "cadre", "boite", "remplissage"],
+      "captions": ["Faites glisser une zone de texte pour la déplacer ; double-cliquez pour modifier son texte.", "Faites glisser la poignée bleue de droite pour changer sa largeur.", "Clic droit : bordure et fond.", "Bordure visible", "Couleur de la bordure", "Fond visible", "Couleur du fond"]
     },
 
     "layers": {
-      "title": "Bring objects forward or send them back",
+      "title": "Avancer des objets ou les reculer",
       "body": [
-        "Shapes, arrows, images, tables and text boxes are stacked in layers.",
-        "- Right-click an object and choose Move forward one level or Move back one level.",
-        "- Each click moves it one step in the stack."
+        "Les formes, flèches, images, tableaux et zones de texte sont empilés en calques.",
+        "- Faites un clic droit sur un objet et choisissez Avancer d'un niveau ou Reculer d'un niveau.",
+        "- Chaque clic le déplace d'un cran dans la pile."
       ],
-      "keywords": ["layer", "layers", "front", "back", "forward", "backward", "behind", "order", "stack", "overlap", "bring to front", "send to back"],
-      "captions": ["Overlapping objects are stacked in layers.", "Right-click an object: move it forward or back one level.", "Move forward one level", "Move back one level"]
+      "keywords": ["calque", "calques", "devant", "derriere", "avancer", "reculer", "arriere", "ordre", "pile", "superposer", "chevaucher", "premier plan", "arriere plan"],
+      "captions": ["Les objets qui se chevauchent sont empilés en calques.", "Clic droit sur un objet : avancez-le ou reculez-le d'un niveau.", "Avancer d'un niveau", "Reculer d'un niveau"]
     },
     "snap_guides": {
-      "title": "Alignment guides (snapping)",
+      "title": "Guides d'alignement (aimantation)",
       "body": [
-        "- While you move or resize an object, pink guides appear when it lines up with the page edges, the page center or another object.",
-        "- The object snaps to the guide when it is close.",
-        "- Hold Alt while dragging to turn off snapping."
+        "- Pendant que vous déplacez ou redimensionnez un objet, des guides roses apparaissent quand il s'aligne avec les bords de la page, le centre de la page ou un autre objet.",
+        "- L'objet s'aimante au guide quand il en est proche.",
+        "- Maintenez Alt pendant le glissement pour désactiver l'aimantation."
       ],
-      "keywords": ["guide", "guides", "snap", "snapping", "align objects", "alignment guides", "pink line", "magnet", "center", "distribute"],
-      "captions": ["While moving or resizing, pink guides show alignment with the page and other objects.", "Hold Alt to turn off snapping."]
+      "keywords": ["guide", "guides", "aimanter", "aimantation", "aligner des objets", "guides d'alignement", "ligne rose", "magnetisme", "centre", "distribuer"],
+      "captions": ["Pendant un déplacement ou un redimensionnement, des guides roses montrent l'alignement avec la page et les autres objets.", "Maintenez Alt pour désactiver l'aimantation."]
     },
 
     "code_block": {
-      "title": "Write a code block",
+      "title": "Écrire un bloc de code",
       "body": [
-        "Start a line with three backticks and the language, write your code, and close with three backticks:",
+        "Commencez une ligne par trois accents graves et le langage, écrivez votre code, puis fermez avec trois accents graves :",
         "> ```python",
         "> print(\"Hello\")",
         "> ```",
-        "- The block gets a code background and syntax highlighting.",
-        "- Highlighted languages: Java, Python, JavaScript/TypeScript, C, C++, C#, HTML/XML, CSS, JSON, SQL, Bash, OCaml. Others get generic highlighting.",
-        "- The fence lines are dimmed when your cursor is outside the block.",
-        "- The color theme is chosen in Settings.",
-        "- You can run some languages: right-click inside the block (see the run topic)."
+        "- Le bloc reçoit un fond de code et une coloration syntaxique.",
+        "- Langages colorés : Java, Python, JavaScript/TypeScript, C, C++, C#, HTML/XML, CSS, JSON, SQL, Bash, OCaml. Les autres reçoivent une coloration générique.",
+        "- Les lignes de délimitation sont atténuées quand votre curseur est hors du bloc.",
+        "- Le thème de couleurs se choisit dans les Paramètres.",
+        "- Vous pouvez exécuter certains langages : clic droit dans le bloc (voir la rubrique sur l'exécution)."
       ],
-      "keywords": ["code", "code block", "backticks", "syntax", "highlight code", "programming", "python", "java", "javascript", "language", "fence", "snippet", "triple backtick"],
-      "captions": ["Type three backticks followed by the language (python, java, js, c, sql…).", "Write your code, then close the block with three backticks.", "The block is styled and syntax-highlighted."]
+      "keywords": ["code", "bloc de code", "accents graves", "backticks", "syntaxe", "coloration", "programmation", "python", "java", "javascript", "langage", "delimiteur", "extrait", "triple backtick"],
+      "captions": ["Tapez trois accents graves suivis du langage (python, java, js, c, sql…).", "Écrivez votre code, puis fermez le bloc avec trois accents graves.", "Le bloc est mis en forme et coloré."]
     },
     "code_run": {
-      "title": "Run a code block",
+      "title": "Exécuter un bloc de code",
       "body": [
-        "- Right-click inside a code block and choose Run code.",
-        "- Runnable languages: Python, JavaScript, Bash, Java, OCaml and C (the interpreter or compiler must be installed and in your PATH).",
-        "- The first time, a confirmation asks you to trust the code: it runs on your computer with the app's rights.",
-        "- The output appears under the block. Use ■ to stop, ▾ to collapse and ✕ to close.",
-        "- A run is stopped after 10 seconds, and the output is limited to 20,000 characters."
+        "- Faites un clic droit dans un bloc de code et choisissez Exécuter le code.",
+        "- Langages exécutables : Python, JavaScript, Bash, Java, OCaml et C (l'interpréteur ou le compilateur doit être installé et présent dans votre PATH).",
+        "- La première fois, une confirmation vous demande de faire confiance au code : il s'exécute sur votre ordinateur avec les droits de l'application.",
+        "- La sortie apparaît sous le bloc. Utilisez ■ pour arrêter, ▾ pour réduire et ✕ pour fermer.",
+        "- Une exécution est arrêtée après 10 secondes, et la sortie est limitée à 20 000 caractères."
       ],
-      "keywords": ["run", "execute", "code output", "run code", "output", "console", "interpreter", "stop", "timeout", "compile", "python run"],
-      "captions": ["Right-click inside a code block.", "Run code (Python)", "First time only: confirm that you trust the code.", "The output appears under the block. Stop (■) or close (✕) it from there."]
+      "keywords": ["executer", "lancer", "sortie du code", "executer le code", "sortie", "console", "interpreteur", "arreter", "delai", "compiler", "lancer python"],
+      "captions": ["Faites un clic droit dans un bloc de code.", "Exécuter le code (Python)", "Première fois seulement : confirmez que vous faites confiance au code.", "La sortie apparaît sous le bloc. Arrêtez-la (■) ou fermez-la (✕) depuis là."]
     },
     "code_theme": {
-      "title": "Change the code block theme",
+      "title": "Changer le thème des blocs de code",
       "body": [
-        "- Click the Settings button.",
-        "- Choose a theme in Code block theme.",
-        "- All code blocks update immediately."
+        "- Cliquez sur le bouton Paramètres.",
+        "- Choisissez un thème dans Thème des blocs de code.",
+        "- Tous les blocs de code sont mis à jour immédiatement."
       ],
-      "keywords": ["code theme", "theme", "dark", "light", "code colors", "syntax colors", "code appearance"],
-      "captions": ["Open Settings and choose the code block theme.", "Background color", "Selection color", "Code block theme", "Number the pages", "Margins (cm)"]
+      "keywords": ["theme du code", "theme", "sombre", "clair", "couleurs du code", "couleurs de syntaxe", "apparence du code"],
+      "captions": ["Ouvrez les Paramètres et choisissez le thème des blocs de code.", "Couleur de fond", "Couleur de sélection", "Thème des blocs de code", "Numéroter les pages", "Marges (cm)"]
     },
 
     "file_save": {
-      "title": "Save your document",
+      "title": "Enregistrer votre document",
       "body": [
-        "- Press Ctrl+S (Cmd+S on Mac) or click the Save button.",
-        "- The first time, you choose a file name; after that, it saves to the same file.",
-        "- Documents are saved as .docx files. TypO stores extra data in them, so reopening a file in TypO restores every object (tables, shapes, arrows, text boxes, images)."
+        "- Appuyez sur Ctrl+S (Cmd+S sur Mac) ou cliquez sur le bouton Enregistrer.",
+        "- La première fois, vous choisissez un nom de fichier ; ensuite, l'enregistrement se fait dans le même fichier.",
+        "- Les documents sont enregistrés en fichiers .docx. TypO y stocke des données supplémentaires, donc rouvrir un fichier dans TypO restaure tous les objets (tableaux, formes, flèches, zones de texte, images)."
       ],
-      "keywords": ["save", "ctrl s", "saving", "store", "write file"],
-      "captions": ["Press Ctrl+S (or the Save button).", "The first time, you choose a file name; after that it saves to the same file."]
+      "keywords": ["enregistrer", "sauvegarder", "sauvegarde", "ctrl s", "stocker", "ecrire un fichier"],
+      "captions": ["Appuyez sur Ctrl+S (ou sur le bouton Enregistrer).", "La première fois, vous choisissez un nom de fichier ; ensuite, il enregistre dans le même fichier."]
     },
     "file_open": {
-      "title": "Open a document",
+      "title": "Ouvrir un document",
       "body": [
-        "- Click the Open button and choose a .docx file.",
-        "- Only .docx files can be opened.",
-        "- Documents saved by TypO come back with all their objects, margins and page settings."
+        "- Cliquez sur le bouton Ouvrir et choisissez un fichier .docx.",
+        "- Seuls les fichiers .docx peuvent être ouverts.",
+        "- Les documents enregistrés par TypO reviennent avec tous leurs objets, leurs marges et leurs réglages de page."
       ],
-      "keywords": ["open", "load", "open file", "open document", "docx", "reopen", "import document"]
+      "keywords": ["ouvrir", "charger", "ouvrir un fichier", "ouvrir un document", "docx", "rouvrir", "importer un document"]
     },
     "file_saveas": {
-      "title": "Save as .docx or export to PDF",
+      "title": "Enregistrer sous .docx ou exporter en PDF",
       "body": [
-        "- Click the Save As button and choose a name and a type.",
-        "- Word document (.docx): can be reopened in TypO and opened in Word.",
-        "- PDF: a picture of each page. It cannot be reopened for editing, and code output panels are not included.",
-        "- After a .docx Save As, Ctrl+S saves to that file."
+        "- Cliquez sur le bouton Enregistrer sous et choisissez un nom et un type.",
+        "- Document Word (.docx) : peut être rouvert dans TypO et ouvert dans Word.",
+        "- PDF : une image de chaque page. Il ne peut pas être rouvert pour modification, et les panneaux de sortie de code ne sont pas inclus.",
+        "- Après un Enregistrer sous en .docx, Ctrl+S enregistre dans ce fichier."
       ],
-      "keywords": ["save as", "export", "pdf", "docx", "word", "export pdf", "convert", "rename", "new file", "format"]
+      "keywords": ["enregistrer sous", "exporter", "export", "pdf", "docx", "word", "exporter en pdf", "convertir", "renommer", "nouveau fichier", "format"]
     },
 
     "page_new": {
-      "title": "Add a page",
+      "title": "Ajouter une page",
       "body": [
-        "- Click the New Page button to add a blank page at the end.",
-        "- A new page is also created automatically when your text no longer fits on the page.",
-        "- New pages follow the margins and page numbering set in Settings."
+        "- Cliquez sur le bouton Nouvelle page pour ajouter une page vierge à la fin.",
+        "- Une nouvelle page est aussi créée automatiquement quand votre texte ne tient plus sur la page.",
+        "- Les nouvelles pages suivent les marges et la numérotation définies dans les Paramètres."
       ],
-      "keywords": ["new page", "add page", "page", "another page", "next page", "overflow", "pagination", "page break"],
-      "captions": ["Click New Page to add a blank page.", "A page is also added automatically when the text overflows."]
+      "keywords": ["nouvelle page", "ajouter une page", "page", "une autre page", "page suivante", "debordement", "pagination", "saut de page"],
+      "captions": ["Cliquez sur Nouvelle page pour ajouter une page vierge.", "Une page est aussi ajoutée automatiquement quand le texte déborde."]
     },
     "page_manage": {
-      "title": "Delete a page or change its orientation",
+      "title": "Supprimer une page ou changer son orientation",
       "body": [
-        "- Right-click an empty area of the page (with no text selected).",
-        "- Toggle Orientation (Portrait/Landscape) switches that page.",
-        "- Delete Page removes it; the remaining pages are renumbered.",
-        "- Import an image is in the same menu."
+        "- Faites un clic droit sur une zone vide de la page (sans texte sélectionné).",
+        "- Basculer l'orientation (Portrait/Paysage) change cette page.",
+        "- Supprimer la page la retire ; les pages restantes sont renumérotées.",
+        "- Importer une image se trouve dans le même menu."
       ],
-      "keywords": ["delete page", "remove page", "orientation", "landscape", "portrait", "rotate page", "page menu", "page layout"],
-      "captions": ["Right-click an empty area of the page.", "Toggle Orientation (Portrait/Landscape)", "Delete Page", "Import an image", "The page switches to landscape."]
+      "keywords": ["supprimer une page", "retirer une page", "orientation", "paysage", "portrait", "faire pivoter la page", "menu de la page", "mise en page"],
+      "captions": ["Faites un clic droit sur une zone vide de la page.", "Basculer l'orientation (Portrait/Paysage)", "Supprimer la page", "Importer une image", "La page passe en paysage."]
     },
     "view_navigate": {
-      "title": "Zoom and move around",
+      "title": "Zoomer et se déplacer",
       "body": [
-        "- Zoom: Ctrl + mouse wheel (from 0.8× to 3×).",
-        "- Move up and down: mouse wheel or the vertical scrollbar.",
-        "- Move left and right: Shift + mouse wheel or the horizontal scrollbar."
+        "- Zoom : Ctrl + molette de la souris (de 0,8× à 3×).",
+        "- Monter et descendre : molette de la souris ou barre de défilement verticale.",
+        "- Aller à gauche et à droite : Maj + molette de la souris ou barre de défilement horizontale."
       ],
-      "keywords": ["zoom", "scroll", "pan", "navigate", "move view", "zoom in", "zoom out", "scrollbar", "magnify", "shift scroll", "ctrl scroll"],
-      "captions": ["Ctrl + mouse wheel: zoom in or out.", "Mouse wheel: move up and down.", "Shift + mouse wheel: move left and right."]
+      "keywords": ["zoom", "defiler", "defilement", "deplacer la vue", "naviguer", "zoomer", "dezoomer", "barre de defilement", "agrandir", "reduire", "maj molette", "ctrl molette"],
+      "captions": ["Ctrl + molette de la souris : zoomer ou dézoomer.", "Molette de la souris : monter et descendre.", "Maj + molette de la souris : aller à gauche et à droite."]
     },
 
     "settings_margins": {
-      "title": "Change the page margins",
+      "title": "Changer les marges de la page",
       "body": [
-        "- Click the Settings button and open Margins (cm).",
-        "- Type a value in centimeters for Left, Top, Right or Bottom, then press Enter.",
-        "- Tick Link all four to apply the same margin to the four sides.",
-        "- Left + Right and Top + Bottom must each stay within 19 cm. A field turns red when the value is not valid."
+        "- Cliquez sur le bouton Paramètres et ouvrez Marges (cm).",
+        "- Tapez une valeur en centimètres pour Gauche, Haut, Droite ou Bas, puis appuyez sur Entrée.",
+        "- Cochez Lier les quatre pour appliquer la même marge aux quatre côtés.",
+        "- Gauche + Droite et Haut + Bas doivent chacun rester dans 19 cm. Un champ devient rouge quand la valeur n'est pas valide."
       ],
-      "keywords": ["margin", "margins", "page margins", "padding", "white space", "link margins"],
-      "captions": ["Click Settings, then open Margins (cm).", "Background color", "Selection color", "Code block theme", "Number the pages", "Margins (cm)", "Type a value in cm for Left, Top, Right or Bottom and press Enter.", "Link all four applies the same margin to the four sides."]
+      "keywords": ["marge", "marges", "marges de page", "espacement", "espace blanc", "lier les marges"],
+      "captions": ["Cliquez sur Paramètres, puis ouvrez Marges (cm).", "Couleur de fond", "Couleur de sélection", "Thème des blocs de code", "Numéroter les pages", "Marges (cm)", "Tapez une valeur en cm pour Gauche, Haut, Droite ou Bas et appuyez sur Entrée.", "Lier les quatre applique la même marge aux quatre côtés."]
     },
     "settings_page_numbers": {
-      "title": "Show page numbers",
+      "title": "Afficher les numéros de page",
       "body": [
-        "- Click the Settings button.",
-        "- Tick Number the pages.",
-        "- The number appears at the bottom of each page, in the document and in the exports."
+        "- Cliquez sur le bouton Paramètres.",
+        "- Cochez Numéroter les pages.",
+        "- Le numéro apparaît en bas de chaque page, dans le document et dans les exports."
       ],
-      "keywords": ["page number", "page numbers", "numbering", "number pages", "footer", "pagination numbers"],
-      "captions": ["Click Settings and tick Number the pages.", "Background color", "Selection color", "Code block theme", "Number the pages", "Margins (cm)"]
+      "keywords": ["numero de page", "numeros de page", "numerotation", "numeroter les pages", "pied de page", "numeros de pagination"],
+      "captions": ["Cliquez sur Paramètres et cochez Numéroter les pages.", "Couleur de fond", "Couleur de sélection", "Thème des blocs de code", "Numéroter les pages", "Marges (cm)"]
     },
     "settings_colors": {
-      "title": "Change colors and appearance",
+      "title": "Changer les couleurs et l'apparence",
       "body": [
-        "- Click the Settings button.",
-        "- Background color: the color behind the pages.",
-        "- Selection color: the color of selected text.",
-        "- Code block theme: the look of code blocks.",
-        "- Number the pages and Margins (cm) are in the same menu."
+        "- Cliquez sur le bouton Paramètres.",
+        "- Couleur de fond : la couleur derrière les pages.",
+        "- Couleur de sélection : la couleur du texte sélectionné.",
+        "- Thème des blocs de code : l'apparence des blocs de code.",
+        "- Numéroter les pages et Marges (cm) sont dans le même menu.",
+        "- La langue de l'application se change aussi ici (au prochain lancement)."
       ],
-      "keywords": ["background", "background color", "selection color", "colors", "colours", "settings", "preferences", "theme", "appearance", "code theme"],
-      "captions": ["Click Settings to change colors.", "Background color", "Selection color", "Code block theme", "Number the pages", "Margins (cm)"]
+      "keywords": ["fond", "couleur de fond", "couleur de selection", "couleurs", "parametres", "preferences", "theme", "apparence", "theme du code", "langue", "francais", "anglais"],
+      "captions": ["Cliquez sur Paramètres pour changer les couleurs.", "Couleur de fond", "Couleur de sélection", "Thème des blocs de code", "Numéroter les pages", "Marges (cm)"]
     },
 
     "not_found": {
-      "title": "I couldn't pinpoint it",
+      "title": "Je n'ai pas réussi à trouver",
       "body": [
-        "Sorry, I couldn't work out what you are looking for.",
-        "- Use the Back button and answer differently, or use I don't know.",
-        "- Try the search box with other words (for example: table, fraction, bold, zoom).",
-        "- Commands typed with a backslash are explained in 'How typing commands works'."
+        "Désolé, je n'ai pas compris ce que vous cherchez.",
+        "- Utilisez le bouton Retour et répondez autrement, ou utilisez Je ne sais pas.",
+        "- Essayez la zone de recherche avec d'autres mots (par exemple : tableau, fraction, gras, zoom).",
+        "- Les commandes tapées avec une barre oblique inverse sont expliquées dans « Comment fonctionnent les commandes tapées »."
       ]
     }
   }
