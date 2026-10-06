@@ -99,6 +99,7 @@ public class CodeRunController {
         entry.stop();
         int generation = ++entry.generation;
         entry.overlay.begin(name);
+        Motion.fadeSlideIn(entry.overlay, -10, 0);
         entry.overlay.setCollapsed(false);
         entry.overlay.toFront();
         scheduleReposition();

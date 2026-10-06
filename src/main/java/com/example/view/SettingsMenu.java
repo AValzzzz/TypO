@@ -45,6 +45,15 @@ public class SettingsMenu extends ContextMenu {
         pageNumberBox.setStyle("-fx-text-fill: BLACK;");
         pageNumberBox.selectedProperty().bindBidirectional(settings.showPageNumbersProperty());
 
+        CheckBox reduceBox = new CheckBox(I18n.t("settings.reduceMotion"));
+        reduceBox.setSelected(Motion.isReduced());
+        reduceBox.selectedProperty().addListener((o, was, is) -> Motion.setReduced(is));
+        getItems().add(new CustomMenuItem(reduceBox, false));
+
+        CheckBox caretBox = new CheckBox(I18n.t("settings.smoothCaret"));
+        caretBox.selectedProperty().bindBidirectional(Motion.smoothCaretProperty());
+        getItems().add(new CustomMenuItem(caretBox, false));
+
         for (int i = 0; i < marginFields.length; i++)
             marginFields[i] = createMarginField(i);
         refreshMarginFields();

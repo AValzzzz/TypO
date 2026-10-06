@@ -410,3 +410,40 @@
     -fx-background-color: -rp-hl-low;
     -fx-border-color: -rp-iris;
 }
+
+.icon {
+    -fx-fill: transparent;
+    -fx-stroke: -rp-text;
+    -fx-stroke-width: 1.8;
+    -fx-stroke-line-cap: round;
+    -fx-stroke-line-join: round;
+}
+
+.button:hover .icon {
+    -fx-stroke: -rp-iris;
+}
+
+.button:disabled .icon {
+    -fx-stroke: -rp-muted;
+}
+
+.toolbar .button {
+    -fx-padding: 8 10 8 10;
+}
+
+.toast {
+    -fx-background-color: -rp-text;
+    -fx-background-radius: 22;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 10 20 10 20;
+    -fx-effect: dropshadow(gaussian, rgba(87, 82, 121, 0.35), 20, 0.05, 0, 6);
+}
+
+.toast-success {
+    -fx-background-color: -rp-pine;
+}
+
+.toast-error {
+    -fx-background-color: -rp-love;
+}

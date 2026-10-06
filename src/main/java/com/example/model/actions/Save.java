@@ -10,6 +10,7 @@ import com.example.model.i18n.I18n;
 import com.example.model.io.DocumentSession;
 import com.example.model.io.DocxDocumentWriter;
 import com.example.model.io.PageContent;
+import com.example.view.Toast;
 
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
@@ -40,6 +41,7 @@ public class Save implements AppAction {
                 content.add(PageContent.capture(page));
             }
             new DocxDocumentWriter().write(content, target);
+            Toast.success(I18n.t("toast.saved"));
         } catch (IOException e) {
             new Alert(AlertType.ERROR, I18n.t("file.error.save", e.getMessage())).showAndWait();
         }

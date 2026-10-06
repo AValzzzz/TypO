@@ -243,9 +243,9 @@ public class ShapeOverlay extends Group implements Layerable {
 
     private void updateHandleVisibility() {
         boolean show = !handleSuppressed && (selected || resizing || rotating);
-        resizeHandle.setVisible(show);
-        rotateHandle.setVisible(show);
-        rotateLine.setVisible(show);
+        Motion.fadeVisible(resizeHandle, show, handleSuppressed);
+        Motion.fadeVisible(rotateHandle, show, handleSuppressed);
+        Motion.fadeVisible(rotateLine, show, handleSuppressed);
     }
 
     public void setHandleSuppressed(boolean suppressed) {
@@ -303,7 +303,8 @@ public class ShapeOverlay extends Group implements Layerable {
 
             double newWidth, newHeight;
             if (e.isControlDown()) {
-                if (snap != null) snap.clear();
+                if (snap != null)
+                    snap.clear();
                 double scale = Math.max((resizeStartWidth + dx) / resizeStartWidth,
                         (resizeStartHeight + dy) / resizeStartHeight);
                 scale = Math.max(scale, Math.max(MIN_SIZE / resizeStartWidth, MIN_SIZE / resizeStartHeight));

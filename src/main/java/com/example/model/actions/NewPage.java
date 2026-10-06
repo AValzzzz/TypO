@@ -1,7 +1,7 @@
 package com.example.model.actions;
 
-
 import com.example.model.Page;
+import com.example.view.Motion;
 import com.example.view.RichTextArea;
 
 import javafx.scene.layout.Pane;
@@ -30,11 +30,11 @@ public class NewPage implements AppAction {
         editor.setWrapText(true);
         editor.setPrefSize(PAGE_WIDTH, PAGE_HEIGHT);
         editor.relocate(0, 0);
-        
         pane.getChildren().add(editor);
         pagesContainer.getChildren().add(pane);
 
         this.createdPage = new Page(pane, editor);
+        Motion.fadeSlideIn(pane, 36, 0);
     }
 
     public Page getCreatedPage() {

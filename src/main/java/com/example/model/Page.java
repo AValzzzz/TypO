@@ -12,6 +12,7 @@ import com.example.model.settings.AppSettings;
 import com.example.view.ArrowOverlay;
 import com.example.view.ImageOverlay;
 import com.example.view.Layerable;
+import com.example.view.Motion;
 import com.example.view.RichTextArea;
 import com.example.view.ShapeOverlay;
 import com.example.view.SnapGuides;
@@ -22,10 +23,16 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
+import javafx.scene.effect.BlurType;
+import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.layout.Pane;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
 
 public class Page {
+    public static final String SHADOW_KEY = "pageShadow";
+
     private final Pane pane;
     private final RichTextArea editor;
     private final SnapGuides snapGuides;
@@ -42,6 +49,8 @@ public class Page {
         this.pane = pane;
         this.editor = textEditor;
 
+        installShadow(pane);
+
         pageNumberLabel.setStyle("-fx-text-fill: BLACK; -fx-font-size: 10px;");
         pageNumberLabel.setAlignment(Pos.CENTER);
         pageNumberLabel.setMouseTransparent(true);
@@ -50,6 +59,19 @@ public class Page {
         pageNumberLabel.visibleProperty().bind(AppSettings.getInstance().showPageNumbersProperty());
         pane.getChildren().add(pageNumberLabel);
         snapGuides = new SnapGuides(pane, this::snapRectsExcept);
+    }
+
+    private static void installShadow(Pane pane) {
+        Rectangle shadow = new Rectangle();
+        shadow.setFill(Color.WHITE);
+        shadow.setManaged(false);
+        shadow.setMouseTransparent(true);
+        shadow.widthProperty().bind(pane.widthProperty());
+        shadow.heightProperty().bind(pane.heightProperty());
+        shadow.setEffect(new DropShadow(BlurType.GAUSSIAN, Color.rgb(87, 82, 121, 0.26), 24, 0, 0, 6));
+        shadow.getProperties().put(SHADOW_KEY, Boolean.TRUE);
+        shadow.getProperties().put("noExport", Boolean.TRUE);
+        pane.getChildren().add(0, shadow);
     }
 
     public Pane getPane() {
@@ -74,6 +96,7 @@ public class Page {
         overlay.setSnap(snapGuides);
         addLayer(overlay);
         imageOverlays.add(overlay);
+        Motion.popIn(overlay);
         return overlay;
     }
 
@@ -86,6 +109,7 @@ public class Page {
         overlay.setSnap(snapGuides);
         addLayer(overlay);
         shapeOverlays.add(overlay);
+        Motion.popIn(overlay);
         return overlay;
     }
 
@@ -98,6 +122,7 @@ public class Page {
         });
         addLayer(overlay);
         arrowOverlays.add(overlay);
+        Motion.popIn(overlay);
         return overlay;
     }
 
@@ -111,6 +136,7 @@ public class Page {
         overlay.setSnap(snapGuides);
         addLayer(overlay);
         tableOverlays.add(overlay);
+        Motion.popIn(overlay);
         return overlay;
     }
 
@@ -123,6 +149,7 @@ public class Page {
         overlay.setSnap(snapGuides);
         addLayer(overlay);
         textBoxOverlays.add(overlay);
+        Motion.popIn(overlay);
         return overlay;
     }
 

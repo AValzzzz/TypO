@@ -8,7 +8,13 @@ import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.collections.ListChangeListener;
 import javafx.scene.Node;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.transform.Scale;
+import javafx.stage.Window;
 import javafx.util.Duration;
 
 public final class Motion {
@@ -17,7 +23,17 @@ public final class Motion {
     private static final String INTERACTIVE_KEY = "motion.interactive";
     private static final String TIMELINE_KEY = "motion.timeline";
 
+    private static final String FADE_KEY = "motion.fade";
+
     private static boolean reduced = PREFS.getBoolean(PREF_KEY, false);
+    private static boolean quiet;
+
+    private static final BooleanProperty SMOOTH_CARET = new SimpleBooleanProperty(
+            PREFS.getBoolean("smoothCaret", false));
+
+    static {
+        SMOOTH_CARET.addListener((obs, was, is) -> PREFS.putBoolean("smoothCaret", is));
+    }
 
     public static final Interpolator EASE_OUT = new Interpolator() {
         @Override
@@ -44,6 +60,10 @@ public final class Motion {
     private Motion() {
     }
 
+    public static BooleanProperty smoothCaretProperty() {
+        return SMOOTH_CARET;
+    }
+
     public static boolean isReduced() {
         return reduced;
     }
@@ -51,6 +71,14 @@ public final class Motion {
     public static void setReduced(boolean value) {
         reduced = value;
         PREFS.putBoolean(PREF_KEY, value);
+    }
+
+    public static void setQuiet(boolean value) {
+        quiet = value;
+    }
+
+    private static boolean skip() {
+        return reduced || quiet;
     }
 
     private static Interpolator spring(double damping, double frequency) {
@@ -71,7 +99,7 @@ public final class Motion {
     }
 
     public static void popIn(Node node, int delayMs) {
-        if (reduced) {
+        if (skip()) {
             node.setOpacity(1);
             node.setScaleX(1);
             node.setScaleY(1);
@@ -90,7 +118,7 @@ public final class Motion {
     }
 
     public static void fadeSlideIn(Node node, double dy, int delayMs) {
-        if (reduced) {
+        if (skip()) {
             node.setOpacity(1);
             node.setTranslateY(0);
             return;
@@ -113,7 +141,7 @@ public final class Motion {
     }
 
     public static void fadeIn(Node node, int ms) {
-        if (reduced) {
+        if (skip()) {
             node.setOpacity(1);
             return;
         }
@@ -131,6 +159,73 @@ public final class Motion {
                 new KeyValue(node.scaleXProperty(), 0.97, EASE_OUT),
                 new KeyValue(node.scaleYProperty(), 0.97, EASE_OUT)));
         t.setOnFinished(e -> after.run());
+        t.play();
+    }
+
+    public static void fadeVisible(Node node, boolean show) {
+        fadeVisible(node, show, false);
+    }
+
+    public static void fadeVisible(Node node, boolean show, boolean immediate) {
+        Object old = node.getProperties().get(FADE_KEY);
+        if (old instanceof Animation a)
+            a.stop();
+
+        if (immediate || reduced) {
+            node.setOpacity(1);
+            node.setVisible(show);
+            return;
+        }
+        if (show) {
+            if (!node.isVisible())
+                node.setOpacity(0);
+            node.setVisible(true);
+            Timeline t = new Timeline(
+                    new KeyFrame(Duration.millis(160), new KeyValue(node.opacityProperty(), 1, EASE_OUT)));
+            node.getProperties().put(FADE_KEY, t);
+            t.play();
+        } else {
+            if (!node.isVisible()) {
+                node.setOpacity(1);
+                return;
+            }
+            Timeline t = new Timeline(
+                    new KeyFrame(Duration.millis(140), new KeyValue(node.opacityProperty(), 0, EASE_OUT)));
+            t.setOnFinished(e -> {
+                node.setVisible(false);
+                node.setOpacity(1);
+            });
+            node.getProperties().put(FADE_KEY, t);
+            t.play();
+        }
+    }
+
+    public static void installPopupAnimations() {
+        Window.getWindows().addListener((ListChangeListener<Window>) c -> {
+            while (c.next())
+                if (c.wasAdded())
+                    for (Window w : c.getAddedSubList())
+                        if (w instanceof ContextMenu menu)
+                            popMenu(menu);
+        });
+    }
+
+    private static void popMenu(ContextMenu menu) {
+        if (reduced || menu.getScene() == null)
+            return;
+        Node root = menu.getScene().getRoot();
+        Scale s = new Scale(0.94, 0.94, 0, 0);
+        root.getTransforms().add(s);
+        root.setOpacity(0);
+        Timeline t = new Timeline(
+                new KeyFrame(Duration.millis(140), new KeyValue(root.opacityProperty(), 1, EASE_OUT)),
+                new KeyFrame(Duration.millis(260),
+                        new KeyValue(s.xProperty(), 1, SPRING_SOFT),
+                        new KeyValue(s.yProperty(), 1, SPRING_SOFT)));
+        t.setOnFinished(e -> {
+            root.getTransforms().remove(s);
+            root.setOpacity(1);
+        });
         t.play();
     }
 

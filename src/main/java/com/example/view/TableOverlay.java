@@ -814,7 +814,8 @@ public class TableOverlay extends Pane implements Layerable {
     }
 
     private void updateHandle() {
-        moveHandle.setVisible(!handleSuppressed && (isHover() || isFocusWithin()));
+        boolean show = !handleSuppressed && (isHover() || isFocusWithin());
+        Motion.fadeVisible(moveHandle, show, handleSuppressed);
     }
 
     public void setHandleSuppressed(boolean suppressed) {

@@ -1,6 +1,7 @@
 package com.example;
 
 import com.example.model.LinkOpener;
+import com.example.view.Backdrop;
 import com.example.view.Motion;
 import com.example.view.Theme;
 
@@ -36,6 +37,8 @@ public class App extends Application {
         stage.setHeight(420);
         
         Theme.apply(scene);
+        Motion.installPopupAnimations();
+        Backdrop.install();
         Motion.fadeSlideIn(root, 12, 0);
         stage.setScene(scene);
         stage.show();

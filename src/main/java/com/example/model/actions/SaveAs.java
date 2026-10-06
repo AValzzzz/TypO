@@ -16,6 +16,7 @@ import com.example.model.io.PdfDocumentWriter.PageSnapshot;
 import com.example.view.CodeOutputOverlay;
 import com.example.view.ImageOverlay;
 import com.example.view.TableOverlay;
+import com.example.view.Toast;
 
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.Node;
@@ -64,9 +65,11 @@ public class SaveAs implements AppAction {
         try {
             if (target.toString().toLowerCase().endsWith(".pdf")) {
                 new PdfDocumentWriter().write(captureSnapshots(), target);
+                Toast.success(I18n.t("toast.exportedPdf"));
             } else {
                 new DocxDocumentWriter().write(captureContent(), target);
                 session.setCurrentFile(target);
+                Toast.success(I18n.t("toast.saved"));
             }
         } catch (IOException e) {
             new Alert(AlertType.ERROR, I18n.t("file.error.save", e.getMessage())).showAndWait();
@@ -93,7 +96,8 @@ public class SaveAs implements AppAction {
                 t.setHandleSuppressed(true);
             List<Node> hiddenOutputs = new ArrayList<>();
             for (Node n : pane.getChildren())
-                if (n instanceof CodeOutputOverlay && n.isVisible()) {
+                if ((n instanceof CodeOutputOverlay || n.getProperties().containsKey(Page.SHADOW_KEY))
+                        && n.isVisible()) {
                     n.setVisible(false);
                     hiddenOutputs.add(n);
                 }

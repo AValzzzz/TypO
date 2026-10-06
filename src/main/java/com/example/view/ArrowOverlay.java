@@ -19,7 +19,7 @@ public class ArrowOverlay extends Group implements Layerable {
     private double startX, startY, endX, endY, controlX, controlY;
 
     private final QuadCurve curve;
-    private final QuadCurve hitArea; 
+    private final QuadCurve hitArea;
     private final Polygon arrowHead;
     private final Region startHandle, endHandle, controlHandle;
 
@@ -37,9 +37,12 @@ public class ArrowOverlay extends Group implements Layerable {
     private double pressStartX, pressStartY, pressEndX, pressEndY, pressControlX, pressControlY;
 
     public ArrowOverlay(double startX, double startY, double endX, double endY, double controlX, double controlY) {
-        this.startX = startX; this.startY = startY;
-        this.endX = endX; this.endY = endY;
-        this.controlX = controlX; this.controlY = controlY;
+        this.startX = startX;
+        this.startY = startY;
+        this.endX = endX;
+        this.endY = endY;
+        this.controlX = controlX;
+        this.controlY = controlY;
 
         curve = new QuadCurve();
         curve.setFill(null);
@@ -69,8 +72,10 @@ public class ArrowOverlay extends Group implements Layerable {
         installControlDrag();
 
         sceneProperty().addListener((obs, oldScene, newScene) -> {
-            if (oldScene != null) oldScene.removeEventFilter(MouseEvent.MOUSE_PRESSED, deselectFilter);
-            if (newScene != null) newScene.addEventFilter(MouseEvent.MOUSE_PRESSED, deselectFilter);
+            if (oldScene != null)
+                oldScene.removeEventFilter(MouseEvent.MOUSE_PRESSED, deselectFilter);
+            if (newScene != null)
+                newScene.addEventFilter(MouseEvent.MOUSE_PRESSED, deselectFilter);
         });
 
         setOnKeyPressed(e -> {
@@ -83,7 +88,8 @@ public class ArrowOverlay extends Group implements Layerable {
         setOnContextMenuRequested(e -> {
             setSelected(true);
             requestFocus();
-            if (openMenu != null && openMenu.isShowing()) openMenu.hide();
+            if (openMenu != null && openMenu.isShowing())
+                openMenu.hide();
             openMenu = new ArrowFormatMenu(this);
             openMenu.show(this, e.getScreenX(), e.getScreenY());
             e.consume();
@@ -91,7 +97,8 @@ public class ArrowOverlay extends Group implements Layerable {
     }
 
     private final javafx.event.EventHandler<MouseEvent> deselectFilter = e -> {
-        if (selected && !isInside(e.getTarget())) setSelected(false);
+        if (selected && !isInside(e.getTarget()))
+            setSelected(false);
     };
 
     private Region makeHandle(String color, Cursor cursor) {
@@ -105,17 +112,26 @@ public class ArrowOverlay extends Group implements Layerable {
     }
 
     private void updateGeometry() {
-        curve.setStartX(startX); curve.setStartY(startY);
-        curve.setEndX(endX); curve.setEndY(endY);
-        curve.setControlX(controlX); curve.setControlY(controlY);
+        curve.setStartX(startX);
+        curve.setStartY(startY);
+        curve.setEndX(endX);
+        curve.setEndY(endY);
+        curve.setControlX(controlX);
+        curve.setControlY(controlY);
 
-        hitArea.setStartX(startX); hitArea.setStartY(startY);
-        hitArea.setEndX(endX); hitArea.setEndY(endY);
-        hitArea.setControlX(controlX); hitArea.setControlY(controlY);
+        hitArea.setStartX(startX);
+        hitArea.setStartY(startY);
+        hitArea.setEndX(endX);
+        hitArea.setEndY(endY);
+        hitArea.setControlX(controlX);
+        hitArea.setControlY(controlY);
 
         double dx = endX - controlX;
         double dy = endY - controlY;
-        if (Math.abs(dx) < 0.001 && Math.abs(dy) < 0.001) { dx = endX - startX; dy = endY - startY; }
+        if (Math.abs(dx) < 0.001 && Math.abs(dy) < 0.001) {
+            dx = endX - startX;
+            dy = endY - startY;
+        }
         double len = Math.max(0.001, Math.hypot(dx, dy));
         double ux = dx / len, uy = dy / len;
         double px = -uy, py = ux;
@@ -125,8 +141,7 @@ public class ArrowOverlay extends Group implements Layerable {
         arrowHead.getPoints().setAll(
                 endX, endY,
                 backX + px * HEAD_WIDTH / 2, backY + py * HEAD_WIDTH / 2,
-                backX - px * HEAD_WIDTH / 2, backY - py * HEAD_WIDTH / 2
-        );
+                backX - px * HEAD_WIDTH / 2, backY - py * HEAD_WIDTH / 2);
 
         layoutHandle(startHandle, startX, startY);
         layoutHandle(endHandle, endX, endY);
@@ -149,15 +164,41 @@ public class ArrowOverlay extends Group implements Layerable {
         arrowHead.setFill(c);
     }
 
-    public void setStrokeColor(Color v) { strokeColor = v; applyStyle(); }
-    public void setStrokeOpacity(double v) { strokeOpacity = v; applyStyle(); }
-    public void setStrokeWidth(double v) { strokeWidth = v; applyStyle(); }
-    public Color getStrokeColor() { return strokeColor; }
-    public double getStrokeOpacity() { return strokeOpacity; }
-    public double getStrokeWidth() { return strokeWidth; }
+    public void setStrokeColor(Color v) {
+        strokeColor = v;
+        applyStyle();
+    }
 
-    public void setSelected(boolean v) { selected = v; updateHandleVisibility(); }
-    public boolean isSelected() { return selected; }
+    public void setStrokeOpacity(double v) {
+        strokeOpacity = v;
+        applyStyle();
+    }
+
+    public void setStrokeWidth(double v) {
+        strokeWidth = v;
+        applyStyle();
+    }
+
+    public Color getStrokeColor() {
+        return strokeColor;
+    }
+
+    public double getStrokeOpacity() {
+        return strokeOpacity;
+    }
+
+    public double getStrokeWidth() {
+        return strokeWidth;
+    }
+
+    public void setSelected(boolean v) {
+        selected = v;
+        updateHandleVisibility();
+    }
+
+    public boolean isSelected() {
+        return selected;
+    }
 
     public void setHandleSuppressed(boolean suppressed) {
         handleSuppressed = suppressed;
@@ -166,22 +207,29 @@ public class ArrowOverlay extends Group implements Layerable {
 
     private void updateHandleVisibility() {
         boolean show = !handleSuppressed && (selected || dragging);
-        startHandle.setVisible(show);
-        endHandle.setVisible(show);
-        controlHandle.setVisible(show);
+        Motion.fadeVisible(startHandle, show, handleSuppressed);
+        Motion.fadeVisible(endHandle, show, handleSuppressed);
+        Motion.fadeVisible(controlHandle, show, handleSuppressed);
     }
 
     private boolean isInside(Object target) {
         javafx.scene.Node n = target instanceof javafx.scene.Node node ? node : null;
         while (n != null) {
-            if (n == this) return true;
+            if (n == this)
+                return true;
             n = n.getParent();
         }
         return false;
     }
 
-    public void setOnDelete(Runnable r) { onDelete = r; }
-    public void delete() { if (onDelete != null) onDelete.run(); }
+    public void setOnDelete(Runnable r) {
+        onDelete = r;
+    }
+
+    public void delete() {
+        if (onDelete != null)
+            onDelete.run();
+    }
 
     private void installLineDrag() {
         hitArea.setOnMousePressed(e -> {
@@ -189,9 +237,12 @@ public class ArrowOverlay extends Group implements Layerable {
             requestFocus();
             pressSceneX = e.getSceneX();
             pressSceneY = e.getSceneY();
-            pressStartX = startX; pressStartY = startY;
-            pressEndX = endX; pressEndY = endY;
-            pressControlX = controlX; pressControlY = controlY;
+            pressStartX = startX;
+            pressStartY = startY;
+            pressEndX = endX;
+            pressEndY = endY;
+            pressControlX = controlX;
+            pressControlY = controlY;
             e.consume();
         });
         hitArea.setOnMouseDragged(e -> {
@@ -199,9 +250,12 @@ public class ArrowOverlay extends Group implements Layerable {
             Point2D p1 = getParent().sceneToLocal(e.getSceneX(), e.getSceneY());
             double dx = p1.getX() - p0.getX();
             double dy = p1.getY() - p0.getY();
-            startX = pressStartX + dx; startY = pressStartY + dy;
-            endX = pressEndX + dx; endY = pressEndY + dy;
-            controlX = pressControlX + dx; controlY = pressControlY + dy;
+            startX = pressStartX + dx;
+            startY = pressStartY + dy;
+            endX = pressEndX + dx;
+            endY = pressEndY + dy;
+            controlX = pressControlX + dx;
+            controlY = pressControlY + dy;
             updateGeometry();
             e.consume();
         });
@@ -213,9 +267,12 @@ public class ArrowOverlay extends Group implements Layerable {
             updateHandleVisibility();
             pressSceneX = e.getSceneX();
             pressSceneY = e.getSceneY();
-            pressStartX = startX; pressStartY = startY;
-            pressEndX = endX; pressEndY = endY;
-            pressControlX = controlX; pressControlY = controlY;
+            pressStartX = startX;
+            pressStartY = startY;
+            pressEndX = endX;
+            pressEndY = endY;
+            pressControlX = controlX;
+            pressControlY = controlY;
             e.consume();
         });
         handle.setOnMouseDragged(e -> {
@@ -225,12 +282,16 @@ public class ArrowOverlay extends Group implements Layerable {
             double dy = p1.getY() - p0.getY();
 
             if (isStart) {
-                startX = pressStartX + dx; startY = pressStartY + dy;
-                controlX = pressControlX + dx; controlY = pressControlY + dy;
+                startX = pressStartX + dx;
+                startY = pressStartY + dy;
+                controlX = pressControlX + dx;
+                controlY = pressControlY + dy;
             }
             if (isEnd) {
-                endX = pressEndX + dx; endY = pressEndY + dy;
-                controlX = pressControlX + dx; controlY = pressControlY + dy;
+                endX = pressEndX + dx;
+                endY = pressEndY + dy;
+                controlX = pressControlX + dx;
+                controlY = pressControlY + dy;
             }
             updateGeometry();
             e.consume();
@@ -262,10 +323,27 @@ public class ArrowOverlay extends Group implements Layerable {
         });
     }
 
-    public double getStartX() { return startX; }
-    public double getStartY() { return startY; }
-    public double getEndX() { return endX; }
-    public double getEndY() { return endY; }
-    public double getControlX() { return controlX; }
-    public double getControlY() { return controlY; }
+    public double getStartX() {
+        return startX;
+    }
+
+    public double getStartY() {
+        return startY;
+    }
+
+    public double getEndX() {
+        return endX;
+    }
+
+    public double getEndY() {
+        return endY;
+    }
+
+    public double getControlX() {
+        return controlX;
+    }
+
+    public double getControlY() {
+        return controlY;
+    }
 }
