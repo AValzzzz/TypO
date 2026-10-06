@@ -54,23 +54,25 @@ jobs:
 
       - name: Build Native Executable (Windows)
         if: matrix.os == 'windows-latest'
+        shell: powershell
         run: |
+          New-Item -ItemType Directory -Force -Path output
           jpackage `
-            --type exe `
+            --type app-image `
             --name TypO `
             --input target/ `
             --main-jar TypO.jar `
             --main-class com.example.Launcher `
             --java-options "-Xmx256m" `
             --dest output/
-          ren output\*.exe TypO-windows.exe
+          Compress-Archive -Path output/TypO -DestinationPath TypO-windows.zip
 
-      - name: Upload Windows Artifacts to Release
+      - name: Upload Windows Artifacts
         if: matrix.os == 'windows-latest'
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            TypO-windows.exe
+            TypO-windows.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
