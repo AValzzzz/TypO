@@ -31,6 +31,8 @@ public class MathNodeFactory {
             if (style.textColor() != null) 
                 label.setStyle(label.getStyle() + "-fx-text-fill: " + ColorUtil.toCssRgba(style.textColor())+";");
         } 
+
+        label.setStyle(style.withFontFamily(null).toCss());
         return label;
     }
 

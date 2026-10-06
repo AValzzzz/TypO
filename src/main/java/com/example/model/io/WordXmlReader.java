@@ -338,7 +338,7 @@ final class WordXmlReader {
             chain.add(rpr);
         if (defRpr != null)
             chain.add(defRpr);
-        return styleFrom(chain, chain);
+        return styleFrom(chain, chain).withFontFamily(null);
     }
 
     private TextStyle styleFrom(List<Element> chain, List<Element> colorChain) {
@@ -387,6 +387,11 @@ final class WordXmlReader {
         }
         if (shift != 0)
             s = s.withBaselineShift(shift);
+
+        String font = fontOf(chain);
+        if (font != null)
+            s = s.withFontFamily(font);
+
         return s;
     }
 
@@ -832,6 +837,24 @@ final class WordXmlReader {
                 op = num(al.getAttribute("val"), 100000) / 100000.0;
         }
         return new Fill(hex, op, false, true);
+    }
+
+    private String fontOf(List<Element> chain) {
+        for (Element pr : chain) {
+            if (pr == defRpr)
+                continue;
+            Element f = kid(pr, W, "rFonts");
+            if (f == null)
+                continue;
+            if (!attr(f, W, "asciiTheme").isEmpty() || !attr(f, W, "hAnsiTheme").isEmpty())
+                return null;
+            String name = attr(f, W, "ascii");
+            if (name.isEmpty())
+                name = attr(f, W, "hAnsi");
+            if (!name.isEmpty())
+                return name;
+        }
+        return null;
     }
 
     private void pend(Element anchor, double w, double h, Maker mk) {

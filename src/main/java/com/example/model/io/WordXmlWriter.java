@@ -186,8 +186,15 @@ final class WordXmlWriter {
             x.append("<w:rStyle w:val=\"Hyperlink\"/>");
         if (mono)
             x.append(FONT_CODE);
+        else if (s != null && s.fontFamily() != null)
+            x.append(fontXml(s.fontFamily()));
         appendProps(x, s, mono);
         return x.toString();
+    }
+
+    private static String fontXml(String family) {
+        String f = esc(family);
+        return "<w:rFonts w:ascii=\"" + f + "\" w:hAnsi=\"" + f + "\" w:eastAsia=\"" + f + "\" w:cs=\"" + f + "\"/>";
     }
 
     private static void appendProps(StringBuilder x, TextStyle s, boolean mono) {

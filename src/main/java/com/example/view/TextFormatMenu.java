@@ -1,5 +1,8 @@
 package com.example.view;
 
+import java.util.List;
+import java.util.Locale;
+import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -9,12 +12,16 @@ import com.example.model.ParagraphStyle;
 import com.example.model.TextStyle;
 import com.example.model.i18n.I18n;
 
+import javafx.collections.FXCollections;
+import javafx.collections.transformation.FilteredList;
 import javafx.geometry.Pos;
 import javafx.scene.control.CheckMenuItem;
 import javafx.scene.control.ColorPicker;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.CustomMenuItem;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.RadioMenuItem;
@@ -23,6 +30,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
 import javafx.scene.text.TextAlignment;
 
 public class TextFormatMenu extends ContextMenu {
@@ -39,6 +47,7 @@ public class TextFormatMenu extends ContextMenu {
         this.onAlign = onAlign;
 
         getItems().addAll(
+                fontItem(),
                 sizeMenu(),
                 colorItem(),
                 new SeparatorMenuItem(),
@@ -194,5 +203,87 @@ public class TextFormatMenu extends ContextMenu {
         item.setSelected(value == current);
         item.setOnAction(e -> onAlign.accept(value));
         return item;
+    }
+
+    private MenuItem fontItem() {
+        Optional<Optional<String>> common = editor.commonValue(s -> Optional.ofNullable(s.fontFamily()));
+        String current = common.flatMap(o -> o).orElse(null);
+        boolean mixed = common.isEmpty();
+        String initialText = current == null ? "" : current;
+
+        List<String> fonts = FontCatalog.available();
+        FilteredList<String> filtered = new FilteredList<>(FXCollections.observableArrayList(fonts), f -> true);
+
+        ComboBox<String> combo = new ComboBox<>(filtered);
+        combo.setEditable(true);
+        combo.setPrefWidth(210);
+        combo.setVisibleRowCount(10);
+        combo.setPromptText(I18n.t(mixed ? "fmt.fontMixed" : "fmt.fontDefault"));
+        combo.getEditor().setText(initialText);
+
+        combo.setCellFactory(lv -> new ListCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                    setFont(Font.getDefault());
+                } else {
+                    setText(item);
+                    setFont(Font.font(item, 14));
+                }
+            }
+        });
+
+        combo.getEditor().textProperty().addListener((obs, old, text) -> {
+            combo.getEditor().setStyle("");
+            if (text != null && text.equals(combo.getValue()))
+                return; 
+            String q = text == null ? "" : text.trim().toLowerCase(Locale.ROOT);
+            filtered.setPredicate(f -> q.isEmpty() || f.toLowerCase(Locale.ROOT).contains(q));
+            if (filtered.isEmpty())
+                combo.hide();
+            else if (!combo.isShowing() && combo.getEditor().isFocused())
+                combo.show();
+        });
+
+        combo.setOnAction(e -> {
+            String picked = combo.getValue();
+            if (picked == null)
+                picked = combo.getEditor().getText();
+            picked = picked == null ? "" : picked.trim();
+
+            if (picked.equals(initialText))
+                return;
+
+            if (picked.isEmpty()) {
+                applyFont(null); 
+                return;
+            }
+            String match = null;
+            for (String f : fonts)
+                if (f.equalsIgnoreCase(picked)) {
+                    match = f;
+                    break;
+                }
+            if (match == null && !filtered.isEmpty())
+                match = filtered.get(0);
+            if (match == null) {
+                combo.getEditor().setStyle("-fx-border-color: red");
+                return;
+            }
+            applyFont(match);
+        });
+
+        combo.showingProperty().addListener((obs, was, is) -> setAutoHide(!is));
+
+        HBox row = new HBox(8, new Label(I18n.t("fmt.font")), combo);
+        row.setAlignment(Pos.CENTER_LEFT);
+        return new CustomMenuItem(row, false);
+    }
+
+    private void applyFont(String family) {
+        onChange.accept(s -> s.codeBlock() ? s : s.withFontFamily(family));
+        hide();
     }
 }
