@@ -17,6 +17,17 @@ import org.w3c.dom.Element;
 import com.example.model.TextStyle;
 import com.example.model.io.PageContent.RunContent;
 import com.example.model.language.maths.MathObject;
+import com.example.model.language.maths.MathSyntax;
+import com.example.model.language.maths.MathSyntax.BigOp;
+import com.example.model.language.maths.MathSyntax.Expr;
+import com.example.model.language.maths.MathSyntax.Frac;
+import com.example.model.language.maths.MathSyntax.Group;
+import com.example.model.language.maths.MathSyntax.Limit;
+import com.example.model.language.maths.MathSyntax.Matrix;
+import com.example.model.language.maths.MathSyntax.Seq;
+import com.example.model.language.maths.MathSyntax.Sqrt;
+import com.example.model.language.maths.MathSyntax.Sub;
+import com.example.model.language.maths.MathSyntax.Sup;
 
 final class OmmlCodec {
     private static final String INTEGRAL = "\u222B";
@@ -25,61 +36,62 @@ final class OmmlCodec {
     }
 
     static String write(MathObject o, String rpr) {
-        String raw = o.getRaw() == null ? "" : o.getRaw();
-        return switch (o.getType()) {
-            case FRACTION -> {
-                String[] p = split(raw, ",", 2);
-                yield "<m:f><m:fPr>" + ctrl(rpr) + "</m:fPr><m:num>" + run(p[0], rpr) + "</m:num><m:den>"
-                        + run(p[1], rpr) + "</m:den></m:f>";
+        if (o.getType() == MathObject.Type.IMAGE)
+            return "";
+        return expr(MathSyntax.fromObject(o), rpr);
+    }
+
+    private static String expr(Expr e, String rpr) {
+        return switch (e) {
+            case MathSyntax.Text t -> run(t.text(), rpr);
+            case Seq seq -> {
+                StringBuilder sb = new StringBuilder();
+                for (Expr item : seq.items())
+                    sb.append(expr(item, rpr));
+                yield sb.toString();
             }
-            case EXPONENT -> {
-                String[] p = split(raw, ",", 2);
-                yield "<m:sSup><m:sSupPr>" + ctrl(rpr) + "</m:sSupPr><m:e>" + run(p[0], rpr) + "</m:e><m:sup>"
-                        + run(p[1], rpr) + "</m:sup></m:sSup>";
-            }
-            case SUBSCRIPT -> {
-                String[] p = split(raw, ",", 2);
-                yield "<m:sSub><m:sSubPr>" + ctrl(rpr) + "</m:sSubPr><m:e>" + run(p[0], rpr) + "</m:e><m:sub>"
-                        + run(p[1], rpr) + "</m:sub></m:sSub>";
-            }
-            case SQRT -> "<m:rad><m:radPr><m:degHide m:val=\"1\"/>" + ctrl(rpr) + "</m:radPr><m:deg/><m:e>"
-                    + run(raw, rpr) + "</m:e></m:rad>";
-            case MATRIX -> {
-                StringBuilder m = new StringBuilder("<m:m>");
-                for (String row : raw.split(";", -1)) {
-                    m.append("<m:mr>");
-                    for (String cell : row.split(",", -1))
-                        m.append("<m:e>").append(run(cell, rpr)).append("</m:e>");
-                    m.append("</m:mr>");
+            case Group g -> "<m:d><m:dPr>" + ctrl(rpr) + "</m:dPr><m:e>" + expr(g.inner(), rpr) + "</m:e></m:d>";
+            case Frac f -> "<m:f><m:fPr>" + ctrl(rpr) + "</m:fPr><m:num>" + expr(f.num(), rpr) + "</m:num><m:den>"
+                    + expr(f.den(), rpr) + "</m:den></m:f>";
+            case Sup sup -> "<m:sSup><m:sSupPr>" + ctrl(rpr) + "</m:sSupPr><m:e>" + expr(sup.base(), rpr)
+                    + "</m:e><m:sup>" + expr(sup.exp(), rpr) + "</m:sup></m:sSup>";
+            case Sub sub -> "<m:sSub><m:sSubPr>" + ctrl(rpr) + "</m:sSubPr><m:e>" + expr(sub.base(), rpr)
+                    + "</m:e><m:sub>" + expr(sub.sub(), rpr) + "</m:sub></m:sSub>";
+            case Sqrt r -> "<m:rad><m:radPr><m:degHide m:val=\"1\"/>" + ctrl(rpr) + "</m:radPr><m:deg/><m:e>"
+                    + expr(r.inner(), rpr) + "</m:e></m:rad>";
+            case Matrix m -> {
+                StringBuilder sb = new StringBuilder("<m:m>");
+                for (List<Expr> row : m.rows()) {
+                    sb.append("<m:mr>");
+                    for (Expr cell : row)
+                        sb.append("<m:e>").append(expr(cell, rpr)).append("</m:e>");
+                    sb.append("</m:mr>");
                 }
-                m.append("</m:m>");
+                sb.append("</m:m>");
                 yield "<m:d><m:dPr><m:begChr m:val=\"[\"/><m:endChr m:val=\"]\"/>" + ctrl(rpr)
-                        + "</m:dPr><m:e>" + m + "</m:e></m:d>";
+                        + "</m:dPr><m:e>" + sb + "</m:e></m:d>";
             }
-            case SUM, INTEGRAL, PRODUCT -> {
-                String[] p = split(raw, "\\|", 3);
-                String chr = switch (o.getType()) {
+            case BigOp b -> {
+                String chr = switch (b.type()) {
                     case SUM -> "\u2211";
                     case PRODUCT -> "\u220F";
                     default -> INTEGRAL;
                 };
-                String loc = o.getType() == MathObject.Type.INTEGRAL ? "subSup" : "undOvr";
+                String loc = b.type() == MathObject.Type.INTEGRAL ? "subSup" : "undOvr";
                 yield "<m:nary><m:naryPr><m:chr m:val=\"" + chr + "\"/><m:limLoc m:val=\"" + loc + "\"/>"
-                        + (p[0].isEmpty() ? "<m:subHide m:val=\"1\"/>" : "")
-                        + (p[1].isEmpty() ? "<m:supHide m:val=\"1\"/>" : "")
-                        + ctrl(rpr) + "</m:naryPr><m:sub>" + run(p[0], rpr) + "</m:sub><m:sup>" + run(p[1], rpr)
-                        + "</m:sup><m:e>" + run(p[2], rpr) + "</m:e></m:nary>";
+                        + (MathSyntax.isEmpty(b.lower()) ? "<m:subHide m:val=\"1\"/>" : "")
+                        + (MathSyntax.isEmpty(b.upper()) ? "<m:supHide m:val=\"1\"/>" : "")
+                        + ctrl(rpr) + "</m:naryPr><m:sub>" + expr(b.lower(), rpr) + "</m:sub><m:sup>"
+                        + expr(b.upper(), rpr) + "</m:sup><m:e>" + expr(b.body(), rpr) + "</m:e></m:nary>";
             }
-            case LIMIT -> {
-                String[] p = split(raw, "\\|", 2);
+            case Limit l -> {
                 String lim = run("lim", rpr);
-                String name = p[0].isEmpty() ? lim
+                String name = MathSyntax.isEmpty(l.condition()) ? lim
                         : "<m:limLow><m:limLowPr>" + ctrl(rpr) + "</m:limLowPr><m:e>" + lim + "</m:e><m:lim>"
-                                + run(p[0], rpr) + "</m:lim></m:limLow>";
+                                + expr(l.condition(), rpr) + "</m:lim></m:limLow>";
                 yield "<m:func><m:funcPr>" + ctrl(rpr) + "</m:funcPr><m:fName>" + name + "</m:fName><m:e>"
-                        + run(p[1], rpr) + "</m:e></m:func>";
+                        + expr(l.body(), rpr) + "</m:e></m:func>";
             }
-            case IMAGE -> "";
         };
     }
 
@@ -94,16 +106,6 @@ final class OmmlCodec {
         return "<m:ctrlPr>" + (rpr.isEmpty() ? "" : "<w:rPr>" + rpr + "</w:rPr>") + "</m:ctrlPr>";
     }
 
-    private static String[] split(String raw, String regex, int n) {
-        String[] p = raw.split(regex, n);
-        if (p.length >= n)
-            return p;
-        String[] out = new String[n];
-        Arrays.fill(out, "");
-        System.arraycopy(p, 0, out, 0, p.length);
-        return out;
-    }
-
     static List<RunContent> read(Element oMath, Function<Element, TextStyle> styleOf) {
         List<RunContent> out = new ArrayList<>();
         for (Element e : elems(oMath)) {
@@ -113,21 +115,28 @@ final class OmmlCodec {
             if (ln.endsWith("Pr"))
                 continue;
             TextStyle style = styleOf.apply(e);
+            String flat = flatten(e);
+            List<Element> parts = kids(e, M, "e");
+            if ("d".equals(ln) && !flat.startsWith("matrix(") && parts.size() == 1) {
+                String[] fence = fence(e);
+                addText(out, fence[0], style);
+                for (RunContent rc : read(parts.get(0), styleOf)) {
+                    if (rc.isMath())
+                        out.add(rc);
+                    else
+                        addText(out, rc.text, rc.style);
+                }
+                addText(out, fence[1], style);
+                continue;
+            }
             MathObject obj = switch (ln) {
-                case "f" -> new MathObject(MathObject.Type.FRACTION, arg(e, "num") + "," + arg(e, "den"));
-                case "sSup" -> new MathObject(MathObject.Type.EXPONENT, arg(e, "e") + "," + arg(e, "sup"));
-                case "sSub" -> new MathObject(MathObject.Type.SUBSCRIPT, arg(e, "e") + "," + arg(e, "sub"));
-                case "rad" -> radical(e);
-                case "d" -> delimited(e);
-                case "m" -> matrix(e);
-                case "nary" -> nary(e);
-                case "func" -> function(e);
+                case "f", "sSup", "sSub", "rad", "d", "m", "nary", "func" -> MathSyntax.toObject(flat);
                 default -> null;
             };
             if (obj != null)
                 out.add(RunContent.math(obj, style));
             else
-                addText(out, flatten(e), style);
+                addText(out, flat, style);
         }
         return out;
     }
@@ -146,72 +155,16 @@ final class OmmlCodec {
         return flatten(kid(parent, M, local));
     }
 
-    private static MathObject radical(Element e) {
-        if (!arg(e, "deg").isEmpty())
-            return null;
-        return new MathObject(MathObject.Type.SQRT, arg(e, "e"));
-    }
 
-    private static MathObject delimited(Element d) {
-        List<Element> es = kids(d, M, "e");
-        if (es.size() != 1)
-            return null;
-        List<Element> content = new ArrayList<>();
-        for (Element c : elems(es.get(0)))
-            if (!c.getLocalName().endsWith("Pr"))
-                content.add(c);
-        if (content.size() == 1 && M.equals(content.get(0).getNamespaceURI())
-                && "m".equals(content.get(0).getLocalName()))
-            return matrix(content.get(0));
-        return null;
-    }
 
-    private static MathObject matrix(Element m) {
-        StringBuilder sb = new StringBuilder();
-        boolean firstRow = true;
-        for (Element mr : kids(m, M, "mr")) {
-            if (!firstRow)
-                sb.append(';');
-            firstRow = false;
-            boolean first = true;
-            for (Element cell : kids(mr, M, "e")) {
-                if (!first)
-                    sb.append(',');
-                first = false;
-                sb.append(flatten(cell));
-            }
-        }
-        return new MathObject(MathObject.Type.MATRIX, sb.toString());
-    }
 
-    private static MathObject nary(Element e) {
-        Element pr = kid(e, M, "naryPr");
-        Element chr = pr == null ? null : kid(pr, M, "chr");
-        String c = chr == null ? INTEGRAL : attr(chr, M, "val");
-        MathObject.Type type;
-        switch (c) {
-            case "\u2211", "\u03A3" -> type = MathObject.Type.SUM;
-            case "\u220F", "\u03A0" -> type = MathObject.Type.PRODUCT;
-            case INTEGRAL -> type = MathObject.Type.INTEGRAL;
-            default -> {
-                return null;
-            }
-        }
-        return new MathObject(type, arg(e, "sub") + "|" + arg(e, "sup") + "|" + arg(e, "e"));
-    }
 
-    private static MathObject function(Element e) {
-        Element fn = kid(e, M, "fName");
-        Element low = fn == null ? null : kid(fn, M, "limLow");
-        String body = arg(e, "e");
-        if (low != null) {
-            if (arg(low, "e").trim().equalsIgnoreCase("lim"))
-                return new MathObject(MathObject.Type.LIMIT, arg(low, "lim") + "|" + body);
-            return null;
-        }
-        if (flatten(fn).trim().equalsIgnoreCase("lim"))
-            return new MathObject(MathObject.Type.LIMIT, "|" + body);
-        return null;
+
+    private static String[] fence(Element d) {
+        Element pr = kid(d, M, "dPr");
+        Element b = pr == null ? null : kid(pr, M, "begChr");
+        Element en = pr == null ? null : kid(pr, M, "endChr");
+        return new String[] { b == null ? "(" : attr(b, M, "val"), en == null ? ")" : attr(en, M, "val") };
     }
 
     static String flatten(Element e) {
@@ -222,7 +175,7 @@ final class OmmlCodec {
             case "t":
                 return e.getTextContent();
             case "f":
-                return "(" + arg(e, "num") + "/" + arg(e, "den") + ")";
+                return "(" + arg(e, "num") + ")/(" + arg(e, "den") + ")";
             case "sSup":
                 return arg(e, "e") + "^(" + arg(e, "sup") + ")";
             case "sSub":
@@ -231,22 +184,29 @@ final class OmmlCodec {
                 return arg(e, "e") + "_(" + arg(e, "sub") + ")^(" + arg(e, "sup") + ")";
             case "rad": {
                 String deg = arg(e, "deg");
-                return (deg.isEmpty() ? "" : deg) + "\u221A(" + arg(e, "e") + ")";
+                return deg.isEmpty() ? "sqrt(" + arg(e, "e") + ")" : deg + "\u221A(" + arg(e, "e") + ")";
             }
             case "nary": {
                 Element pr = kid(e, M, "naryPr");
                 Element chr = pr == null ? null : kid(pr, M, "chr");
                 String c = chr == null ? INTEGRAL : attr(chr, M, "val");
-                return c + "_(" + arg(e, "sub") + ")^(" + arg(e, "sup") + ")" + arg(e, "e");
+                String name = switch (c) {
+                    case "\u2211", "\u03A3" -> "sum";
+                    case "\u220F", "\u03A0" -> "prod";
+                    case INTEGRAL -> "int";
+                    default -> c;
+                };
+                return name + "_(" + arg(e, "sub") + ")^(" + arg(e, "sup") + ")(" + arg(e, "e") + ")";
             }
             case "d": {
                 Element pr = kid(e, M, "dPr");
-                Element b = pr == null ? null : kid(pr, M, "begChr");
-                Element en = pr == null ? null : kid(pr, M, "endChr");
                 Element sp = pr == null ? null : kid(pr, M, "sepChr");
-                String open = b == null ? "(" : attr(b, M, "val");
-                String close = en == null ? ")" : attr(en, M, "val");
+                String[] fence = fence(e);
+                String open = fence[0], close = fence[1];
                 String sep = sp == null ? "|" : attr(sp, M, "val");
+                List<Element> parts = kids(e, M, "e");
+                if ("[".equals(open) && parts.size() == 1 && kid(parts.get(0), M, "m") != null)
+                    return flatten(kid(parts.get(0), M, "m"));
                 StringBuilder sb = new StringBuilder(open);
                 boolean first = true;
                 for (Element c : kids(e, M, "e")) {
@@ -258,7 +218,7 @@ final class OmmlCodec {
                 return sb.append(close).toString();
             }
             case "m": {
-                StringBuilder sb = new StringBuilder("[");
+                StringBuilder sb = new StringBuilder("matrix(");
                 boolean firstRow = true;
                 for (Element mr : kids(e, M, "mr")) {
                     if (!firstRow)
@@ -272,7 +232,7 @@ final class OmmlCodec {
                         sb.append(flatten(c));
                     }
                 }
-                return sb.append(']').toString();
+                return sb.append(')').toString();
             }
             case "func":
                 return flatten(kid(e, M, "fName")) + "(" + arg(e, "e") + ")";

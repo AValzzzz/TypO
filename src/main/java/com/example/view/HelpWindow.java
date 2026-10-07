@@ -26,7 +26,6 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 
@@ -113,7 +112,7 @@ public class HelpWindow {
         root.setBottom(bottom);
 
         Scene scene = new Scene(root, 660, 720);
-        scene.setFill(Color.web("#faf4ed"));
+        scene.setFill(Theme.current().getBackground());
         Theme.apply(scene);
         installKeys(scene);
 

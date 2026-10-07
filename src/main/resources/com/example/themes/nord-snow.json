@@ -1,0 +1,20 @@
+{
+  "name": "Nord Snow",
+  "background": "#eceff4",
+  "surface": "#f5f7fa",
+  "overlay": "#e5e9f0",
+  "text": "#2e3440",
+  "accent": "#5e81ac",
+  "muted": "#8a93a5",
+  "subtle": "#4c566a",
+  "highlightLow": "#e8ecf2",
+  "highlightMed": "#d8dee9",
+  "highlightHigh": "#c4ccda",
+  "success": "#5a8a4f",
+  "error": "#bf616a",
+  "warning": "#c07a3a",
+  "onAccent": "#ffffff",
+  "card": "#ffffff",
+  "backdropTop": "#e5e9f0",
+  "backdropBottom": "#d8dee9"
+}

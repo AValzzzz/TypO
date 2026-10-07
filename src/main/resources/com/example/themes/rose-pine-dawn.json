@@ -1,0 +1,20 @@
+{
+  "name": "Rosé Pine Dawn",
+  "background": "#faf4ed",
+  "surface": "#fffaf3",
+  "overlay": "#f2e9e1",
+  "text": "#575279",
+  "accent": "#907aa9",
+  "muted": "#9893a5",
+  "subtle": "#797593",
+  "highlightLow": "#f4ede8",
+  "highlightMed": "#dfdad9",
+  "highlightHigh": "#cecacd",
+  "success": "#286983",
+  "error": "#b4637a",
+  "warning": "#b35c00",
+  "onAccent": "#ffffff",
+  "card": "#ffffff",
+  "backdropTop": "#efe7df",
+  "backdropBottom": "#e6dcd2"
+}

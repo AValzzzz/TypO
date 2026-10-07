@@ -19,11 +19,7 @@ public class AppSettings {
     public static final double MAX_MARGIN_PAIR_CM = 19.0;
     private static final double DEFAULT_MARGIN_CM = 20.0 / PX_PER_CM;
 
-    private final ObjectProperty<Color> backgroundColor = new SimpleObjectProperty<>(Color.rgb(211, 211, 211)); // current
-                                                                                                                // #D3D3D3
-    private final ObjectProperty<Color> selectionColor = new SimpleObjectProperty<>(Color.rgb(51, 153, 255, 0.4)); // default
-                                                                                                                   // JavaFX-ish
-                                                                                                                   // blue
+    private final ObjectProperty<Color> backgroundColor = new SimpleObjectProperty<>(Color.rgb(211, 211, 211));  
     private final ObjectProperty<CodeTheme> codeTheme = new SimpleObjectProperty<>(CodeTheme.DARK);
     private final BooleanProperty showPageNumbers = new SimpleBooleanProperty(false);
 
@@ -36,7 +32,6 @@ public class AppSettings {
     }
 
     public ObjectProperty<Color> backgroundColorProperty() { return backgroundColor; }
-    public ObjectProperty<Color> selectionColorProperty() { return selectionColor; }
     public ObjectProperty<CodeTheme> codeThemeProperty() { return codeTheme; }
     public BooleanProperty showPageNumbersProperty() { return showPageNumbers; }
     public boolean isShowPageNumbers() { return showPageNumbers.get(); }

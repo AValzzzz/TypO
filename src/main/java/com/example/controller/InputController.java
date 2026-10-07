@@ -1,17 +1,15 @@
 package com.example.controller;
 
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.io.ByteArrayInputStream;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 
 import com.example.model.CodeBlockStyler;
+import com.example.model.FloatingObjects;
 import com.example.model.LinkHandler;
 import com.example.model.Page;
 import com.example.model.ParagraphStyle;
@@ -31,7 +29,6 @@ import com.example.model.actions.SaveAs;
 import com.example.model.actions.Settings;
 import com.example.model.actions.ToggleOrientation;
 import com.example.model.i18n.I18n;
-import com.example.model.io.ColorUtil;
 import com.example.model.io.DocumentSession;
 import com.example.model.io.PageContent;
 import com.example.model.language.BackslashInputHandler;
@@ -53,7 +50,6 @@ import com.example.view.ShapeOverlay;
 import com.example.view.SmoothCaret;
 import com.example.view.SmoothViewport;
 import com.example.view.TableOverlay;
-import com.example.view.TextBoxOverlay;
 import com.example.view.TextFormatMenu;
 import com.example.view.TextSelectionMover;
 import com.example.view.Toast;
@@ -67,7 +63,6 @@ import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.ScrollBar;
-import javafx.scene.image.Image;
 import javafx.scene.input.ContextMenuEvent;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
@@ -78,7 +73,6 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Window;
 
@@ -112,6 +106,7 @@ public class InputController {
     private final DocumentSession session = new DocumentSession();
     private final Set<Page> pendingReflow = new HashSet<>();
     private boolean loading = false;
+    private FloatingShortcuts floatingShortcuts;
 
     @FXML
     public void initialize() {
@@ -126,11 +121,10 @@ public class InputController {
         viewport = new SmoothViewport(stackPane, pagesContainer, hScrollBar, vScrollBar);
         viewport.install();
 
+        floatingShortcuts = new FloatingShortcuts(pages, this::setupCell);
         Page firstPage = new Page(whitePane, textEditor);
         setupPage(firstPage);
 
-        AppSettings.getInstance().selectionColorProperty().addListener((obs, o, n) -> applySelectionColorToAllPages());
-        applySelectionColorToAllPages();
         AppSettings st = AppSettings.getInstance();
         for (DoubleProperty p : List.of(st.marginLeftProperty(), st.marginTopProperty(),
                 st.marginRightProperty(), st.marginBottomProperty()))
@@ -144,6 +138,7 @@ public class InputController {
         KeyCombination saveShortcut = new KeyCodeCombination(KeyCode.S, KeyCombination.SHORTCUT_DOWN);
         rootPane.sceneProperty().addListener((obs, oldScene, scene) -> {
             if (scene != null) {
+                floatingShortcuts.install(scene);
                 scene.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
                     if (saveShortcut.match(event)) {
                         handleSave();
@@ -269,6 +264,7 @@ public class InputController {
             loading = false;
             Motion.setQuiet(false);
         }
+        floatingShortcuts.reset();
         for (Page p : new ArrayList<>(pages))
             scheduleReflow(p);
     }
@@ -294,44 +290,13 @@ public class InputController {
             populate(page, content);
             Map<Layerable, Integer> levels = new HashMap<>();
 
-            for (PageContent.FloatingImageContent img : content.images) {
-                byte[] bytes = Base64.getDecoder().decode(img.base64);
-                Image image = new Image(new ByteArrayInputStream(bytes));
-                ImageOverlay overlay = page.addImageOverlay(image, img.x, img.y, img.width, img.height, img.format,
-                        img.base64);
-                overlay.setRotation(img.rotation);
-                overlay.setImageOpacity(img.opacity);
-                levels.put(overlay, img.level);
-            }
-            for (PageContent.FloatingShapeContent s : content.shapes) {
-                ShapeOverlay o = page.addShapeOverlay(s.type, s.x, s.y, s.width, s.height);
-                o.setFillColor(Color.web("#" + s.fillHex));
-                o.setFillOpacity(s.fillOpacity);
-                o.setStrokeColor(Color.web("#" + s.strokeHex));
-                o.setStrokeOpacity(s.strokeOpacity);
-                o.setStrokeWidth(s.strokeWidth);
-                o.setRotation(s.rotation);
-                levels.put(o, s.level);
-            }
-            for (PageContent.FloatingArrowContent a : content.arrows) {
-                ArrowOverlay o = page.addArrowOverlay(a.startX, a.startY, a.endX, a.endY, a.controlX, a.controlY);
-                o.setStrokeColor(Color.web("#" + a.strokeHex));
-                o.setStrokeOpacity(a.strokeOpacity);
-                o.setStrokeWidth(a.strokeWidth);
-                levels.put(o, a.level);
-            }
-            for (PageContent.FloatingTableContent t : content.tables) {
-                if (t.colWidths.length == 0 || t.rowHeights.length == 0)
-                    continue;
-                TableOverlay o = page.addTableOverlay(t.x, t.y, t.rowHeights.length, t.colWidths.length,
-                        this::setupCell);
-                o.load(t.colWidths, t.rowHeights, t.offX, t.offY, t.merges, t.cells);
-                levels.put(o, t.level);
-            }
-            for (PageContent.FloatingTextBoxContent t : content.textBoxes) {
-                TextBoxOverlay o = page.addTextBoxOverlay(t.x, t.y, t.width, this::setupCell);
-                o.load(t);
-                levels.put(o, t.level);
+            for (List<?> group : List.of(content.images, content.shapes, content.arrows, content.tables,
+                    content.textBoxes)) {
+                for (Object item : group) {
+                    Layerable overlay = FloatingObjects.create(page, item, this::setupCell);
+                    if (overlay != null)
+                        levels.put(overlay, levelOf(item));
+                }
             }
             page.orderLayers(levels);
 
@@ -340,6 +305,18 @@ public class InputController {
             }
         }
         clampTranslate();
+    }
+
+    private static int levelOf(Object content) {
+        Integer level = switch (content) {
+            case PageContent.FloatingImageContent c -> c.level;
+            case PageContent.FloatingShapeContent c -> c.level;
+            case PageContent.FloatingArrowContent c -> c.level;
+            case PageContent.FloatingTableContent c -> c.level;
+            case PageContent.FloatingTextBoxContent c -> c.level;
+            default -> null;
+        };
+        return level != null ? level : 0;
     }
 
     private void populate(Page page, PageContent content) {
@@ -427,24 +404,11 @@ public class InputController {
         return created;
     }
 
-    private void applySelectionColorToAllPages() {
-        for (Page p : pages)
-            applySelectionColor(p.getEditor());
-    }
-
     private void applyMarginsToAllPages() {
         for (Page p : pages) {
             p.applyMargins();
             scheduleReflow(p);
         }
-    }
-
-    private void applySelectionColor(RichTextArea editor) {
-        Color color = AppSettings.getInstance().selectionColorProperty().get();
-        String css = ".styled-text-area .selection { -fx-fill: " + ColorUtil.toCssRgba(color) + "; }";
-        String base64 = Base64.getEncoder()
-                .encodeToString(css.getBytes(StandardCharsets.UTF_8));
-        editor.getStylesheets().add("data:text/css;base64," + base64);
     }
 
     private void setupPage(Page page) {
@@ -461,11 +425,12 @@ public class InputController {
         new LinkHandler(page.getEditor());
         new TextSelectionMover(page, this::setupCell);
         new SmoothCaret(page);
+        floatingShortcuts.track(page);
         page.getEditor().richChanges().subscribe(c -> scheduleReflow(page));
     }
 
     private void setupCell(RichTextArea cell) {
-        applySelectionColor(cell);
+        floatingShortcuts.trackText(cell);
         new BackslashInputHandler(cell, commandRegistry);
         new LinkHandler(cell);
     }

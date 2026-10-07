@@ -33,7 +33,6 @@ import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
 import javafx.scene.Node;
 import javafx.scene.control.IndexRange;
-import javafx.scene.control.Label;
 import javafx.scene.text.TextAlignment;
 import javafx.scene.text.TextFlow;
 
@@ -65,43 +64,13 @@ public class RichTextArea extends GenericStyledArea<ParagraphStyle, Either<Strin
     }
 
     private static Node createNode(StyledSegment<Either<String, MathObject>, TextStyle> seg) {
-        return seg.getSegment().unify(str -> {
+        Node node = seg.getSegment().unify(str -> {
             TextExt text = new TextExt(str);
             text.setStyle(seg.getStyle().toCss());
             return text;
-        }, mathObject -> buildMathNode(mathObject, seg.getStyle()));
-    }
-
-    private static Node buildMathNode(MathObject obj, TextStyle style) {
-        if (obj == MathObject.EMPTY || obj.getType() == null)
-            return new Label("");
-
-        String raw = obj.getRaw();
-        return switch (obj.getType()) {
-            case EXPONENT -> {
-                String[] p = raw.split(",", 2);
-                yield MathNodeFactory.exponent(p[0], p[1], style);
-            }
-            case SUBSCRIPT -> {
-                String[] p = raw.split(",", 2);
-                yield MathNodeFactory.subscript(p[0], p[1], style);
-            }
-            case FRACTION -> {
-                String[] p = raw.split(",", 2);
-                yield MathNodeFactory.fraction(p[0], p[1], style);
-            }
-            case SQRT -> MathNodeFactory.sqrt(raw, style);
-            case MATRIX -> MathNodeFactory.matrix(raw, style);
-            case SUM, INTEGRAL, PRODUCT -> {
-                String[] p = raw.split("\\|", -1);
-                yield MathNodeFactory.bigOperator(obj.getType().symbol(), p[0], p[1], p[2], style);
-            }
-            case LIMIT -> {
-                String[] p = raw.split("\\|", -1);
-                yield MathNodeFactory.limit(p[0], p[1], style);
-            }
-            case IMAGE -> MathNodeFactory.image(raw, style);
-        };
+        }, mathObject -> MathNodeFactory.render(mathObject, seg.getStyle()));
+        TightTextShapes.track(node);
+        return node;
     }
 
     public boolean hasSelection() {

@@ -97,7 +97,7 @@ public class TableOverlay extends Pane implements Layerable {
         grid.setFill(null);
         grid.setMouseTransparent(true);
 
-        selectionShade.setFill(Color.rgb(51, 153, 255, 0.3));
+        selectionShade.getStyleClass().add("table-selection");
         selectionShade.setStroke(null);
         selectionShade.setMouseTransparent(true);
 

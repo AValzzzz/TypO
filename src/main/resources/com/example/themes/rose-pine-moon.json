@@ -1,0 +1,22 @@
+{
+  "name": "Rosé Pine Moon",
+  "background": "#232136",
+  "surface": "#2a273f",
+  "overlay": "#393552",
+  "text": "#e0def4",
+  "accent": "#c4a7e7",
+  "muted": "#6e6a86",
+  "subtle": "#908caa",
+  "highlightLow": "#2a283e",
+  "highlightMed": "#44415a",
+  "highlightHigh": "#56526e",
+  "success": "#3e8fb0",
+  "error": "#eb6f92",
+  "warning": "#f6c177",
+  "onAccent": "#232136",
+  "card": "#2a273f",
+  "backdropTop": "#2a273f",
+  "backdropBottom": "#1d1b2e",
+  "selection": "#c4a7e790",
+  "shadow": "#000000"
+}

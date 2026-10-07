@@ -108,7 +108,7 @@ public class HelpDemoPlayer extends VBox {
         caption.setWrapText(true);
         caption.setPrefWidth(W);
         caption.setMinHeight(44);
-        caption.setStyle("-fx-font-size: 13px; -fx-text-fill: #575279;");
+        caption.getStyleClass().add("help-caption");
 
         Button replay = new Button("\u21BB  " + replayLabel);
         replay.getStyleClass().add("btn-ghost");

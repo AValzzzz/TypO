@@ -117,6 +117,24 @@ public final class Motion {
         t.play();
     }
 
+    public static void spawn(Node node) {
+        if (skip()) {
+            node.setOpacity(1);
+            node.setScaleX(1);
+            node.setScaleY(1);
+            return;
+        }
+        node.setOpacity(0);
+        node.setScaleX(0.5);
+        node.setScaleY(0.5);
+        Timeline t = new Timeline(
+                new KeyFrame(Duration.millis(140), new KeyValue(node.opacityProperty(), 1, EASE_OUT)),
+                new KeyFrame(Duration.millis(480),
+                        new KeyValue(node.scaleXProperty(), 1, SPRING_BOUNCY),
+                        new KeyValue(node.scaleYProperty(), 1, SPRING_BOUNCY)));
+        t.play();
+    }
+
     public static void fadeSlideIn(Node node, double dy, int delayMs) {
         if (skip()) {
             node.setOpacity(1);

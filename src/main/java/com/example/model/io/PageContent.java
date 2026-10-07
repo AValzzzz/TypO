@@ -65,54 +65,65 @@ public class PageContent {
             content.paragraphs.add(pc);
         }
 
-        for (ImageOverlay overlay : page.getImageOverlays()) {
-            FloatingImageContent fi = new FloatingImageContent(
-                    overlay.getImageX(), overlay.getImageY(),
-                    overlay.getImageWidth(), overlay.getImageHeight(),
-                    overlay.getFormat(), overlay.getBase64(), overlay.getImageRotation());
-            fi.level = overlay.getLevel();
-            fi.opacity = overlay.getImageOpacity();
-            content.images.add(fi);
-        }
-
-        for (ShapeOverlay s : page.getShapeOverlays()) {
-            FloatingShapeContent fs = new FloatingShapeContent(
-                    s.getShapeType(), s.getShapeX(), s.getShapeY(), s.getShapeWidth(), s.getShapeHeight(),
-                    ColorUtil.toHex(s.getFillColor()), s.getFillOpacity(),
-                    ColorUtil.toHex(s.getStrokeColor()), s.getStrokeOpacity(), s.getStrokeWidth(),
-                    s.getShapeRotation());
-            fs.level = s.getLevel();
-            content.shapes.add(fs);
-        }
-
-        for (ArrowOverlay a : page.getArrowOverlays()) {
-            FloatingArrowContent fa = new FloatingArrowContent(
-                    a.getStartX(), a.getStartY(), a.getEndX(), a.getEndY(),
-                    a.getControlX(), a.getControlY(),
-                    ColorUtil.toHex(a.getStrokeColor()), a.getStrokeOpacity(), a.getStrokeWidth());
-            fa.level = a.getLevel();
-            content.arrows.add(fa);
-        }
-
-        for (TableOverlay t : page.getTableOverlays()) {
-            FloatingTableContent ft = new FloatingTableContent(t.getTableX(), t.getTableY(),
-                    t.getColumnWidths(), t.getRowHeights(),
-                    t.getOffsetsX(), t.getOffsetsY(), t.getMerges(), t.encodeCells());
-            ft.level = t.getLevel();
-            content.tables.add(ft);
-        }
-
-        for (TextBoxOverlay t : page.getTextBoxOverlays()) {
-            FloatingTextBoxContent ft = new FloatingTextBoxContent(t.getBoxX(), t.getBoxY(), t.getBoxWidth(),
-                    t.isBorderVisible(), ColorUtil.toHex(t.getBorderColor()),
-                    t.isBackgroundVisible(), ColorUtil.toHex(t.getBackgroundColor()), t.getBackgroundOpacity(),
-                    t.encodeContent());
-            ft.level = t.getLevel();
-            ft.plainText = t.getEditor().getText();
-            content.textBoxes.add(ft);
-        }
+        for (ImageOverlay overlay : page.getImageOverlays())
+            content.images.add(capture(overlay));
+        for (ShapeOverlay s : page.getShapeOverlays())
+            content.shapes.add(capture(s));
+        for (ArrowOverlay a : page.getArrowOverlays())
+            content.arrows.add(capture(a));
+        for (TableOverlay t : page.getTableOverlays())
+            content.tables.add(capture(t));
+        for (TextBoxOverlay t : page.getTextBoxOverlays())
+            content.textBoxes.add(capture(t));
 
         return content;
+    }
+
+    public static FloatingImageContent capture(ImageOverlay overlay) {
+        FloatingImageContent fi = new FloatingImageContent(
+                overlay.getImageX(), overlay.getImageY(),
+                overlay.getImageWidth(), overlay.getImageHeight(),
+                overlay.getFormat(), overlay.getBase64(), overlay.getImageRotation());
+        fi.level = overlay.getLevel();
+        fi.opacity = overlay.getImageOpacity();
+        return fi;
+    }
+
+    public static FloatingShapeContent capture(ShapeOverlay s) {
+        FloatingShapeContent fs = new FloatingShapeContent(
+                s.getShapeType(), s.getShapeX(), s.getShapeY(), s.getShapeWidth(), s.getShapeHeight(),
+                ColorUtil.toHex(s.getFillColor()), s.getFillOpacity(),
+                ColorUtil.toHex(s.getStrokeColor()), s.getStrokeOpacity(), s.getStrokeWidth(),
+                s.getShapeRotation());
+        fs.level = s.getLevel();
+        return fs;
+    }
+
+    public static FloatingArrowContent capture(ArrowOverlay a) {
+        FloatingArrowContent fa = new FloatingArrowContent(
+                a.getStartX(), a.getStartY(), a.getEndX(), a.getEndY(),
+                a.getControlX(), a.getControlY(),
+                ColorUtil.toHex(a.getStrokeColor()), a.getStrokeOpacity(), a.getStrokeWidth());
+        fa.level = a.getLevel();
+        return fa;
+    }
+
+    public static FloatingTableContent capture(TableOverlay t) {
+        FloatingTableContent ft = new FloatingTableContent(t.getTableX(), t.getTableY(),
+                t.getColumnWidths(), t.getRowHeights(),
+                t.getOffsetsX(), t.getOffsetsY(), t.getMerges(), t.encodeCells());
+        ft.level = t.getLevel();
+        return ft;
+    }
+
+    public static FloatingTextBoxContent capture(TextBoxOverlay t) {
+        FloatingTextBoxContent ft = new FloatingTextBoxContent(t.getBoxX(), t.getBoxY(), t.getBoxWidth(),
+                t.isBorderVisible(), ColorUtil.toHex(t.getBorderColor()),
+                t.isBackgroundVisible(), ColorUtil.toHex(t.getBackgroundColor()), t.getBackgroundOpacity(),
+                t.encodeContent());
+        ft.level = t.getLevel();
+        ft.plainText = t.getEditor().getText();
+        return ft;
     }
 
     public static final class ParagraphContent {

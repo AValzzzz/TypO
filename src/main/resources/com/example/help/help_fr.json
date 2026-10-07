@@ -92,7 +92,7 @@
       "body": [
         "Tapez une barre oblique inverse, le numérateur, une barre oblique et le dénominateur, puis appuyez sur Espace :",
         "> \\a/b",
-        "- Chaque côté peut contenir uniquement des lettres, des chiffres et des tirets bas (pas d'espaces ni d'opérateurs).",
+        "- Chaque côté est un mot ou un nombre, ou n'importe quoi entre parenthèses, qui peut lui-même contenir des maths : \\(a+b)/(c^2), \\1/(1/x).",
         "- Exemple : \\3/4 donne 3 sur 4.",
         "- Appuyez sur Retour arrière juste après la conversion pour modifier la commande brute."
       ],
@@ -107,7 +107,8 @@
         "> \\x^(n+1)",
         "- La base est composée de lettres et de chiffres.",
         "- L'exposant est un seul mot ou nombre, ou n'importe quoi entre parenthèses.",
-        "- Utilisez des parenthèses pour les exposants plus longs, par ex. \\e^(-x)."
+        "- Utilisez des parenthèses pour les exposants plus longs, par ex. \\e^(-x).",
+        "- Les maths peuvent s'imbriquer entre parenthèses : \\x^(1/2), \\(a/b)^2, \\sqrt(x^2/y_1), \\sum_(i=1)^(n)(i^2/2). Les parenthèses autour de la base restent visibles."
       ],
       "keywords": ["exposant", "exposants", "puissance", "puissances", "carre", "cube", "au carre", "au cube", "elever", "mettre en exposant"],
       "captions": ["Tapez \\ puis base^exposant, puis Espace.", "L'exposant est créé."]
@@ -476,7 +477,7 @@
         "- Tous les blocs de code sont mis à jour immédiatement."
       ],
       "keywords": ["theme du code", "theme", "sombre", "clair", "couleurs du code", "couleurs de syntaxe", "apparence du code"],
-      "captions": ["Ouvrez les Paramètres et choisissez le thème des blocs de code.", "Couleur de fond", "Couleur de sélection", "Thème des blocs de code", "Numéroter les pages", "Marges (cm)"]
+      "captions": ["Ouvrez les Paramètres et choisissez le thème des blocs de code.", "Couleur de fond", "Thème de l'application", "Thème des blocs de code", "Numéroter les pages", "Marges (cm)"]
     },
 
     "file_save": {
@@ -550,7 +551,7 @@
         "- Gauche + Droite et Haut + Bas doivent chacun rester dans 19 cm. Un champ devient rouge quand la valeur n'est pas valide."
       ],
       "keywords": ["marge", "marges", "marges de page", "espacement", "espace blanc", "lier les marges"],
-      "captions": ["Cliquez sur Paramètres, puis ouvrez Marges (cm).", "Couleur de fond", "Couleur de sélection", "Thème des blocs de code", "Numéroter les pages", "Marges (cm)", "Tapez une valeur en cm pour Gauche, Haut, Droite ou Bas et appuyez sur Entrée.", "Lier les quatre applique la même marge aux quatre côtés."]
+      "captions": ["Cliquez sur Paramètres, puis ouvrez Marges (cm).", "Couleur de fond", "Thème de l'application", "Thème des blocs de code", "Numéroter les pages", "Marges (cm)", "Tapez une valeur en cm pour Gauche, Haut, Droite ou Bas et appuyez sur Entrée.", "Lier les quatre applique la même marge aux quatre côtés."]
     },
     "settings_page_numbers": {
       "title": "Afficher les numéros de page",
@@ -560,20 +561,20 @@
         "- Le numéro apparaît en bas de chaque page, dans le document et dans les exports."
       ],
       "keywords": ["numero de page", "numeros de page", "numerotation", "numeroter les pages", "pied de page", "numeros de pagination"],
-      "captions": ["Cliquez sur Paramètres et cochez Numéroter les pages.", "Couleur de fond", "Couleur de sélection", "Thème des blocs de code", "Numéroter les pages", "Marges (cm)"]
+      "captions": ["Cliquez sur Paramètres et cochez Numéroter les pages.", "Couleur de fond", "Thème de l'application", "Thème des blocs de code", "Numéroter les pages", "Marges (cm)"]
     },
     "settings_colors": {
       "title": "Changer les couleurs et l'apparence",
       "body": [
         "- Cliquez sur le bouton Paramètres.",
         "- Couleur de fond : la couleur derrière les pages.",
-        "- Couleur de sélection : la couleur du texte sélectionné.",
+        "- Thème de l'application : les couleurs de toute l'application (sélection comprise). Importer… charge votre propre fichier de thème (.json).",
         "- Thème des blocs de code : l'apparence des blocs de code.",
         "- Numéroter les pages et Marges (cm) sont dans le même menu.",
         "- La langue de l'application se change aussi ici (au prochain lancement)."
       ],
-      "keywords": ["fond", "couleur de fond", "couleur de selection", "couleurs", "parametres", "preferences", "theme", "apparence", "theme du code", "langue", "francais", "anglais"],
-      "captions": ["Cliquez sur Paramètres pour changer les couleurs.", "Couleur de fond", "Couleur de sélection", "Thème des blocs de code", "Numéroter les pages", "Marges (cm)"]
+      "keywords": ["fond", "couleur de fond", "couleur de selection", "theme de l'application", "mode sombre", "importer un theme", "couleurs", "parametres", "preferences", "theme", "apparence", "theme du code", "langue", "francais", "anglais"],
+      "captions": ["Cliquez sur Paramètres pour changer les couleurs.", "Couleur de fond", "Thème de l'application", "Thème des blocs de code", "Numéroter les pages", "Marges (cm)"]
     },
 
     "not_found": {

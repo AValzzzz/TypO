@@ -91,7 +91,7 @@
       "body": [
         "Type a backslash, the numerator, a slash and the denominator, then press Space:",
         "> \\a/b",
-        "- Each side can contain letters, digits and underscores only (no spaces or operators).",
+        "- Each side is a word or number, or anything inside parentheses, which may itself contain math: \\(a+b)/(c^2), \\1/(1/x).",
         "- Example: \\3/4 gives 3 over 4.",
         "- Press Backspace right after the conversion to edit the raw command."
       ],
@@ -106,7 +106,8 @@
         "> \\x^(n+1)",
         "- The base is made of letters and digits.",
         "- The exponent is a single word or number, or anything inside parentheses.",
-        "- Use parentheses for longer exponents, e.g. \\e^(-x)."
+        "- Use parentheses for longer exponents, e.g. \\e^(-x).",
+        "- Math can be nested inside parentheses: \\x^(1/2), \\(a/b)^2, \\sqrt(x^2/y_1), \\sum_(i=1)^(n)(i^2/2). Parentheses around the base stay visible."
       ],
       "keywords": ["exponent", "exponents", "power", "powers", "squared", "cubed", "superscript", "raise", "to the power"],
       "captions": ["Type \\ then base^exponent, then Space.", "The exponent is created."]
@@ -475,7 +476,7 @@
         "- All code blocks update immediately."
       ],
       "keywords": ["code theme", "theme", "dark", "light", "code colors", "syntax colors", "code appearance"],
-      "captions": ["Open Settings and choose the code block theme.", "Background color", "Selection color", "Code block theme", "Number the pages", "Margins (cm)"]
+      "captions": ["Open Settings and choose the code block theme.", "Background color", "App theme", "Code block theme", "Number the pages", "Margins (cm)"]
     },
 
     "file_save": {
@@ -549,7 +550,7 @@
         "- Left + Right and Top + Bottom must each stay within 19 cm. A field turns red when the value is not valid."
       ],
       "keywords": ["margin", "margins", "page margins", "padding", "white space", "link margins"],
-      "captions": ["Click Settings, then open Margins (cm).", "Background color", "Selection color", "Code block theme", "Number the pages", "Margins (cm)", "Type a value in cm for Left, Top, Right or Bottom and press Enter.", "Link all four applies the same margin to the four sides."]
+      "captions": ["Click Settings, then open Margins (cm).", "Background color", "App theme", "Code block theme", "Number the pages", "Margins (cm)", "Type a value in cm for Left, Top, Right or Bottom and press Enter.", "Link all four applies the same margin to the four sides."]
     },
     "settings_page_numbers": {
       "title": "Show page numbers",
@@ -559,19 +560,19 @@
         "- The number appears at the bottom of each page, in the document and in the exports."
       ],
       "keywords": ["page number", "page numbers", "numbering", "number pages", "footer", "pagination numbers"],
-      "captions": ["Click Settings and tick Number the pages.", "Background color", "Selection color", "Code block theme", "Number the pages", "Margins (cm)"]
+      "captions": ["Click Settings and tick Number the pages.", "Background color", "App theme", "Code block theme", "Number the pages", "Margins (cm)"]
     },
     "settings_colors": {
       "title": "Change colors and appearance",
       "body": [
         "- Click the Settings button.",
         "- Background color: the color behind the pages.",
-        "- Selection color: the color of selected text.",
+        "- App theme: the colors of the whole app (selection included). Import… loads your own theme file (.json).",
         "- Code block theme: the look of code blocks.",
         "- Number the pages and Margins (cm) are in the same menu."
       ],
-      "keywords": ["background", "background color", "selection color", "colors", "colours", "settings", "preferences", "theme", "appearance", "code theme"],
-      "captions": ["Click Settings to change colors.", "Background color", "Selection color", "Code block theme", "Number the pages", "Margins (cm)"]
+      "keywords": ["background", "background color", "selection color", "app theme", "dark mode", "import theme", "colors", "colours", "settings", "preferences", "theme", "appearance", "code theme"],
+      "captions": ["Click Settings to change colors.", "Background color", "App theme", "Code block theme", "Number the pages", "Margins (cm)"]
     },
 
     "not_found": {

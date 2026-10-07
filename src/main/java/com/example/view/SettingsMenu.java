@@ -1,18 +1,23 @@
 package com.example.view;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Locale;
 
 import com.example.model.i18n.AppLanguage;
 import com.example.model.i18n.I18n;
 import com.example.model.settings.AppSettings;
+import com.example.model.settings.AppTheme;
 import com.example.model.settings.CodeTheme;
 
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.WeakChangeListener;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ChoiceBox;
-import javafx.scene.control.ColorPicker;
+import javafx.scene.control.Button;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.CustomMenuItem;
 import javafx.scene.control.Label;
@@ -20,21 +25,30 @@ import javafx.scene.control.Menu;
 import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
+import javafx.stage.FileChooser;
 
 public class SettingsMenu extends ContextMenu {
     private static final int LEFT = 0, TOP = 1, RIGHT = 2, BOTTOM = 3;
 
     private final TextField[] marginFields = new TextField[4];
     private final CheckBox linkBox = new CheckBox(I18n.t("settings.linkMargins"));
+    private ChangeListener<AppTheme> themeSync;
 
     public SettingsMenu() {
         setAutoHide(true);
 
         AppSettings settings = AppSettings.getInstance();
 
-        ColorPicker selectionPicker = new ColorPicker(settings.selectionColorProperty().get());
-        selectionPicker.valueProperty().bindBidirectional(settings.selectionColorProperty());
-        keepOpenWhilePickerActive(selectionPicker);
+        ChoiceBox<AppTheme> appThemeChoice = new ChoiceBox<>(Theme.themes());
+        appThemeChoice.setValue(Theme.current());
+        appThemeChoice.valueProperty().addListener((obs, o, n) -> Theme.select(n));
+        Theme.currentProperty().addListener(new WeakChangeListener<>(themeSync = (obs, o, n) -> {
+            if (appThemeChoice.getValue() != n)
+                appThemeChoice.setValue(n);
+        }));
+
+        Button importTheme = new Button(I18n.t("settings.importTheme"));
+        importTheme.setOnAction(e -> importTheme(importTheme));
 
         ChoiceBox<CodeTheme> themeChoice = new ChoiceBox<>();
         themeChoice.getItems().addAll(CodeTheme.values());
@@ -42,7 +56,6 @@ public class SettingsMenu extends ContextMenu {
         themeChoice.valueProperty().addListener((obs, o, n) -> settings.codeThemeProperty().set(n));
 
         CheckBox pageNumberBox = new CheckBox(I18n.t("settings.pageNumbers"));
-        pageNumberBox.setStyle("-fx-text-fill: BLACK;");
         pageNumberBox.selectedProperty().bindBidirectional(settings.showPageNumbersProperty());
 
         CheckBox reduceBox = new CheckBox(I18n.t("settings.reduceMotion"));
@@ -57,8 +70,6 @@ public class SettingsMenu extends ContextMenu {
         for (int i = 0; i < marginFields.length; i++)
             marginFields[i] = createMarginField(i);
         refreshMarginFields();
-
-        linkBox.setStyle("-fx-text-fill: BLACK;");
 
         Menu menu = new Menu(I18n.t("settings.margins"));
         menu.getItems().addAll(
@@ -77,12 +88,12 @@ public class SettingsMenu extends ContextMenu {
         });
 
         Label restartNote = new Label(I18n.t("settings.restartNote"));
-        restartNote.setStyle("-fx-text-fill: #b35c00; -fx-font-size: 11px;");
+        restartNote.getStyleClass().add("settings-note");
         restartNote.visibleProperty().bind(languageChoice.valueProperty().isNotEqualTo(I18n.active()));
         restartNote.managedProperty().bind(restartNote.visibleProperty());
 
         getItems().addAll(
-                row(I18n.t("settings.selectionColor"), selectionPicker),
+                row(I18n.t("settings.appTheme"), appThemeChoice, importTheme),
                 new SeparatorMenuItem(),
                 row(I18n.t("settings.codeTheme"), themeChoice),
                 new SeparatorMenuItem(),
@@ -144,15 +155,25 @@ public class SettingsMenu extends ContextMenu {
         return String.format(Locale.ROOT, "%.2f", cm);
     }
 
-    private void keepOpenWhilePickerActive(ColorPicker picker) {
-        picker.showingProperty().addListener((obs, wasShowing, isShowing) -> setAutoHide(!isShowing));
+    private void importTheme(Node anchor) {
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle(I18n.t("settings.importTheme.title"));
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(I18n.t("settings.importTheme.filter"),
+                "*.json"));
+        File file = chooser.showOpenDialog(anchor.getScene().getWindow());
+        if (file == null)
+            return;
+        try {
+            AppTheme theme = Theme.importTheme(file.toPath());
+            Toast.success(I18n.t("settings.importTheme.done", theme.getName()));
+        } catch (IOException | IllegalArgumentException ex) {
+            Toast.error(I18n.t("settings.importTheme.error", ex.getMessage()));
+        }
     }
 
-    private CustomMenuItem row(String labelText, Node control) {
-        Label label = new Label(labelText);
-        label.setStyle("-fx-text-fill: BLACK;");
-
-        HBox box = new HBox(8, label, control);
+    private CustomMenuItem row(String labelText, Node... controls) {
+        HBox box = new HBox(8, new Label(labelText));
+        box.getChildren().addAll(controls);
         box.setAlignment(Pos.CENTER_LEFT);
         return new CustomMenuItem(box, false);
     }

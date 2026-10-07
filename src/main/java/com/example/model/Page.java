@@ -23,11 +23,8 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
-import javafx.scene.effect.BlurType;
-import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.layout.Pane;
-import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 
 public class Page {
@@ -44,6 +41,7 @@ public class Page {
     private final List<TableOverlay> tableOverlays = new ArrayList<>();
     private final List<TextBoxOverlay> textBoxOverlays = new ArrayList<>();
     private final List<Layerable> layers = new ArrayList<>();
+    private Runnable onLayersChanged;
 
     public Page(Pane pane, RichTextArea textEditor) {
         this.pane = pane;
@@ -63,12 +61,11 @@ public class Page {
 
     private static void installShadow(Pane pane) {
         Rectangle shadow = new Rectangle();
-        shadow.setFill(Color.WHITE);
+        shadow.getStyleClass().add("page-shadow");
         shadow.setManaged(false);
         shadow.setMouseTransparent(true);
         shadow.widthProperty().bind(pane.widthProperty());
         shadow.heightProperty().bind(pane.heightProperty());
-        shadow.setEffect(new DropShadow(BlurType.GAUSSIAN, Color.rgb(87, 82, 121, 0.26), 24, 0, 0, 6));
         shadow.getProperties().put(SHADOW_KEY, Boolean.TRUE);
         shadow.getProperties().put("noExport", Boolean.TRUE);
         pane.getChildren().add(0, shadow);
@@ -96,60 +93,50 @@ public class Page {
         overlay.setSnap(snapGuides);
         addLayer(overlay);
         imageOverlays.add(overlay);
-        Motion.popIn(overlay);
+        Motion.spawn(overlay);
         return overlay;
     }
 
     public ShapeOverlay addShapeOverlay(ShapeType type, double x, double y, double width, double height) {
         ShapeOverlay overlay = new ShapeOverlay(type, x, y, width, height);
-        overlay.setOnDelete(() -> {
-            removeLayer(overlay);
-            shapeOverlays.remove(overlay);
-        });
+        overlay.setOnDelete(() -> remove(overlay));
         overlay.setSnap(snapGuides);
         addLayer(overlay);
         shapeOverlays.add(overlay);
-        Motion.popIn(overlay);
+        Motion.spawn(overlay);
         return overlay;
     }
 
     public ArrowOverlay addArrowOverlay(double startX, double startY, double endX, double endY,
             double controlX, double controlY) {
         ArrowOverlay overlay = new ArrowOverlay(startX, startY, endX, endY, controlX, controlY);
-        overlay.setOnDelete(() -> {
-            removeLayer(overlay);
-            arrowOverlays.remove(overlay);
-        });
+        overlay.setOnDelete(() -> remove(overlay));
         addLayer(overlay);
         arrowOverlays.add(overlay);
-        Motion.popIn(overlay);
+        Motion.spawn(overlay);
         return overlay;
     }
 
     public TableOverlay addTableOverlay(double x, double y, int rows, int cols, Consumer<RichTextArea> cellSetup) {
         TableOverlay overlay = new TableOverlay(rows, cols, x, y, cellSetup);
         overlay.setOnDelete(() -> {
-            removeLayer(overlay);
-            tableOverlays.remove(overlay);
+            remove(overlay);
             editor.requestFocus();
         });
         overlay.setSnap(snapGuides);
         addLayer(overlay);
         tableOverlays.add(overlay);
-        Motion.popIn(overlay);
+        Motion.spawn(overlay);
         return overlay;
     }
 
     public TextBoxOverlay addTextBoxOverlay(double x, double y, double width, Consumer<RichTextArea> cellSetup) {
         TextBoxOverlay overlay = new TextBoxOverlay(x, y, width, cellSetup);
-        overlay.setOnDelete(() -> {
-            removeLayer(overlay);
-            textBoxOverlays.remove(overlay);
-        });
+        overlay.setOnDelete(() -> remove(overlay));
         overlay.setSnap(snapGuides);
         addLayer(overlay);
         textBoxOverlays.add(overlay);
-        Motion.popIn(overlay);
+        Motion.spawn(overlay);
         return overlay;
     }
 
@@ -187,12 +174,41 @@ public class Page {
             }
         });
         applyLayers();
+        fireLayersChanged();
     }
 
-    private void removeLayer(Layerable overlay) {
+    public void remove(Layerable overlay) {
+        imageOverlays.remove(overlay);
+        shapeOverlays.remove(overlay);
+        arrowOverlays.remove(overlay);
+        tableOverlays.remove(overlay);
+        textBoxOverlays.remove(overlay);
         pane.getChildren().remove(overlay.node());
-        layers.remove(overlay);
+        if (layers.remove(overlay)) {
+            applyLayers();
+            fireLayersChanged();
+        }
+    }
+
+    public List<Layerable> getLayers() {
+        return Collections.unmodifiableList(layers);
+    }
+
+    public void setLayerOrder(List<Layerable> order) {
+        layers.sort(Comparator.comparingInt((Layerable l) -> {
+            int i = order.indexOf(l);
+            return i < 0 ? Integer.MAX_VALUE : i;
+        }));
         applyLayers();
+    }
+
+    public void setOnLayersChanged(Runnable listener) {
+        this.onLayersChanged = listener;
+    }
+
+    private void fireLayersChanged() {
+        if (onLayersChanged != null)
+            onLayersChanged.run();
     }
 
     private void moveLayer(Layerable overlay, int delta) {
@@ -202,6 +218,7 @@ public class Page {
             return;
         Collections.swap(layers, i, j);
         applyLayers();
+        fireLayersChanged();
     }
 
     private void applyLayers() {
