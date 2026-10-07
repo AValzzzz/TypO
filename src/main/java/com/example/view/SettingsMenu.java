@@ -11,7 +11,6 @@ import com.example.model.settings.AppSettings;
 import com.example.model.settings.AppTheme;
 import com.example.model.settings.CodeTheme;
 
-import javafx.beans.value.ChangeListener;
 import javafx.beans.value.WeakChangeListener;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -32,7 +31,6 @@ public class SettingsMenu extends ContextMenu {
 
     private final TextField[] marginFields = new TextField[4];
     private final CheckBox linkBox = new CheckBox(I18n.t("settings.linkMargins"));
-    private ChangeListener<AppTheme> themeSync;
 
     public SettingsMenu() {
         setAutoHide(true);
@@ -42,7 +40,7 @@ public class SettingsMenu extends ContextMenu {
         ChoiceBox<AppTheme> appThemeChoice = new ChoiceBox<>(Theme.themes());
         appThemeChoice.setValue(Theme.current());
         appThemeChoice.valueProperty().addListener((obs, o, n) -> Theme.select(n));
-        Theme.currentProperty().addListener(new WeakChangeListener<>(themeSync = (obs, o, n) -> {
+        Theme.currentProperty().addListener(new WeakChangeListener<>((obs, o, n) -> {
             if (appThemeChoice.getValue() != n)
                 appThemeChoice.setValue(n);
         }));
