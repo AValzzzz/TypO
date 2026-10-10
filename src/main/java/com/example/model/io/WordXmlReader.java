@@ -1,5 +1,17 @@
 package com.example.model.io;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
+import com.example.model.TextStyle;
 import static com.example.model.io.Ooxml.A;
 import static com.example.model.io.Ooxml.MC;
 import static com.example.model.io.Ooxml.R;
@@ -17,22 +29,6 @@ import static com.example.model.io.Ooxml.lng;
 import static com.example.model.io.Ooxml.normAngle;
 import static com.example.model.io.Ooxml.num;
 import static com.example.model.io.Ooxml.wval;
-
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.Comparator;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Objects;
-
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-
-import com.example.model.TextStyle;
 import com.example.model.io.PageContent.FloatingArrowContent;
 import com.example.model.io.PageContent.FloatingImageContent;
 import com.example.model.io.PageContent.FloatingShapeContent;
@@ -43,14 +39,12 @@ import com.example.model.io.PageContent.RunContent;
 import com.example.model.language.maths.MathObject;
 import com.example.model.language.shapes.ShapeType;
 
-import javafx.scene.paint.Color;
 import javafx.scene.text.TextAlignment;
 
 final class WordXmlReader {
     private static final String CODE_STYLE = "TypOCode";
     private static final double CONTENT_W = 555;
     private static final double LINE_K = 1.2;
-    private static final double DEF_SIZE = 12;
 
     private interface Maker {
         Object make(double x, double y);
@@ -96,18 +90,9 @@ final class WordXmlReader {
     }
 
     private final Map<String, byte[]> parts;
-    private final String docDir;
-    private final String docName;
     private final String docPath;
-
-    private final Map<String, String[]> rels = new HashMap<>();
-    private final Map<String, Element> styles = new HashMap<>();
-    private String defaultParaStyle;
-    private Element defRpr;
-    private Element defPpr;
-    private final Map<String, String> numAbstract = new HashMap<>();
-    private final Map<String, Map<Integer, String>> absFmt = new HashMap<>();
-    private final Map<String, int[]> counters = new HashMap<>();
+    private WordPackage pkg;
+    private WordStyles styles;
     private DocxSidecar sidecar = new DocxSidecar();
     private boolean pageNumbers;
 
@@ -118,18 +103,14 @@ final class WordXmlReader {
     WordXmlReader(Map<String, byte[]> parts, String docPath) {
         this.parts = parts;
         this.docPath = docPath;
-        int i = docPath.lastIndexOf('/');
-        this.docDir = i < 0 ? "" : docPath.substring(0, i + 1);
-        this.docName = docPath.substring(i + 1);
     }
 
     List<PageContent> read() throws Exception {
-        loadRels();
-        loadStyles();
-        loadNumbering();
+        pkg = new WordPackage(parts, docPath);
+        styles = new WordStyles(pkg);
         sidecar = DocxSidecar.parse(parts);
 
-        byte[] main = parts.get(docPath);
+        byte[] main = pkg.main();
         if (main == null)
             throw new IllegalArgumentException("word/document.xml introuvable");
         Document doc = Ooxml.parse(main);
@@ -143,313 +124,6 @@ final class WordXmlReader {
         for (PageContent pc : out)
             pc.showPageNumbers = pageNumbers;
         return out;
-    }
-
-    private void loadRels() throws Exception {
-        byte[] b = parts.get(docDir + "_rels/" + docName + ".rels");
-        if (b == null)
-            return;
-        Document d = Ooxml.parse(b);
-        var nl = d.getDocumentElement().getElementsByTagNameNS("*", "Relationship");
-        for (int i = 0; i < nl.getLength(); i++) {
-            Element e = (Element) nl.item(i);
-            rels.put(e.getAttribute("Id"), new String[] { e.getAttribute("Target"), e.getAttribute("Type") });
-        }
-    }
-
-    private String resolve(String target) {
-        String p = target.startsWith("/") ? target.substring(1) : docDir + target;
-        Deque<String> stack = new ArrayDeque<>();
-        for (String seg : p.split("/")) {
-            if (seg.isEmpty() || seg.equals("."))
-                continue;
-            if (seg.equals("..")) {
-                if (!stack.isEmpty())
-                    stack.removeLast();
-            } else {
-                stack.addLast(seg);
-            }
-        }
-        return String.join("/", stack);
-    }
-
-    private byte[] partByType(String typeSuffix, String fallback) {
-        for (String[] r : rels.values())
-            if (r[1].endsWith(typeSuffix))
-                return parts.get(resolve(r[0]));
-        return parts.get(fallback);
-    }
-
-    private void loadStyles() {
-        byte[] b = partByType("/styles", "word/styles.xml");
-        if (b == null)
-            return;
-        try {
-            Element root = Ooxml.parse(b).getDocumentElement();
-            Element dd = kid(root, W, "docDefaults");
-            if (dd != null) {
-                Element rd = kid(dd, W, "rPrDefault");
-                Element pd = kid(dd, W, "pPrDefault");
-                defRpr = rd == null ? null : kid(rd, W, "rPr");
-                defPpr = pd == null ? null : kid(pd, W, "pPr");
-            }
-            for (Element st : kids(root, W, "style")) {
-                String id = attr(st, W, "styleId");
-                styles.put(id, st);
-                if ("paragraph".equals(attr(st, W, "type")) && isTrue(attr(st, W, "default")))
-                    defaultParaStyle = id;
-            }
-        } catch (Exception ignored) {
-        }
-    }
-
-    private void loadNumbering() {
-        byte[] b = partByType("/numbering", "word/numbering.xml");
-        if (b == null)
-            return;
-        try {
-            Element root = Ooxml.parse(b).getDocumentElement();
-            for (Element an : kids(root, W, "abstractNum")) {
-                Map<Integer, String> lv = new HashMap<>();
-                for (Element l : kids(an, W, "lvl"))
-                    lv.put((int) num(attr(l, W, "ilvl"), 0), wval(kid(l, W, "numFmt")));
-                absFmt.put(attr(an, W, "abstractNumId"), lv);
-            }
-            for (Element n : kids(root, W, "num"))
-                numAbstract.put(attr(n, W, "numId"), wval(kid(n, W, "abstractNumId")));
-        } catch (Exception ignored) {
-        }
-    }
-
-    private String[] loadMedia(String rid) {
-        String[] r = rels.get(rid);
-        if (r == null)
-            return null;
-        byte[] bytes = parts.get(resolve(r[0]));
-        if (bytes == null || bytes.length < 4)
-            return null;
-        String fmt = null;
-        if ((bytes[0] & 0xFF) == 0x89 && bytes[1] == 'P')
-            fmt = "png";
-        else if ((bytes[0] & 0xFF) == 0xFF && (bytes[1] & 0xFF) == 0xD8)
-            fmt = "jpg";
-        else if (bytes[0] == 'G' && bytes[1] == 'I' && bytes[2] == 'F')
-            fmt = "gif";
-        else if (bytes[0] == 'B' && bytes[1] == 'M')
-            fmt = "bmp";
-        if (fmt == null)
-            return null;
-        return new String[] { fmt, Base64.getEncoder().encodeToString(bytes) };
-    }
-
-    private String effStyle(String id) {
-        return id != null ? id : defaultParaStyle;
-    }
-
-    private void addStyleChain(List<Element> outList, String id, boolean rpr) {
-        int guard = 0;
-        while (id != null && guard++ < 20) {
-            Element st = styles.get(id);
-            if (st == null)
-                break;
-            Element pr = kid(st, W, rpr ? "rPr" : "pPr");
-            if (pr != null)
-                outList.add(pr);
-            String based = wval(kid(st, W, "basedOn"));
-            id = based.isEmpty() ? null : based;
-        }
-    }
-
-    private List<Element> pprChain(Element pPr, String pStyle) {
-        List<Element> l = new ArrayList<>();
-        if (pPr != null)
-            l.add(pPr);
-        addStyleChain(l, effStyle(pStyle), false);
-        if (defPpr != null)
-            l.add(defPpr);
-        return l;
-    }
-
-    private static Element find(List<Element> chain, String local) {
-        for (Element e : chain) {
-            Element k = kid(e, W, local);
-            if (k != null)
-                return k;
-        }
-        return null;
-    }
-
-    private static boolean isOn(Element toggle) {
-        if (toggle == null)
-            return false;
-        String v = wval(toggle);
-        return !(v.equals("0") || v.equals("false") || v.equals("off"));
-    }
-
-    private static String styleId(Element pr, String local) {
-        String v = wval(kid(pr, W, local));
-        return v.isEmpty() ? null : v;
-    }
-
-    private static Color hexColor(String v) {
-        if (v == null || !v.matches("[0-9A-Fa-f]{6}"))
-            return null;
-        return ColorUtil.fromHex(v.toUpperCase(Locale.ROOT));
-    }
-
-    private static Color highlightColor(String name) {
-        return switch (name) {
-            case "yellow" -> Color.YELLOW;
-            case "green" -> Color.LIME;
-            case "cyan" -> Color.CYAN;
-            case "magenta" -> Color.MAGENTA;
-            case "blue" -> Color.BLUE;
-            case "red" -> Color.RED;
-            case "darkBlue" -> Color.DARKBLUE;
-            case "darkCyan" -> Color.DARKCYAN;
-            case "darkGreen" -> Color.DARKGREEN;
-            case "darkMagenta" -> Color.DARKMAGENTA;
-            case "darkRed" -> Color.DARKRED;
-            case "darkYellow" -> Color.web("#808000");
-            case "darkGray" -> Color.DARKGRAY;
-            case "lightGray" -> Color.LIGHTGRAY;
-            case "black" -> Color.BLACK;
-            case "white" -> Color.WHITE;
-            default -> null;
-        };
-    }
-
-    private TextStyle runStyle(Element rPr, String rStyle, String pStyle, boolean link) {
-        List<Element> chain = new ArrayList<>();
-        if (rPr != null)
-            chain.add(rPr);
-        addStyleChain(chain, rStyle, true);
-        addStyleChain(chain, effStyle(pStyle), true);
-        if (defRpr != null)
-            chain.add(defRpr);
-        List<Element> direct = rPr == null ? List.of() : List.of(rPr);
-        return styleFrom(chain, link ? direct : chain);
-    }
-
-    private TextStyle mathStyle(Element container) {
-        List<Element> chain = new ArrayList<>();
-        Element rpr = desc(container, W, "rPr");
-        if (rpr != null)
-            chain.add(rpr);
-        if (defRpr != null)
-            chain.add(defRpr);
-        return styleFrom(chain, chain).withFontFamily(null);
-    }
-
-    private TextStyle styleFrom(List<Element> chain, List<Element> colorChain) {
-        TextStyle s = TextStyle.DEFAULT
-                .withBold(isOn(find(chain, "b")))
-                .withItalic(isOn(find(chain, "i")))
-                .withStrikethrough(isOn(find(chain, "strike")) || isOn(find(chain, "dstrike")));
-
-        Element u = find(colorChain, "u");
-        if (u != null) {
-            String v = wval(u);
-            if (!v.isEmpty() && !v.equals("none"))
-                s = s.withUnderline(true).withUnderlineDotted(v.startsWith("dot"))
-                        .withUnderlineColor(hexColor(attr(u, W, "color")));
-        }
-
-        Element shd = find(chain, "shd");
-        Color hl = shd == null ? null : hexColor(attr(shd, W, "fill"));
-        if (hl == null)
-            hl = highlightColor(wval(find(chain, "highlight")));
-        if (hl != null)
-            s = s.withHighlight(hl);
-
-        Element col = find(colorChain, "color");
-        Color c = col == null ? null : hexColor(wval(col));
-        if (c != null)
-            s = s.withTextColor(c);
-
-        Element sz = find(chain, "sz");
-        double pts = sz == null ? DEF_SIZE : num(wval(sz), DEF_SIZE * 2) / 2.0;
-        s = s.withFontSize(Math.max(1, (int) Math.round(pts)));
-
-        double shift = 0;
-        Element pos = find(chain, "position");
-        if (pos != null) {
-            long p = (long) num(wval(pos), 0);
-            if (p != 0)
-                shift = -p / 2.0;
-        }
-        if (shift == 0) {
-            String va = wval(find(chain, "vertAlign"));
-            if (va.equals("superscript"))
-                shift = -4.0;
-            else if (va.equals("subscript"))
-                shift = 4.0;
-        }
-        if (shift != 0)
-            s = s.withBaselineShift(shift);
-
-        String font = fontOf(chain);
-        if (font != null)
-            s = s.withFontFamily(font);
-
-        return s;
-    }
-
-    private static TextAlignment alignment(List<Element> pchain) {
-        return switch (wval(find(pchain, "jc"))) {
-            case "center" -> TextAlignment.CENTER;
-            case "right", "end" -> TextAlignment.RIGHT;
-            case "both", "distribute" -> TextAlignment.JUSTIFY;
-            default -> TextAlignment.LEFT;
-        };
-    }
-
-    private String numberPrefix(List<Element> pchain) {
-        Element np = find(pchain, "numPr");
-        if (np == null)
-            return "";
-        String numId = wval(kid(np, W, "numId"));
-        if (numId.isEmpty() || numId.equals("0"))
-            return "";
-        int lvl = Math.max(0, Math.min(9, (int) num(wval(kid(np, W, "ilvl")), 0)));
-        String abs = numAbstract.get(numId);
-        String fmt = abs == null ? "bullet" : absFmt.getOrDefault(abs, Map.of()).getOrDefault(lvl, "decimal");
-        int[] cnt = counters.computeIfAbsent(numId, k -> new int[10]);
-        cnt[lvl]++;
-        for (int i = lvl + 1; i < 10; i++)
-            cnt[i] = 0;
-        String indent = "    ".repeat(lvl);
-        return indent + switch (fmt) {
-            case "none" -> "";
-            case "bullet" -> "\u2022 ";
-            case "lowerLetter" -> letters(cnt[lvl]).toLowerCase(Locale.ROOT) + ". ";
-            case "upperLetter" -> letters(cnt[lvl]) + ". ";
-            case "lowerRoman" -> roman(cnt[lvl]).toLowerCase(Locale.ROOT) + ". ";
-            case "upperRoman" -> roman(cnt[lvl]) + ". ";
-            default -> cnt[lvl] + ". ";
-        };
-    }
-
-    private static String letters(int n) {
-        StringBuilder sb = new StringBuilder();
-        while (n > 0) {
-            n--;
-            sb.insert(0, (char) ('A' + n % 26));
-            n /= 26;
-        }
-        return sb.toString();
-    }
-
-    private static String roman(int n) {
-        int[] v = { 1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1 };
-        String[] s = { "M", "CM", "D", "CD", "C", "XC", "L", "XL", "X", "IX", "V", "IV", "I" };
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < v.length; i++)
-            while (n >= v[i]) {
-                sb.append(s[i]);
-                n -= v[i];
-            }
-        return sb.toString();
     }
 
     private void walkBody(Element container) {
@@ -477,15 +151,15 @@ final class WordXmlReader {
 
     private void readBodyParagraph(Element p) {
         Element pPr = kid(p, W, "pPr");
-        String pStyle = styleId(pPr, "pStyle");
-        List<Element> chain = pprChain(pPr, pStyle);
+        String pStyle = WordStyles.styleId(pPr, "pStyle");
+        List<Element> chain = styles.pprChain(pPr, pStyle);
 
-        if (isOn(find(chain, "pageBreakBefore")) && !cur.isEmpty())
+        if (WordStyles.isOn(WordStyles.find(chain, "pageBreakBefore")) && !cur.isEmpty())
             newPage();
 
-        P ctx = new P(pStyle, false, null, alignment(chain));
+        P ctx = new P(pStyle, false, null, WordStyles.alignment(chain));
         if (!ctx.code) {
-            String prefix = numberPrefix(chain);
+            String prefix = styles.numberPrefix(chain);
             if (!prefix.isEmpty())
                 ctx.para.runs.add(RunContent.text(prefix, TextStyle.DEFAULT));
         }
@@ -513,7 +187,7 @@ final class WordXmlReader {
     }
 
     private static double paragraphHeight(ParagraphContent para) {
-        double size = DEF_SIZE;
+        double size = WordStyles.DEF_SIZE;
         int chars = 0;
         for (RunContent r : para.runs) {
             if (r.style != null && r.style.fontSize() != null)
@@ -570,15 +244,15 @@ final class WordXmlReader {
     }
 
     private void readMath(Element oMath, P ctx) {
-        for (RunContent rc : OmmlCodec.read(oMath, this::mathStyle))
+        for (RunContent rc : OmmlCodec.read(oMath, styles::mathStyle))
             addRun(ctx, rc);
     }
 
     private void readRun(Element r, P ctx, boolean inLink) {
         Element rPr = kid(r, W, "rPr");
-        String rStyle = styleId(rPr, "rStyle");
+        String rStyle = WordStyles.styleId(rPr, "rStyle");
         boolean link = inLink || "Hyperlink".equals(rStyle);
-        TextStyle style = runStyle(rPr, rStyle, ctx.pStyle, link);
+        TextStyle style = styles.runStyle(rPr, rStyle, ctx.pStyle, link);
         StringBuilder sb = new StringBuilder();
         runChildren(r, sb, ctx, style);
         flushText(ctx, sb, style);
@@ -670,7 +344,7 @@ final class WordXmlReader {
         Element blip = desc(gd, A, "blip");
         if (blip == null)
             return;
-        String[] media = loadMedia(attr(blip, R, "embed"));
+        String[] media = pkg.media(attr(blip, R, "embed"));
         if (media == null)
             return;
         final String fmt = media[0];
@@ -839,24 +513,6 @@ final class WordXmlReader {
         return new Fill(hex, op, false, true);
     }
 
-    private String fontOf(List<Element> chain) {
-        for (Element pr : chain) {
-            if (pr == defRpr)
-                continue;
-            Element f = kid(pr, W, "rFonts");
-            if (f == null)
-                continue;
-            if (!attr(f, W, "asciiTheme").isEmpty() || !attr(f, W, "hAnsiTheme").isEmpty())
-                return null;
-            String name = attr(f, W, "ascii");
-            if (name.isEmpty())
-                name = attr(f, W, "hAnsi");
-            if (!name.isEmpty())
-                return name;
-        }
-        return null;
-    }
-
     private void pend(Element anchor, double w, double h, Maker mk) {
         Element ph = kid(anchor, WP, "positionH");
         Element pv = kid(anchor, WP, "positionV");
@@ -944,11 +600,11 @@ final class WordXmlReader {
             if (!W.equals(e.getNamespaceURI()) || !e.getLocalName().equals("p"))
                 continue;
             Element pPr = kid(e, W, "pPr");
-            String pStyle = styleId(pPr, "pStyle");
-            List<Element> chain = pprChain(pPr, pStyle);
-            P ctx = new P(pStyle, true, sink, alignment(chain));
+            String pStyle = WordStyles.styleId(pPr, "pStyle");
+            List<Element> chain = styles.pprChain(pPr, pStyle);
+            P ctx = new P(pStyle, true, sink, WordStyles.alignment(chain));
             if (!ctx.code) {
-                String prefix = numberPrefix(chain);
+                String prefix = styles.numberPrefix(chain);
                 if (!prefix.isEmpty())
                     ctx.para.runs.add(RunContent.text(prefix, TextStyle.DEFAULT));
             }
@@ -1061,7 +717,7 @@ final class WordXmlReader {
         }
 
         cur.objects.add(new Pending(0, "margin", "", 0, "margin", "", cur.estY, tw, th, cur.estY, mk));
-        double blank = DEF_SIZE * LINE_K;
+        double blank = WordStyles.DEF_SIZE * LINE_K;
         int k = (int) Math.ceil(th / blank);
         for (int i = 0; i < k; i++) {
             cur.paragraphs.add(new ParagraphContent(false));
@@ -1082,10 +738,7 @@ final class WordXmlReader {
         for (Element fr : kids(sect, W, "footerReference")) {
             if (!"default".equals(attr(fr, W, "type")))
                 continue;
-            String[] rel = rels.get(attr(fr, R, "id"));
-            if (rel == null)
-                continue;
-            byte[] b = parts.get(resolve(rel[0]));
+            byte[] b = pkg.related(attr(fr, R, "id"));
             if (b == null)
                 continue;
             try {

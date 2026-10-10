@@ -50,37 +50,7 @@ public final class CellCodec {
     }
 
     public static void decode(String encoded, RichTextArea cell) {
-        cell.clear();
-        if (encoded == null || encoded.isEmpty())
-            return;
-        try {
-            String[] paragraphs = encoded.split("!", -1);
-            for (int i = 0; i < paragraphs.length; i++) {
-                String p = paragraphs[i];
-                int hash = p.indexOf('#');
-                TextAlignment align = hash > 0 ? alignFrom(p.charAt(0)) : TextAlignment.LEFT;
-                String runsPart = hash >= 0 ? p.substring(hash + 1) : p;
-
-                for (String run : runsPart.split("&")) {
-                    if (run.isEmpty())
-                        continue;
-                    String[] parts = run.split(":", 3);
-                    TextStyle style = decodeStyle(parts[1]);
-                    String payload = parts.length > 2 ? unb64(parts[2]) : "";
-                    if (parts[0].equals("M")) {
-                        if (MathObjectCodec.isToken(payload))
-                            cell.appendMathObject(MathObjectCodec.decode(payload), style);
-                    } else if (!payload.isEmpty()) {
-                        cell.appendStyledText(payload, style);
-                    }
-                }
-                cell.setParagraphStyle(cell.getParagraphs().size() - 1, new ParagraphStyle(null, align));
-                if (i < paragraphs.length - 1)
-                    cell.appendStyledText("\n", TextStyle.DEFAULT);
-            }
-        } catch (RuntimeException e) {
-            cell.clear();
-        }
+        PageContent.populate(cell, parse(encoded));
     }
 
     public static List<ParagraphContent> parse(String encoded) {

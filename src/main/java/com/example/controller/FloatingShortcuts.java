@@ -10,12 +10,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
-import com.example.model.FloatingObjects;
 import com.example.model.Page;
+import com.example.model.io.PageContent.FloatingContent;
 import com.example.model.io.PageContent.FloatingImageContent;
 import com.example.model.io.PageContent.FloatingTextBoxContent;
 import com.example.view.Layerable;
+import com.example.view.Nodes;
 import com.example.view.RichTextArea;
 
 import javafx.application.Platform;
@@ -50,7 +52,7 @@ final class FloatingShortcuts {
     private static final KeyCombination COPY = new KeyCodeCombination(KeyCode.C, KeyCombination.SHORTCUT_DOWN);
     private static final KeyCombination PASTE = new KeyCodeCombination(KeyCode.V, KeyCombination.SHORTCUT_DOWN);
 
-    private record State(List<Object> contents, List<String> signatures) {
+    private record State(List<FloatingContent> contents, List<String> signatures) {
     }
 
     private record Change(Page page, State before, State after) {
@@ -71,7 +73,7 @@ final class FloatingShortcuts {
     private boolean restoring;
     private long lastTextEdit;
 
-    private Object copied;
+    private FloatingContent copied;
     private Page copiedFrom;
     private String copyToken;
     private int pasteCount;
@@ -156,26 +158,22 @@ final class FloatingShortcuts {
     }
 
     private boolean undo() {
-        flush();
-        Entry e = pop(undo);
-        if (e == null)
-            return false;
-        for (Change c : e.changes())
-            if (pages.contains(c.page()))
-                restore(c.page(), c.before());
-        redo.push(e.at(System.nanoTime()));
-        return true;
+        return travel(undo, redo, Change::before);
     }
 
     private boolean redo() {
+        return travel(redo, undo, Change::after);
+    }
+
+    private boolean travel(Deque<Entry> from, Deque<Entry> to, Function<Change, State> target) {
         flush();
-        Entry e = pop(redo);
+        Entry e = pop(from);
         if (e == null)
             return false;
         for (Change c : e.changes())
             if (pages.contains(c.page()))
-                restore(c.page(), c.after());
-        undo.push(e.at(System.nanoTime()));
+                restore(c.page(), target.apply(c));
+        to.push(e.at(System.nanoTime()));
         return true;
     }
 
@@ -195,12 +193,12 @@ final class FloatingShortcuts {
     }
 
     private static State capture(Page page) {
-        List<Object> contents = new ArrayList<>();
+        List<FloatingContent> contents = new ArrayList<>();
         List<String> signatures = new ArrayList<>();
         for (Layerable l : page.getLayers()) {
-            Object c = FloatingObjects.capture(l);
+            FloatingContent c = l.capture();
             contents.add(c);
-            signatures.add(FloatingObjects.signature(c));
+            signatures.add(c.signature());
         }
         return new State(contents, signatures);
     }
@@ -210,7 +208,7 @@ final class FloatingShortcuts {
         try {
             Map<String, Deque<Layerable>> existing = new HashMap<>();
             for (Layerable l : page.getLayers())
-                existing.computeIfAbsent(FloatingObjects.signature(FloatingObjects.capture(l)),
+                existing.computeIfAbsent(l.capture().signature(),
                         k -> new ArrayDeque<>()).add(l);
 
             List<Layerable> order = new ArrayList<>();
@@ -218,7 +216,7 @@ final class FloatingShortcuts {
             for (int i = 0; i < target.contents().size(); i++) {
                 Deque<Layerable> same = existing.get(target.signatures().get(i));
                 Layerable l = same != null ? same.poll() : null;
-                if (l == null && (l = FloatingObjects.create(page, target.contents().get(i), cellSetup)) != null)
+                if (l == null && (l = target.contents().get(i).createOn(page, cellSetup)) != null)
                     recreated.add(l);
                 if (l != null)
                     order.add(l);
@@ -231,7 +229,7 @@ final class FloatingShortcuts {
 
             if (!recreated.isEmpty()) {
                 for (Layerable l : page.getLayers())
-                    FloatingObjects.setSelected(l, recreated.contains(l));
+                    l.setSelected(recreated.contains(l));
                 recreated.get(recreated.size() - 1).node().requestFocus();
             }
         } finally {
@@ -241,7 +239,7 @@ final class FloatingShortcuts {
 
     private void copy(Layerable layer) {
         flush();
-        copied = FloatingObjects.capture(layer);
+        copied = layer.capture();
         copiedFrom = pageOf(layer.node());
         copyToken = UUID.randomUUID().toString();
         pasteCount = 0;
@@ -263,12 +261,12 @@ final class FloatingShortcuts {
     private void paste(Page target) {
         flush();
         pasteCount++;
-        Object content = FloatingObjects.translate(copied, PASTE_OFFSET * pasteCount, PASTE_OFFSET * pasteCount);
+        FloatingContent content = copied.translated(PASTE_OFFSET * pasteCount, PASTE_OFFSET * pasteCount);
 
         Layerable pasted;
         restoring = true;
         try {
-            pasted = FloatingObjects.create(target, content, cellSetup);
+            pasted = content.createOn(target, cellSetup);
         } finally {
             restoring = false;
         }
@@ -276,7 +274,7 @@ final class FloatingShortcuts {
             return;
         changed();
         for (Layerable l : target.getLayers())
-            FloatingObjects.setSelected(l, l == pasted);
+            l.setSelected(l == pasted);
         pasted.node().requestFocus();
     }
 
@@ -291,7 +289,7 @@ final class FloatingShortcuts {
             if ((!inText || newerThanText(redo)) && redo())
                 e.consume();
         } else if (COPY.match(e)) {
-            Layerable layer = inText ? null : layerOf(focus);
+            Layerable layer = inText ? null : Nodes.ancestor(focus, Layerable.class);
             if (layer != null) {
                 copy(layer);
                 e.consume();
@@ -305,24 +303,13 @@ final class FloatingShortcuts {
     }
 
     private static boolean textOwner(Node focus) {
-        for (Node n = focus; n != null; n = n.getParent())
-            if (n instanceof RichTextArea || n instanceof TextInputControl)
-                return true;
-        return false;
-    }
-
-    private static Layerable layerOf(Node focus) {
-        for (Node n = focus; n != null; n = n.getParent())
-            if (n instanceof Layerable l)
-                return l;
-        return null;
+        return Nodes.ancestor(focus, RichTextArea.class) != null || Nodes.ancestor(focus, TextInputControl.class) != null;
     }
 
     private Page pageOf(Node focus) {
-        for (Node n = focus; n != null; n = n.getParent())
-            for (Page p : pages)
-                if (p.getPane() == n)
-                    return p;
+        Page page = Page.owning(focus, pages);
+        if (page != null)
+            return page;
         return pages.contains(copiedFrom) ? copiedFrom : pages.get(0);
     }
 }

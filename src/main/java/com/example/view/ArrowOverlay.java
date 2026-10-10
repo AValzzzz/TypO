@@ -1,10 +1,11 @@
 package com.example.view;
 
+import com.example.model.io.ColorUtil;
+import com.example.model.io.PageContent;
+
 import javafx.geometry.Point2D;
 import javafx.scene.Cursor;
 import javafx.scene.Group;
-import javafx.scene.control.ContextMenu;
-import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
@@ -12,7 +13,6 @@ import javafx.scene.shape.Polygon;
 import javafx.scene.shape.QuadCurve;
 
 public class ArrowOverlay extends Group implements Layerable {
-    private static final double HANDLE_SIZE = 12;
     private static final double HEAD_LENGTH = 14;
     private static final double HEAD_WIDTH = 10;
 
@@ -31,7 +31,7 @@ public class ArrowOverlay extends Group implements Layerable {
     private boolean dragging = false;
     private boolean handleSuppressed = false;
     private Runnable onDelete;
-    private static ContextMenu openMenu;
+    private static final MenuSlot MENU = new MenuSlot();
 
     private double pressSceneX, pressSceneY;
     private double pressStartX, pressStartY, pressEndX, pressEndY, pressControlX, pressControlY;
@@ -56,9 +56,9 @@ public class ArrowOverlay extends Group implements Layerable {
         arrowHead = new Polygon();
         arrowHead.setMouseTransparent(true);
 
-        startHandle = makeHandle("#3399ff", Cursor.MOVE);
-        endHandle = makeHandle("#3399ff", Cursor.MOVE);
-        controlHandle = makeHandle("#33cc66", Cursor.HAND);
+        startHandle = Handles.round(Handles.BLUE, Cursor.MOVE);
+        endHandle = Handles.round(Handles.BLUE, Cursor.MOVE);
+        controlHandle = Handles.round(Handles.GREEN, Cursor.HAND);
 
         getChildren().addAll(curve, hitArea, arrowHead, startHandle, endHandle, controlHandle);
 
@@ -67,48 +67,21 @@ public class ArrowOverlay extends Group implements Layerable {
 
         setFocusTraversable(true);
         installLineDrag();
-        installHandleDrag(startHandle, true, false);
-        installHandleDrag(endHandle, false, true);
+        installEndpointDrag(startHandle, true);
+        installEndpointDrag(endHandle, false);
         installControlDrag();
 
-        sceneProperty().addListener((obs, oldScene, newScene) -> {
-            if (oldScene != null)
-                oldScene.removeEventFilter(MouseEvent.MOUSE_PRESSED, deselectFilter);
-            if (newScene != null)
-                newScene.addEventFilter(MouseEvent.MOUSE_PRESSED, deselectFilter);
+        Overlays.onOutsidePress(this, () -> {
+            if (selected)
+                setSelected(false);
         });
-
-        setOnKeyPressed(e -> {
-            if (e.getCode() == KeyCode.DELETE || e.getCode() == KeyCode.BACK_SPACE) {
-                delete();
-                e.consume();
-            }
-        });
-
+        Overlays.deleteOnKey(this, e -> true, this::delete);
         setOnContextMenuRequested(e -> {
             setSelected(true);
             requestFocus();
-            if (openMenu != null && openMenu.isShowing())
-                openMenu.hide();
-            openMenu = new ArrowFormatMenu(this);
-            openMenu.show(this, e.getScreenX(), e.getScreenY());
+            MENU.show(new ArrowFormatMenu(this), this, e);
             e.consume();
         });
-    }
-
-    private final javafx.event.EventHandler<MouseEvent> deselectFilter = e -> {
-        if (selected && !isInside(e.getTarget()))
-            setSelected(false);
-    };
-
-    private Region makeHandle(String color, Cursor cursor) {
-        Region r = new Region();
-        r.setPrefSize(HANDLE_SIZE, HANDLE_SIZE);
-        r.setStyle("-fx-background-color: " + color + "; -fx-border-color: white; -fx-border-width: 1; "
-                + "-fx-background-radius: 6; -fx-border-radius: 6;");
-        r.setCursor(cursor);
-        r.setVisible(false);
-        return r;
     }
 
     private void updateGeometry() {
@@ -149,16 +122,12 @@ public class ArrowOverlay extends Group implements Layerable {
     }
 
     private void layoutHandle(Region handle, double x, double y) {
-        handle.setLayoutX(x - HANDLE_SIZE / 2);
-        handle.setLayoutY(y - HANDLE_SIZE / 2);
-    }
-
-    private static Color withOpacity(Color c, double opacity) {
-        return Color.color(c.getRed(), c.getGreen(), c.getBlue(), Math.max(0, Math.min(1, opacity)));
+        handle.setLayoutX(x - Handles.SIZE / 2);
+        handle.setLayoutY(y - Handles.SIZE / 2);
     }
 
     private void applyStyle() {
-        Color c = withOpacity(strokeColor, strokeOpacity);
+        Color c = ColorUtil.withOpacity(strokeColor, strokeOpacity);
         curve.setStroke(c);
         curve.setStrokeWidth(strokeWidth);
         arrowHead.setFill(c);
@@ -212,16 +181,6 @@ public class ArrowOverlay extends Group implements Layerable {
         Motion.fadeVisible(controlHandle, show, handleSuppressed);
     }
 
-    private boolean isInside(Object target) {
-        javafx.scene.Node n = target instanceof javafx.scene.Node node ? node : null;
-        while (n != null) {
-            if (n == this)
-                return true;
-            n = n.getParent();
-        }
-        return false;
-    }
-
     public void setOnDelete(Runnable r) {
         onDelete = r;
     }
@@ -235,78 +194,34 @@ public class ArrowOverlay extends Group implements Layerable {
         hitArea.setOnMousePressed(e -> {
             setSelected(true);
             requestFocus();
-            pressSceneX = e.getSceneX();
-            pressSceneY = e.getSceneY();
-            pressStartX = startX;
-            pressStartY = startY;
-            pressEndX = endX;
-            pressEndY = endY;
-            pressControlX = controlX;
-            pressControlY = controlY;
+            rememberPress(e);
             e.consume();
         });
         hitArea.setOnMouseDragged(e -> {
-            Point2D p0 = getParent().sceneToLocal(pressSceneX, pressSceneY);
-            Point2D p1 = getParent().sceneToLocal(e.getSceneX(), e.getSceneY());
-            double dx = p1.getX() - p0.getX();
-            double dy = p1.getY() - p0.getY();
-            startX = pressStartX + dx;
-            startY = pressStartY + dy;
-            endX = pressEndX + dx;
-            endY = pressEndY + dy;
-            controlX = pressControlX + dx;
-            controlY = pressControlY + dy;
-            updateGeometry();
+            dragBy(e, true, true);
             e.consume();
         });
     }
 
-    private void installHandleDrag(Region handle, boolean isStart, boolean isEnd) {
+    private void installEndpointDrag(Region handle, boolean start) {
         handle.setOnMousePressed(e -> {
-            dragging = true;
-            updateHandleVisibility();
-            pressSceneX = e.getSceneX();
-            pressSceneY = e.getSceneY();
-            pressStartX = startX;
-            pressStartY = startY;
-            pressEndX = endX;
-            pressEndY = endY;
-            pressControlX = controlX;
-            pressControlY = controlY;
+            setDragging(true);
+            rememberPress(e);
             e.consume();
         });
         handle.setOnMouseDragged(e -> {
-            Point2D p0 = getParent().sceneToLocal(pressSceneX, pressSceneY);
-            Point2D p1 = getParent().sceneToLocal(e.getSceneX(), e.getSceneY());
-            double dx = p1.getX() - p0.getX();
-            double dy = p1.getY() - p0.getY();
-
-            if (isStart) {
-                startX = pressStartX + dx;
-                startY = pressStartY + dy;
-                controlX = pressControlX + dx;
-                controlY = pressControlY + dy;
-            }
-            if (isEnd) {
-                endX = pressEndX + dx;
-                endY = pressEndY + dy;
-                controlX = pressControlX + dx;
-                controlY = pressControlY + dy;
-            }
-            updateGeometry();
+            dragBy(e, start, !start);
             e.consume();
         });
         handle.setOnMouseReleased(e -> {
-            dragging = false;
-            updateHandleVisibility();
+            setDragging(false);
             e.consume();
         });
     }
 
     private void installControlDrag() {
         controlHandle.setOnMousePressed(e -> {
-            dragging = true;
-            updateHandleVisibility();
+            setDragging(true);
             e.consume();
         });
         controlHandle.setOnMouseDragged(e -> {
@@ -317,10 +232,48 @@ public class ArrowOverlay extends Group implements Layerable {
             e.consume();
         });
         controlHandle.setOnMouseReleased(e -> {
-            dragging = false;
-            updateHandleVisibility();
+            setDragging(false);
             e.consume();
         });
+    }
+
+    private void setDragging(boolean value) {
+        dragging = value;
+        updateHandleVisibility();
+    }
+
+    private void rememberPress(MouseEvent e) {
+        pressSceneX = e.getSceneX();
+        pressSceneY = e.getSceneY();
+        pressStartX = startX;
+        pressStartY = startY;
+        pressEndX = endX;
+        pressEndY = endY;
+        pressControlX = controlX;
+        pressControlY = controlY;
+    }
+
+    private void dragBy(MouseEvent e, boolean moveStart, boolean moveEnd) {
+        Point2D p0 = getParent().sceneToLocal(pressSceneX, pressSceneY);
+        Point2D p1 = getParent().sceneToLocal(e.getSceneX(), e.getSceneY());
+        double dx = p1.getX() - p0.getX();
+        double dy = p1.getY() - p0.getY();
+        if (moveStart) {
+            startX = pressStartX + dx;
+            startY = pressStartY + dy;
+        }
+        if (moveEnd) {
+            endX = pressEndX + dx;
+            endY = pressEndY + dy;
+        }
+        controlX = pressControlX + dx;
+        controlY = pressControlY + dy;
+        updateGeometry();
+    }
+
+    @Override
+    public PageContent.FloatingArrowContent capture() {
+        return PageContent.capture(this);
     }
 
     public double getStartX() {

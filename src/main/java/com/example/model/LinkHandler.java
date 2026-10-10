@@ -8,15 +8,12 @@ import java.util.regex.Pattern;
 
 import org.fxmisc.richtext.CharacterHit;
 import org.fxmisc.richtext.model.Paragraph;
-import org.fxmisc.richtext.model.StyleSpan;
-import org.fxmisc.richtext.model.StyleSpans;
-import org.fxmisc.richtext.model.StyleSpansBuilder;
 import org.reactfx.util.Either;
 
 import com.example.model.language.maths.MathObject;
+import com.example.view.CoalescedTask;
 import com.example.view.RichTextArea;
 
-import javafx.application.Platform;
 import javafx.geometry.Point2D;
 import javafx.scene.Cursor;
 import javafx.scene.input.MouseButton;
@@ -28,14 +25,14 @@ public class LinkHandler {
 
     private final RichTextArea editor;
     private final Cursor normalCursor;
+    private final CoalescedTask rescan = new CoalescedTask(this::rescan);
     private boolean updating = false;
-    private boolean scheduled = false;
 
     public LinkHandler(RichTextArea editor) {
         this.editor = editor;
         this.normalCursor = editor.getCursor();
 
-        editor.plainTextChanges().subscribe(change -> scheduleRescan());
+        editor.plainTextChanges().subscribe(change -> rescan.schedule());
 
         editor.addEventFilter(MouseEvent.MOUSE_PRESSED, e -> {
             if (e.getButton() == MouseButton.PRIMARY && e.isShortcutDown()) {
@@ -51,7 +48,7 @@ public class LinkHandler {
                 e.isShortcutDown() && linkAt(e) != null ? Cursor.HAND : normalCursor));
         editor.addEventFilter(MouseEvent.MOUSE_EXITED, e -> editor.setCursor(normalCursor));
 
-        scheduleRescan();
+        rescan.schedule();
     }
 
     private String linkAt(MouseEvent e) {
@@ -63,16 +60,6 @@ public class LinkHandler {
         if (index.isEmpty())
             return null;
         return editor.getStyleOfChar(index.getAsInt()).link();
-    }
-
-    private void scheduleRescan() {
-        if (scheduled)
-            return;
-        scheduled = true;
-        Platform.runLater(() -> {
-            scheduled = false;
-            rescan();
-        });
     }
 
     private void rescan() {
@@ -109,34 +96,7 @@ public class LinkHandler {
             }
         }
 
-        int paragraphStart = editor.getAbsolutePosition(index, 0);
-        StyleSpans<TextStyle> spans = editor.getStyleSpans(paragraphStart, paragraphStart + len);
-        StyleSpansBuilder<TextStyle> builder = new StyleSpansBuilder<>();
-        boolean changed = false;
-        int pos = 0;
-
-        for (StyleSpan<TextStyle> span : spans) {
-            int spanEnd = pos + span.getLength();
-            int runStart = pos;
-            while (runStart < spanEnd) {
-                String link = wanted[runStart];
-                int runEnd = runStart + 1;
-                while (runEnd < spanEnd && Objects.equals(wanted[runEnd], link))
-                    runEnd++;
-
-                TextStyle old = span.getStyle();
-                if (Objects.equals(old.link(), link)) {
-                    builder.add(old, runEnd - runStart);
-                } else {
-                    builder.add(old.withLink(link), runEnd - runStart);
-                    changed = true;
-                }
-                runStart = runEnd;
-            }
-            pos = spanEnd;
-        }
-
-        if (changed)
-            editor.setStyleSpans(paragraphStart, builder.create());
+        editor.restyle(editor.getAbsolutePosition(index, 0), len, i -> wanted[i],
+                (old, link) -> Objects.equals(old.link(), link) ? old : old.withLink(link));
     }
 }

@@ -1,7 +1,11 @@
 package com.example.model.io;
 
+import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Base64;
 import java.util.List;
+import java.util.function.Consumer;
 
 import org.fxmisc.richtext.model.Paragraph;
 import org.fxmisc.richtext.model.StyledSegment;
@@ -15,11 +19,14 @@ import com.example.model.language.shapes.ShapeType;
 import com.example.model.settings.AppSettings;
 import com.example.view.ArrowOverlay;
 import com.example.view.ImageOverlay;
+import com.example.view.Layerable;
 import com.example.view.RichTextArea;
 import com.example.view.ShapeOverlay;
 import com.example.view.TableOverlay;
 import com.example.view.TextBoxOverlay;
 
+import javafx.scene.image.Image;
+import javafx.scene.paint.Color;
 import javafx.scene.text.TextAlignment;
 
 public class PageContent {
@@ -79,6 +86,35 @@ public class PageContent {
         return content;
     }
 
+    public static void populate(RichTextArea editor, List<ParagraphContent> paragraphs) {
+        editor.clear();
+        for (int i = 0; i < paragraphs.size(); i++) {
+            ParagraphContent paragraph = paragraphs.get(i);
+            for (RunContent run : paragraph.runs) {
+                if (run.isMath())
+                    editor.appendMathObject(run.math, run.style);
+                else
+                    editor.appendStyledText(run.text, run.style);
+            }
+            ParagraphStyle style = paragraph.codeBlock
+                    ? new ParagraphStyle(AppSettings.getInstance().codeThemeProperty().get(), TextAlignment.LEFT)
+                    : new ParagraphStyle(null, paragraph.alignment);
+            editor.setParagraphStyle(editor.getParagraphs().size() - 1, style);
+            if (i < paragraphs.size() - 1)
+                editor.appendStyledText("\n", TextStyle.DEFAULT);
+        }
+    }
+
+    public List<FloatingContent> floating() {
+        List<FloatingContent> all = new ArrayList<>();
+        all.addAll(images);
+        all.addAll(shapes);
+        all.addAll(arrows);
+        all.addAll(tables);
+        all.addAll(textBoxes);
+        return all;
+    }
+
     public static FloatingImageContent capture(ImageOverlay overlay) {
         FloatingImageContent fi = new FloatingImageContent(
                 overlay.getImageX(), overlay.getImageY(),
@@ -126,6 +162,24 @@ public class PageContent {
         return ft;
     }
 
+    public sealed interface FloatingContent permits FloatingImageContent, FloatingShapeContent,
+            FloatingArrowContent, FloatingTableContent, FloatingTextBoxContent {
+        Integer getLevel();
+
+        FloatingContent translated(double dx, double dy);
+
+        String signature();
+
+        Layerable createOn(Page page, Consumer<RichTextArea> cellSetup);
+    }
+
+    private static String signature(Object... parts) {
+        StringBuilder sb = new StringBuilder();
+        for (Object p : parts)
+            sb.append(p).append('|');
+        return sb.toString();
+    }
+
     public static final class ParagraphContent {
         public final boolean codeBlock;
         public TextAlignment alignment;
@@ -165,7 +219,7 @@ public class PageContent {
         }
     }
 
-    public static final class FloatingImageContent {
+    public static final class FloatingImageContent implements FloatingContent {
         public final double x, y, width, height;
         public final String format;
         public final String base64;
@@ -187,9 +241,31 @@ public class PageContent {
         public Integer getLevel() {
             return level;
         }
+
+        @Override
+        public FloatingImageContent translated(double dx, double dy) {
+            FloatingImageContent c = new FloatingImageContent(x + dx, y + dy, width, height, format, base64, rotation);
+            c.opacity = opacity;
+            return c;
+        }
+
+        @Override
+        public String signature() {
+            return PageContent.signature("image", x, y, width, height, rotation, opacity, base64.length(),
+                    base64.hashCode());
+        }
+
+        @Override
+        public ImageOverlay createOn(Page page, Consumer<RichTextArea> cellSetup) {
+            Image image = new Image(new ByteArrayInputStream(Base64.getDecoder().decode(base64)));
+            ImageOverlay o = page.addImageOverlay(image, x, y, width, height, format, base64);
+            o.setRotation(rotation);
+            o.setImageOpacity(opacity);
+            return o;
+        }
     }
 
-    public static final class FloatingShapeContent {
+    public static final class FloatingShapeContent implements FloatingContent {
         public final ShapeType type;
         public final double x, y, width, height;
         public final String fillHex, strokeHex;
@@ -215,9 +291,33 @@ public class PageContent {
         public Integer getLevel() {
             return level;
         }
+
+        @Override
+        public FloatingShapeContent translated(double dx, double dy) {
+            return new FloatingShapeContent(type, x + dx, y + dy, width, height, fillHex, fillOpacity, strokeHex,
+                    strokeOpacity, strokeWidth, rotation);
+        }
+
+        @Override
+        public String signature() {
+            return PageContent.signature("shape", type, x, y, width, height, fillHex, fillOpacity, strokeHex,
+                    strokeOpacity, strokeWidth, rotation);
+        }
+
+        @Override
+        public ShapeOverlay createOn(Page page, Consumer<RichTextArea> cellSetup) {
+            ShapeOverlay o = page.addShapeOverlay(type, x, y, width, height);
+            o.setFillColor(Color.web("#" + fillHex));
+            o.setFillOpacity(fillOpacity);
+            o.setStrokeColor(Color.web("#" + strokeHex));
+            o.setStrokeOpacity(strokeOpacity);
+            o.setStrokeWidth(strokeWidth);
+            o.setRotation(rotation);
+            return o;
+        }
     }
 
-    public static final class FloatingArrowContent {
+    public static final class FloatingArrowContent implements FloatingContent {
         public final double startX, startY, endX, endY, controlX, controlY;
         public final String strokeHex;
         public final double strokeOpacity, strokeWidth;
@@ -239,9 +339,30 @@ public class PageContent {
         public Integer getLevel() {
             return level;
         }
+
+        @Override
+        public FloatingArrowContent translated(double dx, double dy) {
+            return new FloatingArrowContent(startX + dx, startY + dy, endX + dx, endY + dy, controlX + dx,
+                    controlY + dy, strokeHex, strokeOpacity, strokeWidth);
+        }
+
+        @Override
+        public String signature() {
+            return PageContent.signature("arrow", startX, startY, endX, endY, controlX, controlY, strokeHex,
+                    strokeOpacity, strokeWidth);
+        }
+
+        @Override
+        public ArrowOverlay createOn(Page page, Consumer<RichTextArea> cellSetup) {
+            ArrowOverlay o = page.addArrowOverlay(startX, startY, endX, endY, controlX, controlY);
+            o.setStrokeColor(Color.web("#" + strokeHex));
+            o.setStrokeOpacity(strokeOpacity);
+            o.setStrokeWidth(strokeWidth);
+            return o;
+        }
     }
 
-    public static final class FloatingTableContent {
+    public static final class FloatingTableContent implements FloatingContent {
         public final double x, y;
         public final double[] colWidths, rowHeights;
         public final double[][] offX, offY;
@@ -269,9 +390,30 @@ public class PageContent {
         public Integer getLevel() {
             return level;
         }
+
+        @Override
+        public FloatingTableContent translated(double dx, double dy) {
+            return new FloatingTableContent(x + dx, y + dy, colWidths, rowHeights, offX, offY, merges, cells);
+        }
+
+        @Override
+        public String signature() {
+            return PageContent.signature("table", x, y, Arrays.toString(colWidths), Arrays.toString(rowHeights),
+                    Arrays.deepToString(offX), Arrays.deepToString(offY), Arrays.deepToString(merges),
+                    Arrays.deepToString(cells));
+        }
+
+        @Override
+        public TableOverlay createOn(Page page, Consumer<RichTextArea> cellSetup) {
+            if (colWidths.length == 0 || rowHeights.length == 0)
+                return null;
+            TableOverlay o = page.addTableOverlay(x, y, rowHeights.length, colWidths.length, cellSetup);
+            o.load(colWidths, rowHeights, offX, offY, merges, cells);
+            return o;
+        }
     }
 
-    public static final class FloatingTextBoxContent {
+    public static final class FloatingTextBoxContent implements FloatingContent {
         public final double x, y, width;
         public final boolean borderVisible, backgroundVisible;
         public final String borderHex, backgroundHex;
@@ -295,6 +437,27 @@ public class PageContent {
 
         public Integer getLevel() {
             return level;
+        }
+
+        @Override
+        public FloatingTextBoxContent translated(double dx, double dy) {
+            FloatingTextBoxContent c = new FloatingTextBoxContent(x + dx, y + dy, width, borderVisible, borderHex,
+                    backgroundVisible, backgroundHex, backgroundOpacity, cells);
+            c.plainText = plainText;
+            return c;
+        }
+
+        @Override
+        public String signature() {
+            return PageContent.signature("textbox", x, y, width, borderVisible, borderHex, backgroundVisible,
+                    backgroundHex, backgroundOpacity, cells);
+        }
+
+        @Override
+        public TextBoxOverlay createOn(Page page, Consumer<RichTextArea> cellSetup) {
+            TextBoxOverlay o = page.addTextBoxOverlay(x, y, width, cellSetup);
+            o.load(this);
+            return o;
         }
     }
 }

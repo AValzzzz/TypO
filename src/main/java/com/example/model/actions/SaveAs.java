@@ -3,20 +3,16 @@ package com.example.model.actions;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 
 import com.example.model.Page;
 import com.example.model.i18n.I18n;
+import com.example.model.io.DocumentExporter;
 import com.example.model.io.DocumentSession;
-import com.example.model.io.DocxDocumentWriter;
-import com.example.model.io.PageContent;
-import com.example.model.io.PdfDocumentWriter;
 import com.example.view.Toast;
 
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
-import javafx.scene.layout.Pane;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.stage.Window;
@@ -52,48 +48,15 @@ public class SaveAs implements AppAction {
 
         try {
             if (target.toString().toLowerCase().endsWith(".pdf")) {
-                exportPdf(target);
+                DocumentExporter.writePdf(pages, target);
                 Toast.success(I18n.t("toast.exportedPdf"));
             } else {
-                new DocxDocumentWriter().write(captureContent(), target);
+                DocumentExporter.writeDocx(pages, target);
                 session.setCurrentFile(target);
                 Toast.success(I18n.t("toast.saved"));
             }
         } catch (IOException e) {
             new Alert(AlertType.ERROR, I18n.t("file.error.save", e.getMessage())).showAndWait();
-        }
-    }
-
-    private List<PageContent> captureContent() {
-        List<PageContent> content = new ArrayList<>();
-        for (Page page : pages) {
-            content.add(PageContent.capture(page));
-        }
-        return content;
-    }
-
-    private void exportPdf(Path target) throws IOException {
-        setHandlesSuppressed(true);
-        try {
-            List<Pane> panes = new ArrayList<>();
-            for (Page page : pages) {
-                page.getPane().applyCss();
-                page.getPane().layout();
-                panes.add(page.getPane());
-            }
-            new PdfDocumentWriter().write(panes, target);
-        } finally {
-            setHandlesSuppressed(false);
-        }
-    }
-
-    private void setHandlesSuppressed(boolean suppressed) {
-        for (Page page : pages) {
-            page.getImageOverlays().forEach(o -> o.setHandleSuppressed(suppressed));
-            page.getShapeOverlays().forEach(o -> o.setHandleSuppressed(suppressed));
-            page.getArrowOverlays().forEach(o -> o.setHandleSuppressed(suppressed));
-            page.getTableOverlays().forEach(o -> o.setHandleSuppressed(suppressed));
-            page.getTextBoxOverlays().forEach(o -> o.setHandleSuppressed(suppressed));
         }
     }
 

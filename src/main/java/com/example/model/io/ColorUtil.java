@@ -34,4 +34,12 @@ public class ColorUtil {
     public static String toCssHex(Color c) {
         return "#" + toHex(c);
     }
+
+    public static Color withOpacity(Color c, double opacity) {
+        return Color.color(c.getRed(), c.getGreen(), c.getBlue(), Math.max(0, Math.min(1, opacity)));
+    }
+
+    public static Color opaque(Color c) {
+        return withOpacity(c, 1);
+    }
 }

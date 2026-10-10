@@ -4,21 +4,11 @@ import java.util.List;
 
 import com.example.model.i18n.I18n;
 
-import javafx.geometry.Pos;
-import javafx.scene.Node;
-import javafx.scene.control.ContextMenu;
-import javafx.scene.control.CustomMenuItem;
-import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.TextField;
-import javafx.scene.layout.HBox;
 
-public class TableFormatMenu extends ContextMenu {
-
-    public TableFormatMenu(TableOverlay table) {
-        this(table, List.of());
-    }
+public class TableFormatMenu extends FormatMenu {
 
     public TableFormatMenu(TableOverlay table, List<MenuItem> extra) {
         TextField rows = field(table.getRowCount());
@@ -54,11 +44,5 @@ public class TableFormatMenu extends ContextMenu {
         TextField f = new TextField(String.valueOf(value));
         f.setPrefColumnCount(4);
         return f;
-    }
-
-    private static CustomMenuItem row(String label, Node control) {
-        HBox box = new HBox(8, new Label(label), control);
-        box.setAlignment(Pos.CENTER_LEFT);
-        return new CustomMenuItem(box, false);
     }
 }

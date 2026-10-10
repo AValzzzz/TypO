@@ -8,12 +8,9 @@ import com.example.model.io.CellCodec;
 import com.example.model.io.ColorUtil;
 import com.example.model.io.PageContent;
 
-import javafx.application.Platform;
-import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
 import javafx.scene.Cursor;
-import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.input.ContextMenuEvent;
 import javafx.scene.input.KeyCode;
@@ -31,15 +28,15 @@ public class TextBoxOverlay extends Pane implements Layerable {
     private static final double MIN_WIDTH = 30;
     private static final double MIN_HEIGHT = 20;
     private static final double HANDLE = 14;
-    private static final String HANDLE_STYLE = "-fx-background-color: #3399ff; -fx-border-color: white; -fx-border-width: 1;";
 
-    private static ContextMenu openMenu;
+    private static final MenuSlot MENU = new MenuSlot();
 
     private final RichTextArea editor = new RichTextArea();
     private final Region background = new Region();
     private final Rectangle outline = new Rectangle();
-    private final Region moveHandle = new Region();
-    private final Region widthHandle = new Region();
+    private final Region moveHandle = Handles.square(Cursor.MOVE);
+    private final Region widthHandle = Handles.square(Cursor.E_RESIZE);
+    private final MoveDrag move = new MoveDrag(this, () -> this.snap);
     private SnapGuides snap;
 
     private double boxWidth;
@@ -49,19 +46,10 @@ public class TextBoxOverlay extends Pane implements Layerable {
     private Color backgroundColor = Color.WHITE;
     private double backgroundOpacity = 1.0;
 
-    private boolean selected, editing, handleSuppressed, layoutScheduled, deleted;
-    private double pressParentX, pressParentY, pressLayoutX, pressLayoutY;
+    private boolean selected, editing, handleSuppressed, deleted;
+    private final CoalescedTask relayout = new CoalescedTask(this::requestLayout);
     private double widthPressX, widthPressValue;
     private Runnable onDelete;
-
-    private final EventHandler<MouseEvent> deselectFilter = e -> {
-        if (!isInside(e.getTarget())) {
-            if (selected)
-                setSelected(false);
-            if (editing)
-                stopEditing();
-        }
-    };
 
     public TextBoxOverlay(double x, double y, double width, Consumer<RichTextArea> cellSetup) {
         this.boxWidth = Math.max(MIN_WIDTH, width);
@@ -71,9 +59,9 @@ public class TextBoxOverlay extends Pane implements Layerable {
         editor.setStyle("-fx-background-color: transparent; -fx-font-size: 14px;");
         editor.setPadding(new Insets(PAD_V, PAD_H, PAD_V, PAD_H));
         editor.setMouseTransparent(true);
-        editor.totalHeightEstimateProperty().addListener((obs, o, n) -> scheduleLayout());
+        editor.totalHeightEstimateProperty().addListener((obs, o, n) -> relayout.schedule());
         editor.focusedProperty().addListener((obs, was, is) -> {
-            if (!is && editing && (openMenu == null || !openMenu.isShowing()))
+            if (!is && editing && !MENU.isShowing())
                 stopEditing();
         });
         editor.addEventHandler(KeyEvent.KEY_PRESSED, e -> {
@@ -99,11 +87,6 @@ public class TextBoxOverlay extends Pane implements Layerable {
         outline.getStrokeDashArray().setAll(4.0, 3.0);
         outline.setMouseTransparent(true);
 
-        moveHandle.setStyle(HANDLE_STYLE);
-        moveHandle.setCursor(Cursor.MOVE);
-        widthHandle.setStyle(HANDLE_STYLE);
-        widthHandle.setCursor(Cursor.E_RESIZE);
-
         getChildren().addAll(background, editor, outline, moveHandle, widthHandle);
         applyStyle();
         updateChrome();
@@ -112,11 +95,11 @@ public class TextBoxOverlay extends Pane implements Layerable {
         setFocusTraversable(true);
         installHandlers();
 
-        sceneProperty().addListener((obs, oldScene, newScene) -> {
-            if (oldScene != null)
-                oldScene.removeEventFilter(MouseEvent.MOUSE_PRESSED, deselectFilter);
-            if (newScene != null)
-                newScene.addEventFilter(MouseEvent.MOUSE_PRESSED, deselectFilter);
+        Overlays.onOutsidePress(this, () -> {
+            if (selected)
+                setSelected(false);
+            if (editing)
+                stopEditing();
         });
     }
 
@@ -131,23 +114,17 @@ public class TextBoxOverlay extends Pane implements Layerable {
             if (e.getClickCount() == 2) {
                 startEditing(e.getSceneX(), e.getSceneY());
             } else {
-                beginMove(e);
+                move.begin(e);
             }
             e.consume();
         });
         addEventHandler(MouseEvent.MOUSE_DRAGGED, e -> {
             if (editing || !e.isPrimaryButtonDown())
                 return;
-            doMove(e);
+            move.update(e);
             e.consume();
         });
-        setOnKeyPressed(e -> {
-            if (!editing && e.getTarget() == this
-                    && (e.getCode() == KeyCode.DELETE || e.getCode() == KeyCode.BACK_SPACE)) {
-                delete();
-                e.consume();
-            }
-        });
+        Overlays.deleteOnKey(this, e -> !editing && e.getTarget() == this, this::delete);
         setOnContextMenuRequested(e -> {
             setSelected(true);
             requestFocus();
@@ -161,11 +138,11 @@ public class TextBoxOverlay extends Pane implements Layerable {
             setSelected(true);
             if (!editing)
                 requestFocus();
-            beginMove(e);
+            move.begin(e);
             e.consume();
         });
         moveHandle.setOnMouseDragged(e -> {
-            doMove(e);
+            move.update(e);
             e.consume();
         });
 
@@ -183,27 +160,6 @@ public class TextBoxOverlay extends Pane implements Layerable {
             requestLayout();
             e.consume();
         });
-    }
-
-    private void beginMove(MouseEvent e) {
-        Point2D p = getParent().sceneToLocal(e.getSceneX(), e.getSceneY());
-        pressParentX = p.getX();
-        pressParentY = p.getY();
-        pressLayoutX = getLayoutX();
-        pressLayoutY = getLayoutY();
-    }
-
-    private void doMove(MouseEvent e) {
-        Point2D p = getParent().sceneToLocal(e.getSceneX(), e.getSceneY());
-        double nx = pressLayoutX + (p.getX() - pressParentX);
-        double ny = pressLayoutY + (p.getY() - pressParentY);
-        if (snap != null) {
-            double[] s = snap.move(this, nx, ny, e.isAltDown());
-            nx = s[0];
-            ny = s[1];
-        }
-        setLayoutX(nx);
-        setLayoutY(ny);
     }
 
     private void startEditing(double sceneX, double sceneY) {
@@ -256,41 +212,18 @@ public class TextBoxOverlay extends Pane implements Layerable {
         updateChrome();
     }
 
-    private boolean isInside(Object target) {
-        Node n = target instanceof Node node ? node : null;
-        while (n != null) {
-            if (n == this)
-                return true;
-            n = n.getParent();
-        }
-        return false;
-    }
-
     private void showMenu(ContextMenu menu, ContextMenuEvent e) {
-        if (openMenu != null && openMenu.isShowing())
-            openMenu.hide();
-        openMenu = menu;
         menu.setOnHidden(ev -> {
             if (editing && !editor.isFocused())
                 stopEditing();
         });
-        menu.show(this, e.getScreenX(), e.getScreenY());
+        MENU.show(menu, this, e);
     }
 
     private double contentHeight() {
         Double est = editor.totalHeightEstimateProperty().getValue();
         double need = (est != null && !est.isNaN()) ? est + 2 * PAD_V : 0;
         return Math.max(MIN_HEIGHT, need);
-    }
-
-    private void scheduleLayout() {
-        if (layoutScheduled)
-            return;
-        layoutScheduled = true;
-        Platform.runLater(() -> {
-            layoutScheduled = false;
-            requestLayout();
-        });
     }
 
     @Override
@@ -320,9 +253,8 @@ public class TextBoxOverlay extends Pane implements Layerable {
     private void applyStyle() {
         StringBuilder css = new StringBuilder();
         if (backgroundVisible) {
-            Color c = Color.color(backgroundColor.getRed(), backgroundColor.getGreen(),
-                    backgroundColor.getBlue(), Math.max(0, Math.min(1, backgroundOpacity)));
-            css.append("-fx-background-color: ").append(ColorUtil.toCssRgba(c)).append(";");
+            css.append("-fx-background-color: ")
+                    .append(ColorUtil.toCssRgba(ColorUtil.withOpacity(backgroundColor, backgroundOpacity))).append(";");
         }
         if (borderVisible)
             css.append("-fx-border-color: ").append(ColorUtil.toCssHex(borderColor))
@@ -407,6 +339,11 @@ public class TextBoxOverlay extends Pane implements Layerable {
         CellCodec.decode(c.cells, editor);
         applyStyle();
         requestLayout();
+    }
+
+    @Override
+    public PageContent.FloatingTextBoxContent capture() {
+        return PageContent.capture(this);
     }
 
     public void setOnDelete(Runnable r) {

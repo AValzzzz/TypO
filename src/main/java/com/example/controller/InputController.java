@@ -1,19 +1,16 @@
 package com.example.controller;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.nio.file.Path;
 
 import com.example.model.CodeBlockStyler;
-import com.example.model.FloatingObjects;
 import com.example.model.LinkHandler;
 import com.example.model.Page;
-import com.example.model.ParagraphStyle;
-import com.example.model.TextStyle;
 import com.example.model.actions.AlignParagraph;
 import com.example.model.actions.DeletePage;
 import com.example.model.actions.FormatText;
@@ -31,6 +28,7 @@ import com.example.model.actions.ToggleOrientation;
 import com.example.model.i18n.I18n;
 import com.example.model.io.DocumentSession;
 import com.example.model.io.PageContent;
+import com.example.model.io.PageContent.FloatingContent;
 import com.example.model.language.BackslashInputHandler;
 import com.example.model.language.CommandRegistry;
 import com.example.model.language.maths.MathCommands;
@@ -38,18 +36,15 @@ import com.example.model.language.shapes.ArrowCommand;
 import com.example.model.language.shapes.ShapeCommand;
 import com.example.model.language.tables.TableCommand;
 import com.example.model.settings.AppSettings;
-import com.example.view.ArrowOverlay;
 import com.example.view.CodeOutputOverlay;
 import com.example.view.CodeRunController;
 import com.example.view.Icons;
-import com.example.view.ImageOverlay;
 import com.example.view.Layerable;
 import com.example.view.Motion;
+import com.example.view.Nodes;
 import com.example.view.RichTextArea;
-import com.example.view.ShapeOverlay;
 import com.example.view.SmoothCaret;
 import com.example.view.SmoothViewport;
-import com.example.view.TableOverlay;
 import com.example.view.TextFormatMenu;
 import com.example.view.TextSelectionMover;
 import com.example.view.Toast;
@@ -73,7 +68,6 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.scene.text.TextAlignment;
 import javafx.stage.Window;
 
 public class InputController {
@@ -198,7 +192,7 @@ public class InputController {
 
         List<MenuItem> runItems = new ArrayList<>();
         page.getPane().addEventFilter(ContextMenuEvent.CONTEXT_MENU_REQUESTED, event -> {
-            if (isInsideShape(event.getTarget()))
+            if (isInsideOverlay(event.getTarget()))
                 return;
             pageMenu.getItems().removeAll(runItems);
             runItems.clear();
@@ -212,15 +206,9 @@ public class InputController {
         });
     }
 
-    private static boolean isInsideShape(Object target) {
-        Node n = target instanceof Node node ? node : null;
-        while (n != null) {
-            if (n instanceof ShapeOverlay || n instanceof ArrowOverlay || n instanceof TableOverlay
-                    || n instanceof ImageOverlay || n instanceof CodeOutputOverlay)
-                return true;
-            n = n.getParent();
-        }
-        return false;
+    private static boolean isInsideOverlay(Object target) {
+        return Nodes.ancestor(target, Layerable.class) != null
+                || Nodes.ancestor(target, CodeOutputOverlay.class) != null;
     }
 
     private ContextMenu createTextMenu(Page page) {
@@ -288,16 +276,13 @@ public class InputController {
 
         for (PageContent content : loadedPages) {
             Page page = createPage();
-            populate(page, content);
+            PageContent.populate(page.getEditor(), content.paragraphs);
             Map<Layerable, Integer> levels = new HashMap<>();
 
-            for (List<?> group : List.of(content.images, content.shapes, content.arrows, content.tables,
-                    content.textBoxes)) {
-                for (Object item : group) {
-                    Layerable overlay = FloatingObjects.create(page, item, this::setupCell);
-                    if (overlay != null)
-                        levels.put(overlay, levelOf(item));
-                }
+            for (FloatingContent item : content.floating()) {
+                Layerable overlay = item.createOn(page, this::setupCell);
+                if (overlay != null)
+                    levels.put(overlay, item.getLevel() != null ? item.getLevel() : 0);
             }
             page.orderLayers(levels);
 
@@ -306,41 +291,6 @@ public class InputController {
             }
         }
         clampTranslate();
-    }
-
-    private static int levelOf(Object content) {
-        Integer level = switch (content) {
-            case PageContent.FloatingImageContent c -> c.level;
-            case PageContent.FloatingShapeContent c -> c.level;
-            case PageContent.FloatingArrowContent c -> c.level;
-            case PageContent.FloatingTableContent c -> c.level;
-            case PageContent.FloatingTextBoxContent c -> c.level;
-            default -> null;
-        };
-        return level != null ? level : 0;
-    }
-
-    private void populate(Page page, PageContent content) {
-        RichTextArea editor = page.getEditor();
-        editor.clear();
-
-        for (int i = 0; i < content.paragraphs.size(); i++) {
-            PageContent.ParagraphContent paragraph = content.paragraphs.get(i);
-            for (PageContent.RunContent run : paragraph.runs) {
-                if (run.isMath()) {
-                    editor.appendMathObject(run.math, run.style);
-                } else {
-                    editor.appendStyledText(run.text, run.style);
-                }
-            }
-            ParagraphStyle style = paragraph.codeBlock
-                    ? new ParagraphStyle(AppSettings.getInstance().codeThemeProperty().get(), TextAlignment.LEFT)
-                    : new ParagraphStyle(null, paragraph.alignment);
-            editor.setParagraphStyle(editor.getParagraphs().size() - 1, style);
-            if (i < content.paragraphs.size() - 1) {
-                editor.appendStyledText("\n", TextStyle.DEFAULT);
-            }
-        }
     }
 
     private void scheduleReflow(Page page) {

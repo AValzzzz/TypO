@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
+import com.example.model.io.ColorUtil;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
@@ -82,7 +83,7 @@ public final class AppTheme {
         c.putIfAbsent("error", Color.web(dark ? "#eb6f92" : "#b4637a"));
         c.putIfAbsent("warning", Color.web(dark ? "#f6c177" : "#b35c00"));
         c.putIfAbsent("onAccent", isDark(accent) ? Color.WHITE : Color.web("#1e1e2e"));
-        c.putIfAbsent("selection", withOpacity(accent, 0.35));
+        c.putIfAbsent("selection", ColorUtil.withOpacity(accent, 0.35));
         c.putIfAbsent("card", c.get("surface"));
         c.putIfAbsent("backdropTop", c.get("overlay"));
         c.putIfAbsent("backdropBottom", c.get("overlay").interpolate(Color.BLACK, 0.06));
@@ -91,10 +92,6 @@ public final class AppTheme {
 
     private static boolean isDark(Color c) {
         return 0.2126 * c.getRed() + 0.7152 * c.getGreen() + 0.0722 * c.getBlue() < 0.5;
-    }
-
-    private static Color withOpacity(Color c, double opacity) {
-        return Color.color(c.getRed(), c.getGreen(), c.getBlue(), opacity);
     }
 
     public String getName() {
@@ -135,19 +132,19 @@ public final class AppTheme {
         define(css, "-c-card", colors.get("card"));
         define(css, "-c-backdrop-top", colors.get("backdropTop"));
         define(css, "-c-backdrop-bottom", colors.get("backdropBottom"));
-        define(css, "-c-toolbar", withOpacity(colors.get("surface"), 0.88));
-        define(css, "-c-toolbar-border", withOpacity(colors.get("highlightHigh"), 0.7));
-        define(css, "-c-accent-faint", withOpacity(accent, 0.18));
-        define(css, "-c-accent-glow", withOpacity(accent, 0.40));
-        define(css, "-c-accent-strong", withOpacity(accent, 0.45));
-        define(css, "-c-accent-thumb", withOpacity(accent, 0.75));
-        define(css, "-c-shadow-faint", withOpacity(shadow, 0.08));
-        define(css, "-c-shadow-soft", withOpacity(shadow, 0.14));
-        define(css, "-c-shadow", withOpacity(shadow, 0.20));
-        define(css, "-c-shadow-page", withOpacity(shadow, 0.26));
-        define(css, "-c-shadow-strong", withOpacity(shadow, 0.28));
-        define(css, "-c-shadow-toast", withOpacity(shadow, 0.35));
-        define(css, "-c-scroll-thumb", withOpacity(colors.get("text"), 0.28));
+        define(css, "-c-toolbar", ColorUtil.withOpacity(colors.get("surface"), 0.88));
+        define(css, "-c-toolbar-border", ColorUtil.withOpacity(colors.get("highlightHigh"), 0.7));
+        define(css, "-c-accent-faint", ColorUtil.withOpacity(accent, 0.18));
+        define(css, "-c-accent-glow", ColorUtil.withOpacity(accent, 0.40));
+        define(css, "-c-accent-strong", ColorUtil.withOpacity(accent, 0.45));
+        define(css, "-c-accent-thumb", ColorUtil.withOpacity(accent, 0.75));
+        define(css, "-c-shadow-faint", ColorUtil.withOpacity(shadow, 0.08));
+        define(css, "-c-shadow-soft", ColorUtil.withOpacity(shadow, 0.14));
+        define(css, "-c-shadow", ColorUtil.withOpacity(shadow, 0.20));
+        define(css, "-c-shadow-page", ColorUtil.withOpacity(shadow, 0.26));
+        define(css, "-c-shadow-strong", ColorUtil.withOpacity(shadow, 0.28));
+        define(css, "-c-shadow-toast", ColorUtil.withOpacity(shadow, 0.35));
+        define(css, "-c-scroll-thumb", ColorUtil.withOpacity(colors.get("text"), 0.28));
         return css.append("}\n").toString();
     }
 

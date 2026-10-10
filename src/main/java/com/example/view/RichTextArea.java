@@ -3,21 +3,24 @@ package com.example.view;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.IntFunction;
 import java.util.function.UnaryOperator;
 
-import org.fxmisc.richtext.TextExt;
-import org.fxmisc.richtext.model.StyledSegment;
-import org.fxmisc.richtext.model.TextOps;
 import org.fxmisc.richtext.GenericStyledArea;
+import org.fxmisc.richtext.TextExt;
 import org.fxmisc.richtext.model.ReadOnlyStyledDocument;
 import org.fxmisc.richtext.model.SegmentOps;
 import org.fxmisc.richtext.model.StyleSpan;
 import org.fxmisc.richtext.model.StyleSpans;
 import org.fxmisc.richtext.model.StyleSpansBuilder;
 import org.fxmisc.richtext.model.StyledDocument;
+import org.fxmisc.richtext.model.StyledSegment;
+import org.fxmisc.richtext.model.TextOps;
 import org.reactfx.util.Either;
 
 import com.example.model.ParagraphStyle;
@@ -91,6 +94,31 @@ public class RichTextArea extends GenericStyledArea<ParagraphStyle, Either<Strin
         if (sel.getLength() == 0)
             return;
         applyStyle(sel.getStart(), sel.getEnd(), change);
+    }
+
+    public <K> void restyle(int start, int length, IntFunction<K> keyAt, BiFunction<TextStyle, K, TextStyle> restyle) {
+        StyleSpans<TextStyle> spans = getStyleSpans(start, start + length);
+        StyleSpansBuilder<TextStyle> builder = new StyleSpansBuilder<>();
+        boolean changed = false;
+        int pos = 0;
+        for (StyleSpan<TextStyle> span : spans) {
+            int spanEnd = pos + span.getLength();
+            int runStart = pos;
+            while (runStart < spanEnd) {
+                K key = keyAt.apply(runStart);
+                int runEnd = runStart + 1;
+                while (runEnd < spanEnd && Objects.equals(keyAt.apply(runEnd), key))
+                    runEnd++;
+                TextStyle old = span.getStyle();
+                TextStyle next = restyle.apply(old, key);
+                changed |= !next.equals(old);
+                builder.add(next, runEnd - runStart);
+                runStart = runEnd;
+            }
+            pos = spanEnd;
+        }
+        if (changed)
+            setStyleSpans(start, builder.create());
     }
 
     public void applyStyle(int start, int end, UnaryOperator<TextStyle> change) {

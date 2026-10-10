@@ -121,7 +121,7 @@ public final class CodeRunner {
             Files.writeString(file, code, StandardCharsets.UTF_8);
 
             List<List<String>> candidates = it.commands();
-            boolean appendFile = true;
+            List<String> args = List.of(file.toString());
             if (!it.compilers().isEmpty()) {
                 Path exe = dir.resolve(WINDOWS ? "program.exe" : "program");
                 Result compiled = compile(it, file, exe, dir, exec, onOutput);
@@ -130,54 +130,21 @@ public final class CodeRunner {
                     return;
                 }
                 candidates = List.of(List.of(exe.toString()));
-                appendFile = false;
+                args = List.of();
             }
 
-            Process started = null;
-            for (List<String> prefix : candidates) {
-                List<String> command = new ArrayList<>(prefix);
-                if (appendFile)
-                    command.add(file.toString());
-                ProcessBuilder pb = new ProcessBuilder(command).directory(dir.toFile()).redirectErrorStream(true);
-                pb.environment().put("PYTHONIOENCODING", "utf-8");
-                try {
-                    started = pb.start();
-                    break;
-                } catch (IOException ignored) {
-                }
-            }
-
-            if (started == null) {
+            Process process = startFirst(candidates, args, dir, Map.of("PYTHONIOENCODING", "utf-8"));
+            if (process == null) {
                 onOutput.accept("« " + it.name() + " » est introuvable. Installez-le et vérifiez qu'il est "
                         + "dans le PATH.");
                 onDone.accept(new Result(Status.FAILED_TO_START, -1, false));
                 return;
             }
 
-            final Process process = started;
-            exec.process = process;
-            if (exec.stopped)
-                kill(process);
-            try {
-                process.getOutputStream().close();
-            } catch (IOException ignored) {
-            }
-
-            AtomicBoolean truncated = new AtomicBoolean();
-            Thread reader = new Thread(() -> pump(process.getInputStream(), onOutput, truncated), "code-runner-out");
-            reader.setDaemon(true);
-            reader.start();
-
-            boolean finished = process.waitFor(TIMEOUT_SECONDS, TimeUnit.SECONDS);
-            boolean timedOut = !finished && !exec.stopped;
-            if (!finished)
-                kill(process);
-            process.waitFor(2, TimeUnit.SECONDS);
-            reader.join(2000);
-
-            Status status = exec.stopped ? Status.STOPPED : timedOut ? Status.TIMEOUT : Status.FINISHED;
+            Outcome outcome = supervise(process, exec, onOutput);
+            Status status = exec.stopped ? Status.STOPPED : !outcome.finished() ? Status.TIMEOUT : Status.FINISHED;
             int exit = process.isAlive() ? -1 : process.exitValue();
-            result = new Result(status, exit, truncated.get());
+            result = new Result(status, exit, outcome.truncated());
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             result = new Result(Status.STOPPED, -1, false);
@@ -192,27 +159,45 @@ public final class CodeRunner {
 
     private static Result compile(Interpreter it, Path file, Path exe, Path dir, Execution exec,
             Consumer<String> onOutput) throws InterruptedException {
-        Process started = null;
-        for (List<String> prefix : it.compilers()) {
-            List<String> command = new ArrayList<>(prefix);
-            command.add(file.toString());
-            command.add("-o");
-            command.add(exe.toString());
-            command.add("-lm");
-            try {
-                started = new ProcessBuilder(command).directory(dir.toFile()).redirectErrorStream(true).start();
-                break;
-            } catch (IOException ignored) {
-            }
-        }
-
-        if (started == null) {
+        Process process = startFirst(it.compilers(), List.of(file.toString(), "-o", exe.toString(), "-lm"), dir,
+                Map.of());
+        if (process == null) {
             onOutput.accept("Aucun compilateur C trouvé (gcc, cc ou clang). Installez-en un et vérifiez "
                     + "qu'il est dans le PATH.");
             return new Result(Status.FAILED_TO_START, -1, false);
         }
 
-        final Process process = started;
+        Outcome outcome = supervise(process, exec, onOutput);
+        if (exec.stopped)
+            return new Result(Status.STOPPED, -1, false);
+        if (!outcome.finished())
+            return new Result(Status.TIMEOUT, -1, outcome.truncated());
+        int exit = process.exitValue();
+        if (exit != 0)
+            return new Result(Status.FINISHED, exit, outcome.truncated());
+        return null;
+    }
+
+    private record Outcome(boolean finished, boolean truncated) {
+    }
+
+    private static Process startFirst(List<List<String>> prefixes, List<String> args, Path dir,
+            Map<String, String> env) {
+        for (List<String> prefix : prefixes) {
+            List<String> command = new ArrayList<>(prefix);
+            command.addAll(args);
+            ProcessBuilder pb = new ProcessBuilder(command).directory(dir.toFile()).redirectErrorStream(true);
+            pb.environment().putAll(env);
+            try {
+                return pb.start();
+            } catch (IOException ignored) {
+            }
+        }
+        return null;
+    }
+
+    private static Outcome supervise(Process process, Execution exec, Consumer<String> onOutput)
+            throws InterruptedException {
         exec.process = process;
         if (exec.stopped)
             kill(process);
@@ -231,15 +216,7 @@ public final class CodeRunner {
             kill(process);
         process.waitFor(2, TimeUnit.SECONDS);
         reader.join(2000);
-
-        if (exec.stopped)
-            return new Result(Status.STOPPED, -1, false);
-        if (!finished)
-            return new Result(Status.TIMEOUT, -1, truncated.get());
-        int exit = process.exitValue();
-        if (exit != 0)
-            return new Result(Status.FINISHED, exit, truncated.get());
-        return null;
+        return new Outcome(finished, truncated.get());
     }
 
     private static void pump(InputStream in, Consumer<String> onOutput, AtomicBoolean truncated) {

@@ -25,20 +25,16 @@ public final class FontCatalog {
 
     private static List<String> available;
     private static String defaultFamily;
+    private static Map<String, String> installed;
 
     private FontCatalog() {
     }
 
     public static synchronized List<String> available() {
         if (available == null) {
-            Theme.loadFonts();
-            Map<String, String> installed = new HashMap<>();
-            for (String family : Font.getFamilies())
-                installed.put(family.toLowerCase(Locale.ROOT), family);
-
             TreeSet<String> found = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
             for (String name : CURATED) {
-                String real = installed.get(name.toLowerCase(Locale.ROOT));
+                String real = installed(name);
                 if (real != null)
                     found.add(real);
             }
@@ -48,17 +44,22 @@ public final class FontCatalog {
     }
 
     public static synchronized String defaultFamily() {
-        if (defaultFamily == null) {
-            Theme.loadFonts();
-            Map<String, String> installed = new HashMap<>();
-            for (String family : Font.getFamilies())
-                installed.put(family.toLowerCase(Locale.ROOT), family);
+        if (defaultFamily == null)
             defaultFamily = UI_DEFAULTS.stream()
-                    .map(name -> installed.get(name.toLowerCase(Locale.ROOT)))
+                    .map(FontCatalog::installed)
                     .filter(f -> f != null)
                     .findFirst()
                     .orElse(Font.getDefault().getFamily());
-        }
         return defaultFamily;
+    }
+
+    private static String installed(String family) {
+        if (installed == null) {
+            Theme.loadFonts();
+            installed = new HashMap<>();
+            for (String f : Font.getFamilies())
+                installed.put(f.toLowerCase(Locale.ROOT), f);
+        }
+        return installed.get(family.toLowerCase(Locale.ROOT));
     }
 }

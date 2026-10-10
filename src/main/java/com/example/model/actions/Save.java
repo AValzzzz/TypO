@@ -2,14 +2,12 @@ package com.example.model.actions;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 
 import com.example.model.Page;
 import com.example.model.i18n.I18n;
+import com.example.model.io.DocumentExporter;
 import com.example.model.io.DocumentSession;
-import com.example.model.io.DocxDocumentWriter;
-import com.example.model.io.PageContent;
 import com.example.view.Toast;
 
 import javafx.scene.control.Alert;
@@ -36,11 +34,7 @@ public class Save implements AppAction {
         }
 
         try {
-            List<PageContent> content = new ArrayList<>();
-            for (Page page : pages) {
-                content.add(PageContent.capture(page));
-            }
-            new DocxDocumentWriter().write(content, target);
+            DocumentExporter.writeDocx(pages, target);
             Toast.success(I18n.t("toast.saved"));
         } catch (IOException e) {
             new Alert(AlertType.ERROR, I18n.t("file.error.save", e.getMessage())).showAndWait();

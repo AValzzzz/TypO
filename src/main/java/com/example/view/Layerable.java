@@ -1,5 +1,7 @@
 package com.example.view;
 
+import com.example.model.io.PageContent.FloatingContent;
+
 import javafx.scene.Node;
 
 public interface Layerable {
@@ -16,6 +18,12 @@ public interface Layerable {
         void moveDown();
     }
 
+    FloatingContent capture();
+
+    void setHandleSuppressed(boolean suppressed);
+
+    default void setSelected(boolean selected) {
+    }
 
     default Node node() {
         return (Node) this;

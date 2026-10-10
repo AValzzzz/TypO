@@ -83,9 +83,7 @@ public class BackslashInputHandler {
 
         if (c == ' ' && buffering) {
             String raw = editor.getText(commandStart, caret).substring(1);
-            System.out.println("RAW COMMAND: [" + raw + "]");
             Optional<Command> match = registry.find(raw);
-            System.out.println("MATCHED: " + match.map(m -> m.getClass().getSimpleName()).orElse("NONE"));
 
             if (match.isPresent()) {
                 CommandResult result = match.get().apply(raw);
@@ -142,8 +140,6 @@ public class BackslashInputHandler {
                 && event.getText().isEmpty()
                 && !event.isControlDown() && !event.isAltDown() && !event.isMetaDown()) {
             event.consume();
-            System.out.println("caret=" + editor.getCaretPosition() + " convertedEnd=" + convertedEnd
-                    + " justConverted=" + justConverted);
             editor.replaceSelection(event.isShiftDown() ? "¨" : "^");
             return;
         }

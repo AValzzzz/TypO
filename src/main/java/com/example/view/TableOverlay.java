@@ -9,8 +9,8 @@ import java.util.function.Consumer;
 import com.example.model.TextStyle;
 import com.example.model.i18n.I18n;
 import com.example.model.io.CellCodec;
+import com.example.model.io.PageContent;
 
-import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
 import javafx.scene.Cursor;
@@ -19,7 +19,6 @@ import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.input.ContextMenuEvent;
-import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
@@ -46,7 +45,7 @@ public class TableOverlay extends Pane implements Layerable {
     private static final double HANDLE = 14;
     private static final String DIVIDER_HIGHLIGHT = "-fx-background-color: rgba(51,153,255,0.7);";
 
-    private static ContextMenu openMenu;
+    private static final MenuSlot MENU = new MenuSlot();
 
     private static final class Drag {
         boolean vertical, ctrl;
@@ -72,7 +71,8 @@ public class TableOverlay extends Pane implements Layerable {
 
     private final Path grid = new Path();
     private final Path selectionShade = new Path();
-    private final Region moveHandle = new Region();
+    private final Region moveHandle = Handles.square(Cursor.MOVE);
+    private final MoveDrag move = new MoveDrag(this, () -> this.snap);
     private SnapGuides snap;
 
     private double[] xs = new double[] { 0 };
@@ -84,8 +84,7 @@ public class TableOverlay extends Pane implements Layerable {
     private Drag drag;
 
     private boolean handleSuppressed = false;
-    private boolean layoutScheduled = false;
-    private double pressParentX, pressParentY, pressLayoutX, pressLayoutY;
+    private final CoalescedTask relayout = new CoalescedTask(this::requestLayout);
 
     private Runnable onDelete;
 
@@ -101,8 +100,6 @@ public class TableOverlay extends Pane implements Layerable {
         selectionShade.setStroke(null);
         selectionShade.setMouseTransparent(true);
 
-        moveHandle.setStyle("-fx-background-color: #3399ff; -fx-border-color: white; -fx-border-width: 1;");
-        moveHandle.setCursor(Cursor.MOVE);
         moveHandle.setVisible(false);
         installMoveHandlers();
 
@@ -119,20 +116,14 @@ public class TableOverlay extends Pane implements Layerable {
         hoverProperty().addListener((obs, o, n) -> updateHandle());
         focusWithinProperty().addListener((obs, o, n) -> {
             updateHandle();
-            if (!n && (openMenu == null || !openMenu.isShowing()))
+            if (!n && !MENU.isShowing())
                 clearSelection();
         });
 
         setFocusTraversable(true);
         focusedProperty().addListener((obs, o, n) -> grid.setStroke(n ? Color.web("#3399ff") : Color.BLACK));
 
-        setOnKeyPressed(e -> {
-            if (e.getTarget() == this
-                    && (e.getCode() == KeyCode.DELETE || e.getCode() == KeyCode.BACK_SPACE)) {
-                delete();
-                e.consume();
-            }
-        });
+        Overlays.deleteOnKey(this, e -> e.getTarget() == this, this::delete);
 
         setOnContextMenuRequested(e -> {
             showMenu(tableMenu(null), e);
@@ -162,7 +153,7 @@ public class TableOverlay extends Pane implements Layerable {
         cell.setWrapText(true);
         cell.setStyle("-fx-background-color: transparent; -fx-font-size: 14px;");
         cell.setPadding(new Insets(PAD_V, PAD_H, PAD_V, PAD_H));
-        cell.totalHeightEstimateProperty().addListener((obs, o, n) -> scheduleLayout());
+        cell.totalHeightEstimateProperty().addListener((obs, o, n) -> relayout.schedule());
 
         cell.addEventHandler(ContextMenuEvent.CONTEXT_MENU_REQUESTED, e -> {
             boolean multi = cellSel != null && countUnits(cellSel) > 1;
@@ -453,7 +444,7 @@ public class TableOverlay extends Pane implements Layerable {
         }
         if (!extra.isEmpty())
             extra.add(new SeparatorMenuItem());
-        extra.addAll(LayerMenu.items(this));
+        extra.addAll(FormatMenu.layerItems(this));
 
         return new TableFormatMenu(this, extra);
     }
@@ -501,16 +492,6 @@ public class TableOverlay extends Pane implements Layerable {
             xs[c + 1] = xs[c] + colWidths.get(c);
         for (int r = 0; r < rh.length; r++)
             ys[r + 1] = ys[r] + rh[r];
-    }
-
-    private void scheduleLayout() {
-        if (layoutScheduled)
-            return;
-        layoutScheduled = true;
-        Platform.runLater(() -> {
-            layoutScheduled = false;
-            requestLayout();
-        });
     }
 
     @Override
@@ -780,37 +761,21 @@ public class TableOverlay extends Pane implements Layerable {
     private void installMoveHandlers() {
         moveHandle.setOnMousePressed(e -> {
             requestFocus();
-            Point2D p = getParent().sceneToLocal(e.getSceneX(), e.getSceneY());
-            pressParentX = p.getX();
-            pressParentY = p.getY();
-            pressLayoutX = getLayoutX();
-            pressLayoutY = getLayoutY();
+            move.begin(e);
             e.consume();
         });
         moveHandle.setOnMouseDragged(e -> {
-            Point2D p = getParent().sceneToLocal(e.getSceneX(), e.getSceneY());
-            double nx = pressLayoutX + (p.getX() - pressParentX);
-            double ny = pressLayoutY + (p.getY() - pressParentY);
-            if (snap != null) {
-                double[] s = snap.move(this, nx, ny, e.isAltDown());
-                nx = s[0];
-                ny = s[1];
-            }
-            setLayoutX(nx);
-            setLayoutY(ny);
+            move.update(e);
             e.consume();
         });
     }
 
     private void showMenu(ContextMenu menu, ContextMenuEvent e) {
-        if (openMenu != null && openMenu.isShowing())
-            openMenu.hide();
-        openMenu = menu;
         menu.setOnHidden(ev -> {
             if (!isFocusWithin())
                 clearSelection();
         });
-        menu.show(this, e.getScreenX(), e.getScreenY());
+        MENU.show(menu, this, e);
     }
 
     private void updateHandle() {
@@ -909,6 +874,11 @@ public class TableOverlay extends Pane implements Layerable {
             for (int c = 0; c < cells.get(r).size() && c < encoded[r].length; c++)
                 CellCodec.decode(encoded[r][c], cells.get(r).get(c));
         requestLayout();
+    }
+
+    @Override
+    public PageContent.FloatingTableContent capture() {
+        return PageContent.capture(this);
     }
 
     public void setOnDelete(Runnable r) {

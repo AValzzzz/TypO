@@ -71,6 +71,14 @@ public class Page {
         pane.getChildren().add(0, shadow);
     }
 
+    public static Page owning(Node node, List<Page> pages) {
+        for (Node n = node; n != null; n = n.getParent())
+            for (Page p : pages)
+                if (p.getPane() == n)
+                    return p;
+        return null;
+    }
+
     public Pane getPane() {
         return pane;
     }
@@ -91,30 +99,21 @@ public class Page {
             String format, String base64) {
         ImageOverlay overlay = new ImageOverlay(image, x, y, width, height, format, base64);
         overlay.setSnap(snapGuides);
-        addLayer(overlay);
-        imageOverlays.add(overlay);
-        Motion.spawn(overlay);
-        return overlay;
+        return adopt(overlay, imageOverlays);
     }
 
     public ShapeOverlay addShapeOverlay(ShapeType type, double x, double y, double width, double height) {
         ShapeOverlay overlay = new ShapeOverlay(type, x, y, width, height);
         overlay.setOnDelete(() -> remove(overlay));
         overlay.setSnap(snapGuides);
-        addLayer(overlay);
-        shapeOverlays.add(overlay);
-        Motion.spawn(overlay);
-        return overlay;
+        return adopt(overlay, shapeOverlays);
     }
 
     public ArrowOverlay addArrowOverlay(double startX, double startY, double endX, double endY,
             double controlX, double controlY) {
         ArrowOverlay overlay = new ArrowOverlay(startX, startY, endX, endY, controlX, controlY);
         overlay.setOnDelete(() -> remove(overlay));
-        addLayer(overlay);
-        arrowOverlays.add(overlay);
-        Motion.spawn(overlay);
-        return overlay;
+        return adopt(overlay, arrowOverlays);
     }
 
     public TableOverlay addTableOverlay(double x, double y, int rows, int cols, Consumer<RichTextArea> cellSetup) {
@@ -124,19 +123,20 @@ public class Page {
             editor.requestFocus();
         });
         overlay.setSnap(snapGuides);
-        addLayer(overlay);
-        tableOverlays.add(overlay);
-        Motion.spawn(overlay);
-        return overlay;
+        return adopt(overlay, tableOverlays);
     }
 
     public TextBoxOverlay addTextBoxOverlay(double x, double y, double width, Consumer<RichTextArea> cellSetup) {
         TextBoxOverlay overlay = new TextBoxOverlay(x, y, width, cellSetup);
         overlay.setOnDelete(() -> remove(overlay));
         overlay.setSnap(snapGuides);
+        return adopt(overlay, textBoxOverlays);
+    }
+
+    private <T extends Layerable> T adopt(T overlay, List<T> typed) {
         addLayer(overlay);
-        textBoxOverlays.add(overlay);
-        Motion.spawn(overlay);
+        typed.add(overlay);
+        Motion.spawn(overlay.node());
         return overlay;
     }
 
@@ -178,11 +178,9 @@ public class Page {
     }
 
     public void remove(Layerable overlay) {
-        imageOverlays.remove(overlay);
-        shapeOverlays.remove(overlay);
-        arrowOverlays.remove(overlay);
-        tableOverlays.remove(overlay);
-        textBoxOverlays.remove(overlay);
+        for (List<? extends Layerable> typed : List.of(imageOverlays, shapeOverlays, arrowOverlays, tableOverlays,
+                textBoxOverlays))
+            typed.remove(overlay);
         pane.getChildren().remove(overlay.node());
         if (layers.remove(overlay)) {
             applyLayers();

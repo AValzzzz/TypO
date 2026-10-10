@@ -3,15 +3,15 @@ package com.example.controller;
 import java.util.List;
 import java.util.function.Consumer;
 
-import com.example.model.FloatingObjects;
 import com.example.model.Page;
+import com.example.model.io.PageContent.FloatingContent;
 import com.example.view.Layerable;
 import com.example.view.Motion;
+import com.example.view.Nodes;
 import com.example.view.RichTextArea;
 
 import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
-import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
@@ -36,13 +36,10 @@ final class FloatingPageDrag {
 
     private void pressed(MouseEvent e) {
         end();
-        if (e.getButton() != MouseButton.PRIMARY || !(e.getTarget() instanceof Node target))
+        if (e.getButton() != MouseButton.PRIMARY)
             return;
-        Layerable l = null;
-        for (Node n = target; n != null && l == null; n = n.getParent())
-            if (n instanceof Layerable found)
-                l = found;
-        Page p = l == null ? null : pageOf(l.node());
+        Layerable l = Nodes.ancestor(e.getTarget(), Layerable.class);
+        Page p = l == null ? null : Page.owning(l.node(), pages);
         if (p == null)
             return;
         layer = l;
@@ -56,7 +53,7 @@ final class FloatingPageDrag {
         Page from = source;
         Bounds before = pressBounds;
         end();
-        if (l == null || !pages.contains(from) || pageOf(l.node()) != from)
+        if (l == null || !pages.contains(from) || Page.owning(l.node(), pages) != from)
             return;
         Bounds b = l.node().getBoundsInParent();
         if (b.equals(before))
@@ -78,12 +75,12 @@ final class FloatingPageDrag {
 
     private void hop(Layerable l, Page from, Page to) {
         Point2D origin = to.getPane().sceneToLocal(from.getPane().localToScene(0, 0));
-        Object content = FloatingObjects.translate(FloatingObjects.capture(l), origin.getX(), origin.getY());
+        FloatingContent content = l.capture().translated(origin.getX(), origin.getY());
 
         Layerable moved;
         Motion.setQuiet(true);
         try {
-            moved = FloatingObjects.create(to, content, cellSetup);
+            moved = content.createOn(to, cellSetup);
         } finally {
             Motion.setQuiet(false);
         }
@@ -91,18 +88,9 @@ final class FloatingPageDrag {
             return;
         from.remove(l);
         for (Layerable other : to.getLayers())
-            FloatingObjects.setSelected(other, other == moved);
+            other.setSelected(other == moved);
         moved.node().requestFocus();
     }
-
-    private Page pageOf(Node node) {
-        for (Node n = node; n != null; n = n.getParent())
-            for (Page p : pages)
-                if (p.getPane() == n)
-                    return p;
-        return null;
-    }
-
     private Page pageAt(Point2D scenePoint) {
         for (Page p : pages) {
             Point2D local = p.getPane().sceneToLocal(scenePoint);
