@@ -17,6 +17,7 @@ module com.example.javafx {
     requires org.apache.poi.ooxml;
 
     requires org.apache.pdfbox;
+    requires org.apache.fontbox;
     requires javafx.base;
     requires org.apache.poi.poi;
 

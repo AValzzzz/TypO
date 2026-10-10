@@ -16,6 +16,8 @@ import java.util.zip.ZipOutputStream;
 
 import org.w3c.dom.Element;
 
+import com.example.view.FontCatalog;
+
 public final class DocxDocumentWriter {
 
     private static final String REL_NS = "http://schemas.openxmlformats.org/officeDocument/2006/relationships";
@@ -43,7 +45,7 @@ public final class DocxDocumentWriter {
             <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
             <w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">\
             <w:docDefaults><w:rPrDefault><w:rPr>\
-            <w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:eastAsia="Calibri" w:cs="Calibri"/>\
+            <w:rFonts w:ascii="%1$s" w:hAnsi="%1$s" w:eastAsia="%1$s" w:cs="%1$s"/>\
             <w:sz w:val="24"/><w:szCs w:val="24"/><w:lang w:val="fr-FR"/>\
             </w:rPr></w:rPrDefault>\
             <w:pPrDefault><w:pPr><w:spacing w:after="0" w:line="240" w:lineRule="auto"/></w:pPr></w:pPrDefault>\
@@ -79,7 +81,7 @@ public final class DocxDocumentWriter {
             put(zip, "_rels/.rels", ROOT_RELS);
             put(zip, "word/document.xml", document);
             put(zip, "word/_rels/document.xml.rels", documentRels(w));
-            put(zip, "word/styles.xml", STYLES);
+            put(zip, "word/styles.xml", STYLES.formatted(Ooxml.esc(FontCatalog.defaultFamily())));
             put(zip, "word/footer1.xml", FOOTER);
             for (Map.Entry<String, byte[]> m : w.media().entrySet())
                 put(zip, m.getKey(), m.getValue());

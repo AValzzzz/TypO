@@ -12,28 +12,16 @@ import com.example.model.io.DocumentSession;
 import com.example.model.io.DocxDocumentWriter;
 import com.example.model.io.PageContent;
 import com.example.model.io.PdfDocumentWriter;
-import com.example.model.io.PdfDocumentWriter.PageSnapshot;
-import com.example.view.CodeOutputOverlay;
-import com.example.view.ImageOverlay;
-import com.example.view.TableOverlay;
 import com.example.view.Toast;
 
-import javafx.embed.swing.SwingFXUtils;
-import javafx.scene.Node;
-import javafx.scene.SnapshotParameters;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
-import javafx.scene.image.WritableImage;
 import javafx.scene.layout.Pane;
-import javafx.scene.paint.Color;
-import javafx.scene.transform.Scale;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.stage.Window;
 
 public class SaveAs implements AppAction {
-
-    private static final double PDF_RENDER_SCALE = 2.0;
 
     private final List<Page> pages;
     private final Window owner;
@@ -64,7 +52,7 @@ public class SaveAs implements AppAction {
 
         try {
             if (target.toString().toLowerCase().endsWith(".pdf")) {
-                new PdfDocumentWriter().write(captureSnapshots(), target);
+                exportPdf(target);
                 Toast.success(I18n.t("toast.exportedPdf"));
             } else {
                 new DocxDocumentWriter().write(captureContent(), target);
@@ -84,40 +72,29 @@ public class SaveAs implements AppAction {
         return content;
     }
 
-    private List<PageSnapshot> captureSnapshots() {
-        List<PageSnapshot> snapshots = new ArrayList<>();
-        for (Page page : pages) {
-            Pane pane = page.getPane();
-            boolean landscape = pane.getWidth() > pane.getHeight();
-
-            for (ImageOverlay overlay : page.getImageOverlays())
-                overlay.setHandleSuppressed(true);
-            for (TableOverlay t : page.getTableOverlays())
-                t.setHandleSuppressed(true);
-            List<Node> hiddenOutputs = new ArrayList<>();
-            for (Node n : pane.getChildren())
-                if ((n instanceof CodeOutputOverlay || n.getProperties().containsKey(Page.SHADOW_KEY))
-                        && n.isVisible()) {
-                    n.setVisible(false);
-                    hiddenOutputs.add(n);
-                }
-            try {
-                SnapshotParameters params = new SnapshotParameters();
-                params.setTransform(new Scale(PDF_RENDER_SCALE, PDF_RENDER_SCALE));
-                params.setFill(Color.WHITE);
-
-                WritableImage fxImage = pane.snapshot(params, null);
-                snapshots.add(new PageSnapshot(SwingFXUtils.fromFXImage(fxImage, null), landscape));
-            } finally {
-                for (ImageOverlay overlay : page.getImageOverlays())
-                    overlay.setHandleSuppressed(false);
-                for (TableOverlay t : page.getTableOverlays())
-                    t.setHandleSuppressed(false);
-                for (Node n : hiddenOutputs)
-                    n.setVisible(true);
+    private void exportPdf(Path target) throws IOException {
+        setHandlesSuppressed(true);
+        try {
+            List<Pane> panes = new ArrayList<>();
+            for (Page page : pages) {
+                page.getPane().applyCss();
+                page.getPane().layout();
+                panes.add(page.getPane());
             }
+            new PdfDocumentWriter().write(panes, target);
+        } finally {
+            setHandlesSuppressed(false);
         }
-        return snapshots;
+    }
+
+    private void setHandlesSuppressed(boolean suppressed) {
+        for (Page page : pages) {
+            page.getImageOverlays().forEach(o -> o.setHandleSuppressed(suppressed));
+            page.getShapeOverlays().forEach(o -> o.setHandleSuppressed(suppressed));
+            page.getArrowOverlays().forEach(o -> o.setHandleSuppressed(suppressed));
+            page.getTableOverlays().forEach(o -> o.setHandleSuppressed(suppressed));
+            page.getTextBoxOverlays().forEach(o -> o.setHandleSuppressed(suppressed));
+        }
     }
 
     private Path ensureExtension(File file, boolean wantsPdf) {

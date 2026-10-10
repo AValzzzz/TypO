@@ -53,9 +53,12 @@ final class FloatingShortcuts {
     private record State(List<Object> contents, List<String> signatures) {
     }
 
-    private record Entry(Page page, State before, State after, long time) {
+    private record Change(Page page, State before, State after) {
+    }
+
+    private record Entry(List<Change> changes, long time) {
         Entry at(long newTime) {
-            return new Entry(page, before, after, newTime);
+            return new Entry(changes, newTime);
         }
     }
 
@@ -137,16 +140,19 @@ final class FloatingShortcuts {
             return;
         pending = false;
         baseline.keySet().retainAll(pages);
+        List<Change> changes = new ArrayList<>();
         for (Page p : pages) {
             State now = capture(p);
             State before = baseline.put(p, now);
-            if (before != null && !before.signatures().equals(now.signatures())) {
-                undo.push(new Entry(p, before, now, System.nanoTime()));
-                if (undo.size() > MAX_HISTORY)
-                    undo.removeLast();
-                redo.clear();
-            }
+            if (before != null && !before.signatures().equals(now.signatures()))
+                changes.add(new Change(p, before, now));
         }
+        if (changes.isEmpty())
+            return;
+        undo.push(new Entry(changes, System.nanoTime()));
+        if (undo.size() > MAX_HISTORY)
+            undo.removeLast();
+        redo.clear();
     }
 
     private boolean undo() {
@@ -154,7 +160,9 @@ final class FloatingShortcuts {
         Entry e = pop(undo);
         if (e == null)
             return false;
-        restore(e.page(), e.before());
+        for (Change c : e.changes())
+            if (pages.contains(c.page()))
+                restore(c.page(), c.before());
         redo.push(e.at(System.nanoTime()));
         return true;
     }
@@ -164,7 +172,9 @@ final class FloatingShortcuts {
         Entry e = pop(redo);
         if (e == null)
             return false;
-        restore(e.page(), e.after());
+        for (Change c : e.changes())
+            if (pages.contains(c.page()))
+                restore(c.page(), c.after());
         undo.push(e.at(System.nanoTime()));
         return true;
     }
@@ -172,7 +182,7 @@ final class FloatingShortcuts {
     private Entry pop(Deque<Entry> stack) {
         while (!stack.isEmpty()) {
             Entry e = stack.pop();
-            if (pages.contains(e.page()))
+            if (e.changes().stream().anyMatch(c -> pages.contains(c.page())))
                 return e;
         }
         return null;

@@ -52,10 +52,13 @@ public final class Toast {
         if (variant != null)
             toast.getStyleClass().add(variant);
         toast.setMouseTransparent(true);
+        toast.setManaged(false);
         toast.layoutXProperty().bind(host.widthProperty().subtract(toast.widthProperty()).divide(2));
         toast.layoutYProperty().bind(host.heightProperty().subtract(toast.heightProperty()).subtract(40));
 
         host.getChildren().add(toast);
+        toast.applyCss();
+        toast.autosize();
         toast.toFront();
         current = toast;
         Motion.fadeSlideIn(toast, 28, 0);

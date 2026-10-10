@@ -21,7 +21,10 @@ public final class FontCatalog {
             "Liberation Sans", "Liberation Serif", "Liberation Mono", "DejaVu Sans", "DejaVu Serif",
             "DejaVu Sans Mono", "Noto Sans", "Noto Serif", "Open Sans", "Roboto", "Lato", "Ubuntu");
 
+    private static final List<String> UI_DEFAULTS = List.of("Inter", "Segoe UI", "Helvetica Neue", "Arial");
+
     private static List<String> available;
+    private static String defaultFamily;
 
     private FontCatalog() {
     }
@@ -42,5 +45,20 @@ public final class FontCatalog {
             available = List.copyOf(new ArrayList<>(found));
         }
         return available;
+    }
+
+    public static synchronized String defaultFamily() {
+        if (defaultFamily == null) {
+            Theme.loadFonts();
+            Map<String, String> installed = new HashMap<>();
+            for (String family : Font.getFamilies())
+                installed.put(family.toLowerCase(Locale.ROOT), family);
+            defaultFamily = UI_DEFAULTS.stream()
+                    .map(name -> installed.get(name.toLowerCase(Locale.ROOT)))
+                    .filter(f -> f != null)
+                    .findFirst()
+                    .orElse(Font.getDefault().getFamily());
+        }
+        return defaultFamily;
     }
 }

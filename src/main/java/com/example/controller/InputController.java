@@ -139,6 +139,7 @@ public class InputController {
         rootPane.sceneProperty().addListener((obs, oldScene, scene) -> {
             if (scene != null) {
                 floatingShortcuts.install(scene);
+                new FloatingPageDrag(pages, this::setupCell).install(scene);
                 scene.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
                     if (saveShortcut.match(event)) {
                         handleSave();
