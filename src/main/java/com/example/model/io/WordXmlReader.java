@@ -83,7 +83,7 @@ final class WordXmlReader {
         }
     }
 
-    private record TableDraft(double[] cols, double[] rows, int[][] merges, String[][] cells) {
+    private record TableDraft(double[] cols, double[] rows, int[][] merges, String[][] cells, String[][] fills) {
     }
 
     private record Fill(String hex, double opacity, boolean none, boolean present) {
@@ -582,7 +582,7 @@ final class WordXmlReader {
         double[][] zx = new double[d.rows().length][d.cols().length];
         double[][] zy = new double[d.rows().length][d.cols().length];
         FloatingTableContent derived = new FloatingTableContent(x, y, d.cols(), d.rows(), zx, zy, d.merges(),
-                d.cells());
+                d.cells(), d.fills());
         if (name != null && !name.isEmpty()) {
             DocxSidecar.Entry e = sidecar.get(name);
             if (e != null && DocxSidecar.sameSignature(e.signature(), DocxSidecar.signature(derived))) {
@@ -658,6 +658,7 @@ final class WordXmlReader {
 
         String empty = CellCodec.serialize(List.of());
         String[][] cells = new String[rows][cols];
+        String[][] fills = new String[rows][cols];
         for (String[] row : cells)
             java.util.Arrays.fill(row, empty);
 
@@ -675,6 +676,9 @@ final class WordXmlReader {
                     continue;
                 }
                 cells[r][t.col()] = CellCodec.serialize(readBlockParagraphs(t.el()));
+                String fill = attr(kid(kid(t.el(), W, "tcPr"), W, "shd"), W, "fill");
+                if (fill.matches("[0-9A-Fa-f]{6}"))
+                    fills[r][t.col()] = fill.toUpperCase();
                 if (t.span() > 1 || "restart".equals(t.vm())) {
                     int[] m = { r, t.col(), r, c1 };
                     merges.add(m);
@@ -688,7 +692,7 @@ final class WordXmlReader {
             }
         }
         merges.removeIf(m -> m[0] == m[2] && m[1] == m[3]);
-        return new TableDraft(colW, rowH, merges.toArray(new int[0][]), cells);
+        return new TableDraft(colW, rowH, merges.toArray(new int[0][]), cells, fills);
     }
 
     private void readBodyTable(Element tbl) {

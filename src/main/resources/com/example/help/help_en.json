@@ -283,6 +283,10 @@
         "- Change the number of rows and columns: right-click the table, type a number in Rows or Columns and press Enter.",
         "- Merge cells: drag across several cells to select them, right-click, then Merge cells. Right-click a merged cell and choose Split cells to undo.",
         "- Resize: drag a divider between cells. Hold Ctrl while dragging to move a single divider, and Alt to turn off snapping.",
+        "- The table's left and top edges can be dragged too, to resize the first column or row.",
+        "- New columns and rows take the median size of the others; if the table then goes past the page, it shrinks to fit.",
+        "- Dividers snap to other dividers, to the size that fits the text, and (green bars) to the size of another column, row or cell.",
+        "- Cell color: right-click a cell (or a selection of cells) and pick a Cell color.",
         "- Move the table: drag the blue square at its top-left corner.",
         "- Delete it: select the table (click its border or the blue square) and press Delete.",
         "- Right-click also has layer options (move forward / back one level)."

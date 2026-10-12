@@ -147,7 +147,7 @@ public class PageContent {
     public static FloatingTableContent capture(TableOverlay t) {
         FloatingTableContent ft = new FloatingTableContent(t.getTableX(), t.getTableY(),
                 t.getColumnWidths(), t.getRowHeights(),
-                t.getOffsetsX(), t.getOffsetsY(), t.getMerges(), t.encodeCells());
+                t.getOffsetsX(), t.getOffsetsY(), t.getMerges(), t.encodeCells(), t.getCellFills());
         ft.level = t.getLevel();
         return ft;
     }
@@ -368,10 +368,11 @@ public class PageContent {
         public final double[][] offX, offY;
         public final int[][] merges;
         public final String[][] cells;
+        public final String[][] fills;
         public Integer level;
 
         public FloatingTableContent(double x, double y, double[] colWidths, double[] rowHeights,
-                double[][] offX, double[][] offY, int[][] merges, String[][] cells) {
+                double[][] offX, double[][] offY, int[][] merges, String[][] cells, String[][] fills) {
             this.x = x;
             this.y = y;
             this.colWidths = colWidths;
@@ -380,11 +381,12 @@ public class PageContent {
             this.offY = offY;
             this.merges = merges;
             this.cells = cells;
+            this.fills = fills != null ? fills : new String[rowHeights.length][colWidths.length];
         }
 
         public static FloatingTableContent empty() {
             return new FloatingTableContent(0, 0, new double[0], new double[0],
-                    new double[0][0], new double[0][0], new int[0][0], new String[0][0]);
+                    new double[0][0], new double[0][0], new int[0][0], new String[0][0], new String[0][0]);
         }
 
         public Integer getLevel() {
@@ -393,14 +395,15 @@ public class PageContent {
 
         @Override
         public FloatingTableContent translated(double dx, double dy) {
-            return new FloatingTableContent(x + dx, y + dy, colWidths, rowHeights, offX, offY, merges, cells);
+            return new FloatingTableContent(x + dx, y + dy, colWidths, rowHeights, offX, offY, merges, cells,
+                    fills);
         }
 
         @Override
         public String signature() {
             return PageContent.signature("table", x, y, Arrays.toString(colWidths), Arrays.toString(rowHeights),
                     Arrays.deepToString(offX), Arrays.deepToString(offY), Arrays.deepToString(merges),
-                    Arrays.deepToString(cells));
+                    Arrays.deepToString(cells), Arrays.deepToString(fills));
         }
 
         @Override
@@ -408,7 +411,7 @@ public class PageContent {
             if (colWidths.length == 0 || rowHeights.length == 0)
                 return null;
             TableOverlay o = page.addTableOverlay(x, y, rowHeights.length, colWidths.length, cellSetup);
-            o.load(colWidths, rowHeights, offX, offY, merges, cells);
+            o.load(colWidths, rowHeights, offX, offY, merges, cells, fills);
             return o;
         }
     }

@@ -37,6 +37,7 @@ public class TextSelectionMover {
     private int pressStart, pressEnd;
     private Point2D pressPoint;
 
+    @SuppressWarnings("exports")
     public TextSelectionMover(Page page, Consumer<RichTextArea> cellSetup) {
         this.page = page;
         this.editor = page.getEditor();

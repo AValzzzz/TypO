@@ -94,7 +94,31 @@ final class DocxSidecar {
                 String cell = r < t.cells.length && c < t.cells[r].length ? t.cells[r][c] : "";
                 l.add(CellCodec.normalize(cell));
             }
+        if (hasFill(t))
+            for (int r = 0; r < t.rowHeights.length; r++)
+                for (int c = 0; c < t.colWidths.length; c++)
+                    l.add("#" + (hiddenByMerge(merges, r, c) ? "-" : fillAt(t.fills, r, c)));
         return String.join("\n", l);
+    }
+
+    private static boolean hasFill(FloatingTableContent t) {
+        for (int r = 0; r < t.rowHeights.length; r++)
+            for (int c = 0; c < t.colWidths.length; c++)
+                if (!hiddenByMerge(t.merges, r, c) && !fillAt(t.fills, r, c).equals("-"))
+                    return true;
+        return false;
+    }
+
+    private static boolean hiddenByMerge(int[][] merges, int r, int c) {
+        for (int[] m : merges)
+            if (r >= m[0] && r <= m[2] && c >= m[1] && c <= m[3])
+                return m[0] != r || m[1] != c;
+        return false;
+    }
+
+    private static String fillAt(String[][] fills, int r, int c) {
+        String f = r < fills.length && c < fills[r].length ? fills[r][c] : null;
+        return f == null ? "-" : f.toUpperCase();
     }
 
     static String signature(FloatingTextBoxContent t) {
@@ -152,6 +176,7 @@ final class DocxSidecar {
         for (String[] row : t.cells)
             for (String c : row)
                 l.add(b64(c));
+        l.add(joinFills(t.fills));
         return String.join("\n", l);
     }
 
@@ -165,9 +190,10 @@ final class DocxSidecar {
             for (int r = 0; r < rows.length; r++)
                 for (int c = 0; c < cols.length; c++)
                     cells[r][c] = k < l.length ? unb64(l[k++]) : "";
+            String[][] fills = fills(k < l.length ? l[k] : "", rows.length, cols.length);
             return new FloatingTableContent(Double.parseDouble(l[0]), Double.parseDouble(l[1]), cols, rows,
                     matrix(l[4], rows.length, cols.length), matrix(l[5], rows.length, cols.length),
-                    merges(l[6]), cells);
+                    merges(l[6]), cells, fills);
         } catch (RuntimeException e) {
             return null;
         }
@@ -221,6 +247,32 @@ final class DocxSidecar {
                     .append(merges[i][2]).append(',').append(merges[i][3]);
         }
         return sb.toString();
+    }
+
+    private static String joinFills(String[][] fills) {
+        StringBuilder sb = new StringBuilder();
+        for (int r = 0; r < fills.length; r++) {
+            if (r > 0)
+                sb.append(';');
+            for (int c = 0; c < fills[r].length; c++) {
+                if (c > 0)
+                    sb.append(',');
+                sb.append(fills[r][c] == null ? "-" : fills[r][c]);
+            }
+        }
+        return sb.toString();
+    }
+
+    private static String[][] fills(String s, int rows, int cols) {
+        String[][] f = new String[rows][cols];
+        String[] rs = s.split(";", -1);
+        for (int r = 0; r < rs.length && r < rows; r++) {
+            String[] vs = rs[r].split(",", -1);
+            for (int c = 0; c < vs.length && c < cols; c++)
+                if (!vs[c].isEmpty() && !vs[c].equals("-"))
+                    f[r][c] = vs[c];
+        }
+        return f;
     }
 
     private static double[] doubles(String s) {

@@ -148,7 +148,7 @@ final class PdfCanvas {
                     cx = ex;
                     cy = ey;
                 }
-                case ClosePath c -> {
+                case ClosePath _ -> {
                     cs.closePath();
                     cx = sx;
                     cy = sy;

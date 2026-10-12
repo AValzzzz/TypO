@@ -284,6 +284,10 @@
         "- Changer le nombre de lignes et de colonnes : clic droit sur le tableau, tapez un nombre dans Lignes ou Colonnes et appuyez sur Entrée.",
         "- Fusionner des cellules : faites glisser sur plusieurs cellules pour les sélectionner, clic droit, puis Fusionner les cellules. Faites un clic droit sur une cellule fusionnée et choisissez Séparer les cellules pour annuler.",
         "- Redimensionner : faites glisser un séparateur entre les cellules. Maintenez Ctrl pendant le glissement pour déplacer un seul séparateur, et Alt pour désactiver l'aimantation.",
+        "- Les bords gauche et haut du tableau peuvent aussi être déplacés, pour redimensionner la première colonne ou ligne.",
+        "- Les nouvelles colonnes et lignes prennent la taille médiane des autres ; si le tableau dépasse alors de la page, il est réduit pour tenir.",
+        "- Les séparateurs s'aimantent aux autres séparateurs, à la taille qui ajuste le texte, et (barres vertes) à la taille d'une autre colonne, ligne ou cellule.",
+        "- Couleur de cellule : clic droit sur une cellule (ou une sélection de cellules), puis Couleur de la cellule.",
         "- Déplacer le tableau : faites glisser le carré bleu à son coin supérieur gauche.",
         "- Le supprimer : sélectionnez le tableau (cliquez sur sa bordure ou sur le carré bleu) et appuyez sur Suppr.",
         "- Le clic droit propose aussi les options de calques (avancer / reculer d'un niveau)."

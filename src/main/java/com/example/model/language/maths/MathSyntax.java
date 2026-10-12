@@ -3,19 +3,6 @@ package com.example.model.language.maths;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Parser for the typed math syntax ({@code x^2}, {@code a/b}, {@code sqrt(x)}, {@code sum_(i=1)^(n)(i)}, ...),
- * where every argument may itself contain math: {@code x^(1/2)}, {@code (a/b)^2}, {@code sqrt(x^2/y_1)}.
- *
- * <p>
- * Parentheses used as argument delimiters ({@code x^(...)}, {@code sqrt(...)}, around a numerator or a
- * denominator) are not displayed; parentheses around the base of an exponent or a subscript, or inside plain
- * text, are kept.
- *
- * <p>
- * {@link MathObject} keeps its historical flat format (e.g. {@code FRACTION "num,den"}); each piece of it is the
- * source of a sub-expression, which {@link #fromObject} parses back.
- */
 public final class MathSyntax {
     private MathSyntax() {
     }
@@ -29,7 +16,6 @@ public final class MathSyntax {
     public record Seq(List<Expr> items) implements Expr {
     }
 
-    /** Parentheses that are displayed around their content. */
     public record Group(Expr inner) implements Expr {
     }
 
@@ -56,13 +42,11 @@ public final class MathSyntax {
 
     public static final Expr EMPTY = new Seq(List.of());
 
-    // ---- parsing --------------------------------------------------------------------------------------------
 
     public static Expr parse(String src) {
         Parser p = new Parser(src == null ? "" : src);
         List<Expr> items = new ArrayList<>();
         while (!p.done()) {
-            // A stray closing parenthesis at the top level is plain text.
             if (p.peek() == ')') {
                 items.add(new Text(")"));
                 p.pos++;
@@ -73,7 +57,6 @@ public final class MathSyntax {
         return simplify(items);
     }
 
-    /** Parses an argument: one pair of parentheses around the whole of it is a delimiter, not displayed. */
     public static Expr parseArgument(String src) {
         return unwrap(parse(src));
     }
@@ -118,15 +101,12 @@ public final class MathSyntax {
             return !done() && peek() == c;
         }
 
-        /** seq := frac* (until ')' or the end) */
         Expr seq() {
             List<Expr> items = new ArrayList<>();
             while (!done() && peek() != ')')
                 items.add(frac());
             return new Seq(items);
         }
-
-        /** frac := script ('/' script)* */
         Expr frac() {
             Expr left = script();
             while (at('/') && pos + 1 < s.length() && s.charAt(pos + 1) != ')') {
@@ -136,7 +116,6 @@ public final class MathSyntax {
             return left;
         }
 
-        /** script := primary (('^' | '_') argument)* */
         Expr script() {
             Expr base = primary();
             while ((at('^') || at('_')) && pos + 1 < s.length() && s.charAt(pos + 1) != ')') {
@@ -148,7 +127,6 @@ public final class MathSyntax {
             return base;
         }
 
-        /** argument := '(' seq ')' | [+-]? word | any single character */
         Expr argument() {
             if (at('('))
                 return unwrap(group());
@@ -174,7 +152,6 @@ public final class MathSyntax {
                 Expr special = keyword(word, start);
                 if (special != null)
                     return special;
-                // A function call such as sin(x) is a single operand: sin(x)/x, f(x)^2.
                 if (at('('))
                     return new Seq(List.of(new Text(word), group()));
                 return new Text(word);
@@ -182,7 +159,6 @@ public final class MathSyntax {
             return new Text(String.valueOf(s.charAt(pos++)));
         }
 
-        /** '(' seq ')' — a missing ')' closes at the end of the input. */
         Expr group() {
             pos++;
             Expr inner = simplify(((Seq) seq()).items());
@@ -254,8 +230,6 @@ public final class MathSyntax {
             return new Matrix(rows);
         }
     }
-
-    /** {@code x->0} becomes {@code x→0}, {@code infinity} becomes {@code ∞}, as the original command did. */
     private static Expr limitCondition(Expr cond) {
         String src = source(cond).replace("->", "→").replace("infinity", "∞");
         return parse(src);
@@ -277,7 +251,6 @@ public final class MathSyntax {
         return -1;
     }
 
-    /** Splits on {@code sep} outside parentheses; {@code limit > 0} caps the number of pieces. */
     public static List<String> splitTopLevel(String s, char sep, int limit) {
         List<String> out = new ArrayList<>();
         int depth = 0, start = 0;
@@ -303,9 +276,6 @@ public final class MathSyntax {
         return p;
     }
 
-    // ---- MathObject <-> Expr ----------------------------------------------------------------------------------
-
-    /** The expression a math object stands for, or null for an image. */
     public static Expr fromObject(MathObject o) {
         if (o == null || o.getType() == null)
             return EMPTY;
@@ -347,7 +317,6 @@ public final class MathSyntax {
         };
     }
 
-    /** The math object for a whole expression, or null if it is only text (nothing to convert). */
     public static MathObject toObject(Expr e) {
         while (e instanceof Group g)
             e = g.inner();
@@ -364,12 +333,10 @@ public final class MathSyntax {
         };
     }
 
-    /** Converts typed math source, or returns null when it contains no math construct. */
     public static MathObject toObject(String src) {
         return toObject(parse(src));
     }
 
-    /** Source of a raw piece, in parentheses if it contains one of the separators of its object. */
     private static String piece(Expr e, String separators) {
         String src = source(e);
         if (e instanceof Group)
@@ -400,7 +367,6 @@ public final class MathSyntax {
         return sb.toString();
     }
 
-    /** Typed syntax for an expression; {@code parse(source(e))} gives {@code e} back. */
     public static String source(Expr e) {
         return switch (e) {
             case Text t -> t.text();
@@ -444,7 +410,6 @@ public final class MathSyntax {
         return true;
     }
 
-    /** {@code f(x)}: a word directly followed by parentheses. */
     private static boolean isCall(Expr e) {
         return e instanceof Seq s && s.items().size() == 2 && isWord(s.items().get(0))
                 && s.items().get(1) instanceof Group;

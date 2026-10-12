@@ -1,7 +1,10 @@
 package com.example.view;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Consumer;
@@ -9,12 +12,15 @@ import java.util.function.Consumer;
 import com.example.model.TextStyle;
 import com.example.model.i18n.I18n;
 import com.example.model.io.CellCodec;
+import com.example.model.io.ColorUtil;
 import com.example.model.io.PageContent;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
+import javafx.scene.Parent;
+import javafx.scene.control.ColorPicker;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SeparatorMenuItem;
@@ -29,6 +35,9 @@ import javafx.scene.shape.LineTo;
 import javafx.scene.shape.MoveTo;
 import javafx.scene.shape.Path;
 import javafx.scene.shape.PathElement;
+import javafx.scene.shape.Shape;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextFlow;
 
 public class TableOverlay extends Pane implements Layerable {
     public static final int MAX_ROWS = 20;
@@ -39,7 +48,14 @@ public class TableOverlay extends Pane implements Layerable {
     private static final double MIN_COL_WIDTH = 30;
     private static final double MIN_ROW_HEIGHT = 20;
     private static final double HIT = 6;
-    private static final double SNAP = 6;
+    private static final double SNAP_PX = 6;
+    private static final double EQUAL_SNAP_PX = 12;
+    private static final double GUIDE_EXTEND = 8;
+    private static final double EQUAL_BAR = 6;
+    private static final Color GUIDE_COLOR = Color.web("#FF2D75");
+    private static final Color EQUAL_GUIDE_COLOR = Color.web("#22C55E");
+    private static final String FILL_KEY = "cellFill";
+    private static final Text MEASURE = new Text();
     private static final double PAD_V = 2;
     private static final double PAD_H = 4;
     private static final double HANDLE = 14;
@@ -47,14 +63,50 @@ public class TableOverlay extends Pane implements Layerable {
 
     private static final MenuSlot MENU = new MenuSlot();
 
+    private enum SnapKind {
+        EDGE, FIT, EQUAL
+    }
+
+    // value is in drag space: the base size (plain drag) or the offset delta (Ctrl drag).
+    // EDGE/FIT draw a line at `line`; EQUAL draws bars over `equal` ({-1, k} = whole column/row k, else a cell).
+    private record SnapTarget(SnapKind kind, double value, double line, List<int[]> equal) {
+    }
+
+    private record CellBox(int r1, int c1, int r2, int c2, double[] rect) {
+        int lo(boolean v) {
+            return v ? c1 : r1;
+        }
+
+        int hi(boolean v) {
+            return v ? c2 : r2;
+        }
+
+        int crossLo(boolean v) {
+            return v ? r1 : c1;
+        }
+
+        double start(boolean v) {
+            return v ? rect[0] : rect[1];
+        }
+
+        double end(boolean v) {
+            return v ? rect[2] : rect[3];
+        }
+
+        double size(boolean v) {
+            return end(v) - start(v);
+        }
+    }
+
     private static final class Drag {
-        boolean vertical, ctrl;
-        double start, startBase, minBase;
+        boolean vertical, ctrl, lead;
+        double start, startBase, minBase, startLayout;
         int b;
         int[] idx;
         double[] startOff;
         double lo = Double.NEGATIVE_INFINITY, hi = Double.POSITIVE_INFINITY;
-        double[] snaps = new double[0];
+        List<SnapTarget> targets = new ArrayList<>();
+        SnapTarget active;
     }
 
     private final Consumer<RichTextArea> cellSetup;
@@ -71,7 +123,11 @@ public class TableOverlay extends Pane implements Layerable {
 
     private final Path grid = new Path();
     private final Path selectionShade = new Path();
+    private final Path edgeGuide = new Path();
+    private final Path equalGuide = new Path();
     private final Region moveHandle = Handles.square(Cursor.MOVE);
+    private final Region leftEdge = newDivider(true);
+    private final Region topEdge = newDivider(false);
     private final MoveDrag move = new MoveDrag(this, () -> this.snap);
     private SnapGuides snap;
 
@@ -99,6 +155,14 @@ public class TableOverlay extends Pane implements Layerable {
         selectionShade.getStyleClass().add("table-selection");
         selectionShade.setStroke(null);
         selectionShade.setMouseTransparent(true);
+
+        for (Path guide : List.of(edgeGuide, equalGuide)) {
+            guide.setFill(null);
+            guide.setMouseTransparent(true);
+            guide.getProperties().put("noExport", Boolean.TRUE);
+        }
+        edgeGuide.setStroke(GUIDE_COLOR);
+        equalGuide.setStroke(EQUAL_GUIDE_COLOR);
 
         moveHandle.setVisible(false);
         installMoveHandlers();
@@ -151,17 +215,25 @@ public class TableOverlay extends Pane implements Layerable {
     private RichTextArea createCell() {
         RichTextArea cell = new RichTextArea();
         cell.setWrapText(true);
-        cell.setStyle("-fx-background-color: transparent; -fx-font-size: 14px;");
+        setFill(cell, null);
         cell.setPadding(new Insets(PAD_V, PAD_H, PAD_V, PAD_H));
         cell.totalHeightEstimateProperty().addListener((obs, o, n) -> relayout.schedule());
 
         cell.addEventHandler(ContextMenuEvent.CONTEXT_MENU_REQUESTED, e -> {
             boolean multi = cellSel != null && countUnits(cellSel) > 1;
-            ContextMenu menu = (!multi && cell.hasSelection())
-                    ? new TextFormatMenu(cell,
-                            change -> cell.updateSelectionStyle(change),
-                            align -> cell.updateSelectionParagraphStyle(s -> s.withAlignment(align)))
-                    : tableMenu(cell);
+            ContextMenu menu;
+            if (!multi && cell.hasSelection()) {
+                menu = new TextFormatMenu(cell,
+                        change -> cell.updateSelectionStyle(change),
+                        align -> cell.updateSelectionParagraphStyle(s -> s.withAlignment(align)));
+                int[] unit = unitOf(cell);
+                if (unit != null) {
+                    menu.getItems().add(new SeparatorMenuItem());
+                    menu.getItems().addAll(fillItems(menu, unit));
+                }
+            } else {
+                menu = tableMenu(cell);
+            }
             showMenu(menu, e);
             e.consume();
         });
@@ -211,6 +283,8 @@ public class TableOverlay extends Pane implements Layerable {
         final int nc = Math.max(1, Math.min(MAX_COLS, newCols));
         final int oldRows = rowHeights.size();
         final int oldCols = colWidths.size();
+        final double newColWidth = median(getColumnWidths());
+        final double newRowHeight = median(effectiveRowHeights());
 
         merges.removeIf(m -> m[2] >= nr || m[3] >= nc);
         cellSel = null;
@@ -224,7 +298,7 @@ public class TableOverlay extends Pane implements Layerable {
             }
         }
         while (colWidths.size() < nc) {
-            colWidths.add(MIN_COL_WIDTH);
+            colWidths.add(newColWidth);
             for (int r = 0; r < cells.size(); r++) {
                 cells.get(r).add(createCell());
                 rightDividers.get(r).add(newDivider(true));
@@ -239,7 +313,7 @@ public class TableOverlay extends Pane implements Layerable {
             bottomDividers.remove(last);
         }
         while (rowHeights.size() < nr)
-            addRow(MIN_ROW_HEIGHT);
+            addRow(newRowHeight);
 
         double[][] nx = new double[nr][nc];
         double[][] ny = new double[nr][nc];
@@ -257,7 +331,41 @@ public class TableOverlay extends Pane implements Layerable {
         offX = nx;
         offY = ny;
 
+        if (nc > oldCols)
+            fitToPage(true);
+        if (nr > oldRows)
+            fitToPage(false);
+
         rebuildChildren();
+    }
+
+    private static double median(double[] values) {
+        double[] v = values.clone();
+        Arrays.sort(v);
+        int n = v.length;
+        return n % 2 == 1 ? v[n / 2] : (v[n / 2 - 1] + v[n / 2]) / 2;
+    }
+
+    // Scales columns (or rows) down proportionally, with their offsets, when the table runs past the
+    // page's right (or bottom) edge. Rows can't go below their text height, so they may still overflow.
+    private void fitToPage(boolean horizontal) {
+        if (!(getParent() instanceof Region page))
+            return;
+        double total = horizontal ? computePrefWidth(-1) : computePrefHeight(-1);
+        double available = (horizontal ? page.getWidth() : page.getHeight())
+                - (horizontal ? getLayoutX() : getLayoutY());
+        if (available <= 0 || total <= available)
+            return;
+        double k = available / total;
+        List<Double> sizes = horizontal ? colWidths : rowHeights;
+        double[] current = horizontal ? getColumnWidths() : effectiveRowHeights();
+        double min = horizontal ? MIN_COL_WIDTH : MIN_ROW_HEIGHT;
+        for (int i = 0; i < sizes.size(); i++)
+            sizes.set(i, Math.max(min, current[i] * k));
+        double[][] off = horizontal ? offX : offY;
+        for (double[] row : off)
+            for (int i = 0; i < row.length; i++)
+                row[i] *= k;
     }
 
     private void rebuildChildren() {
@@ -266,6 +374,8 @@ public class TableOverlay extends Pane implements Layerable {
             nodes.addAll(row);
         nodes.add(grid);
         nodes.add(selectionShade);
+        nodes.add(edgeGuide);
+        nodes.add(equalGuide);
         for (int r = 0; r < cells.size(); r++) {
             for (int c = 0; c < cells.get(r).size(); c++) {
                 Region rd = rightDividers.get(r).get(c);
@@ -276,6 +386,10 @@ public class TableOverlay extends Pane implements Layerable {
                 nodes.add(bd);
             }
         }
+        leftEdge.getProperties().put("lead", Boolean.TRUE);
+        topEdge.getProperties().put("lead", Boolean.TRUE);
+        nodes.add(leftEdge);
+        nodes.add(topEdge);
         nodes.add(moveHandle);
         getChildren().setAll(nodes);
         requestLayout();
@@ -427,7 +541,9 @@ public class TableOverlay extends Pane implements Layerable {
 
     private ContextMenu tableMenu(RichTextArea ctxCell) {
         List<MenuItem> extra = new ArrayList<>();
-        if (cellSel != null && countUnits(cellSel) > 1) {
+        boolean multi = cellSel != null && countUnits(cellSel) > 1;
+        int[] fillRect = multi ? cellSel.clone() : (ctxCell == null ? null : unitOf(ctxCell));
+        if (multi) {
             int[] snapshot = cellSel.clone();
             MenuItem merge = new MenuItem(I18n.t("table.merge"));
             merge.setOnAction(e -> mergeCells(snapshot));
@@ -446,7 +562,57 @@ public class TableOverlay extends Pane implements Layerable {
             extra.add(new SeparatorMenuItem());
         extra.addAll(FormatMenu.layerItems(this));
 
-        return new TableFormatMenu(this, extra);
+        TableFormatMenu menu = new TableFormatMenu(this, extra);
+        if (fillRect != null) {
+            List<MenuItem> fill = new ArrayList<>(fillItems(menu, fillRect));
+            fill.add(new SeparatorMenuItem());
+            menu.getItems().addAll(0, fill);
+        }
+        return menu;
+    }
+
+    private int[] unitOf(RichTextArea cell) {
+        int[] pos = positionOf(cell);
+        if (pos == null)
+            return null;
+        int[] m = mergeContaining(pos[0], pos[1]);
+        return m != null ? m.clone() : new int[] { pos[0], pos[1], pos[0], pos[1] };
+    }
+
+    private List<MenuItem> fillItems(ContextMenu menu, int[] rect) {
+        Color current = fillOf(cells.get(rect[0]).get(rect[1]));
+        ColorPicker picker = new ColorPicker(current != null ? current : Color.WHITE);
+        picker.setOnAction(e -> fillCells(rect, ColorUtil.opaque(picker.getValue())));
+        picker.showingProperty().addListener((obs, was, is) -> menu.setAutoHide(!is));
+
+        boolean anyFill = false;
+        for (int r = rect[0]; r <= rect[2]; r++)
+            for (int c = rect[1]; c <= rect[3]; c++)
+                anyFill |= fillOf(cells.get(r).get(c)) != null;
+        MenuItem none = new MenuItem(I18n.t("table.noFill"));
+        none.setDisable(!anyFill);
+        none.setOnAction(e -> fillCells(rect, null));
+
+        return List.of(FormatMenu.row(I18n.t("table.fill"), picker), none);
+    }
+
+    private void fillCells(int[] rect, Color color) {
+        for (int r = rect[0]; r <= rect[2] && r < cells.size(); r++)
+            for (int c = rect[1]; c <= rect[3] && c < colWidths.size(); c++)
+                setFill(cells.get(r).get(c), color);
+    }
+
+    private static Color fillOf(RichTextArea cell) {
+        return (Color) cell.getProperties().get(FILL_KEY);
+    }
+
+    private static void setFill(RichTextArea cell, Color color) {
+        if (color == null)
+            cell.getProperties().remove(FILL_KEY);
+        else
+            cell.getProperties().put(FILL_KEY, color);
+        cell.setStyle("-fx-background-color: " + (color == null ? "transparent" : ColorUtil.toCssHex(color))
+                + "; -fx-font-size: 14px;");
     }
 
     private double need(RichTextArea cell) {
@@ -548,7 +714,10 @@ public class TableOverlay extends Pane implements Layerable {
                         addRect(shade, rectOf(r, c), true);
         }
         selectionShade.getElements().setAll(shade);
+        updateGuides();
 
+        leftEdge.resizeRelocate(-HIT / 2, 0, HIT, ys[rows]);
+        topEdge.resizeRelocate(0, -HIT / 2, xs[cols], HIT);
         moveHandle.resizeRelocate(-HANDLE, -HANDLE, HANDLE, HANDLE);
     }
 
@@ -576,6 +745,7 @@ public class TableOverlay extends Pane implements Layerable {
             if (drag != null) {
                 drag = null;
                 highlight(d, false);
+                requestLayout();
                 e.consume();
             }
         });
@@ -590,7 +760,8 @@ public class TableOverlay extends Pane implements Layerable {
         if (e.getButton() != MouseButton.PRIMARY)
             return;
         computeMetrics();
-        int[] rc = (int[]) d.getProperties().get("rc");
+        boolean lead = d.getProperties().containsKey("lead");
+        int[] rc = lead ? new int[] { 0, 0 } : (int[]) d.getProperties().get("rc");
         int r1 = rc[0], c1 = rc[1], r2 = r1, c2 = c1;
         int[] m = mergeContaining(r1, c1);
         if (m != null) {
@@ -598,12 +769,13 @@ public class TableOverlay extends Pane implements Layerable {
             c2 = m[3];
         }
 
-        Point2D p = sceneToLocal(e.getSceneX(), e.getSceneY());
         Drag dr = new Drag();
         dr.vertical = vertical;
-        dr.ctrl = e.isControlDown();
-        dr.start = vertical ? p.getX() : p.getY();
-        dr.b = vertical ? c2 : r2;
+        dr.lead = lead;
+        dr.ctrl = e.isControlDown() && !lead;
+        dr.start = dragPos(dr, e);
+        dr.b = lead ? 0 : vertical ? c2 : r2;
+        dr.startLayout = vertical ? getLayoutX() : getLayoutY();
 
         if (!dr.ctrl) {
             if (vertical) {
@@ -626,7 +798,6 @@ public class TableOverlay extends Pane implements Layerable {
                     dr.hi = Math.min(dr.hi, next[2] - MIN_COL_WIDTH - cur[2]);
                 }
             }
-            dr.snaps = verticalSnaps(dr);
         } else {
             dr.idx = affectedCols(c1, c2, dr.b).stream().mapToInt(Integer::intValue).toArray();
             dr.startOff = new double[dr.idx.length];
@@ -640,8 +811,8 @@ public class TableOverlay extends Pane implements Layerable {
                     dr.hi = Math.min(dr.hi, next[3] - MIN_ROW_HEIGHT - cur[3]);
                 }
             }
-            dr.snaps = horizontalSnaps(dr);
         }
+        dr.targets = snapTargets(dr);
 
         drag = dr;
         if (dr.ctrl)
@@ -652,12 +823,25 @@ public class TableOverlay extends Pane implements Layerable {
     private void doDrag(MouseEvent e) {
         if (drag == null)
             return;
-        Point2D p = sceneToLocal(e.getSceneX(), e.getSceneY());
-        double delta = (drag.vertical ? p.getX() : p.getY()) - drag.start;
+        double delta = dragPos(drag, e) - drag.start;
 
-        if (!drag.ctrl) {
-            double v = Math.max(drag.minBase, drag.startBase + delta);
-            if (snap != null) {
+        if (drag.lead) {
+            // Left/top edge: the first column/row grows towards the outside while the opposite edge stays put.
+            double v = applySnap(Math.max(drag.minBase, drag.startBase - delta), e.isAltDown());
+            if (snap != null)
+                snap.clear();
+            if (drag.vertical) {
+                colWidths.set(0, v);
+                setLayoutX(drag.startLayout + drag.startBase - v);
+            } else {
+                rowHeights.set(0, v);
+                setLayoutY(drag.startLayout + drag.startBase - effectiveRowHeights()[0]);
+            }
+        } else if (!drag.ctrl) {
+            double v = applySnap(Math.max(drag.minBase, drag.startBase + delta), e.isAltDown());
+            if (snap != null && drag.active != null) {
+                snap.clear();
+            } else if (snap != null) {
                 if (drag.vertical) {
                     double total = computePrefWidth(-1) - colWidths.get(drag.b) + v;
                     double[] s = snap.resize(this, total, 0, true, false, e.isAltDown());
@@ -676,9 +860,8 @@ public class TableOverlay extends Pane implements Layerable {
             else
                 rowHeights.set(drag.b, v);
         } else {
-            double d = drag.lo > drag.hi ? 0 : Math.max(drag.lo, Math.min(drag.hi, delta));
-            if (!e.isAltDown())
-                d = snap(d);
+            double d = applySnap(drag.lo > drag.hi ? 0 : Math.max(drag.lo, Math.min(drag.hi, delta)),
+                    e.isAltDown());
             for (int k = 0; k < drag.idx.length; k++) {
                 if (drag.vertical)
                     offX[drag.idx[k]][drag.b] = drag.startOff[k] + d;
@@ -688,6 +871,13 @@ public class TableOverlay extends Pane implements Layerable {
         }
         requestLayout();
         e.consume();
+    }
+
+    // Edge drags move the table itself, so they are measured in the parent's coordinates.
+    private double dragPos(Drag dr, MouseEvent e) {
+        Point2D p = dr.lead && getParent() != null ? getParent().sceneToLocal(e.getSceneX(), e.getSceneY())
+                : sceneToLocal(e.getSceneX(), e.getSceneY());
+        return dr.vertical ? p.getX() : p.getY();
     }
 
     private List<Integer> affectedRows(int r1, int r2, int b) {
@@ -847,8 +1037,18 @@ public class TableOverlay extends Pane implements Layerable {
         return out;
     }
 
+    public String[][] getCellFills() {
+        String[][] out = new String[cells.size()][];
+        for (int r = 0; r < out.length; r++) {
+            out[r] = new String[cells.get(r).size()];
+            for (int c = 0; c < out[r].length; c++)
+                out[r][c] = ColorUtil.toHex(fillOf(cells.get(r).get(c)));
+        }
+        return out;
+    }
+
     public void load(double[] widths, double[] heights, double[][] ox, double[][] oy, int[][] mergeData,
-            String[][] encoded) {
+            String[][] encoded, String[][] fills) {
         for (int c = 0; c < colWidths.size() && c < widths.length; c++)
             colWidths.set(c, Math.max(MIN_COL_WIDTH, widths[c]));
         for (int r = 0; r < rowHeights.size() && r < heights.length; r++)
@@ -873,6 +1073,9 @@ public class TableOverlay extends Pane implements Layerable {
         for (int r = 0; r < cells.size() && r < encoded.length; r++)
             for (int c = 0; c < cells.get(r).size() && c < encoded[r].length; c++)
                 CellCodec.decode(encoded[r][c], cells.get(r).get(c));
+        for (int r = 0; r < cells.size() && r < fills.length; r++)
+            for (int c = 0; c < cells.get(r).size() && c < fills[r].length; c++)
+                setFill(cells.get(r).get(c), ColorUtil.fromHex(fills[r][c]));
         requestLayout();
     }
 
@@ -890,59 +1093,243 @@ public class TableOverlay extends Pane implements Layerable {
             onDelete.run();
     }
 
-    private double[] verticalSnaps(Drag dr) {
-        int first = dr.idx[0], last = dr.idx[dr.idx.length - 1];
-        List<Double> targets = new ArrayList<>();
-        for (int i : new int[] { first - 1, last + 1 }) {
-            if (i < 0 || i >= rowHeights.size())
-                continue;
-            int[] m = mergeContaining(i, dr.b);
-            if (m != null && m[3] != dr.b)
-                continue;
-            targets.add(rectOf(i, dr.b)[2]);
+    private List<CellBox> boxes() {
+        List<CellBox> out = new ArrayList<>();
+        for (int r = 0; r < cells.size(); r++) {
+            for (int c = 0; c < cells.get(r).size(); c++) {
+                if (isHidden(r, c))
+                    continue;
+                int[] m = mergeContaining(r, c);
+                out.add(m == null ? new CellBox(r, c, r, c, rectOf(r, c))
+                        : new CellBox(m[0], m[1], m[2], m[3], rectOf(r, c)));
+            }
         }
-        double[] out = new double[targets.size() * dr.idx.length];
-        int n = 0;
-        for (double t : targets)
-            for (int row : dr.idx)
-                out[n++] = t - rectOf(row, dr.b)[2];
         return out;
     }
 
-    private double[] horizontalSnaps(Drag dr) {
-        int first = dr.idx[0], last = dr.idx[dr.idx.length - 1];
-        List<Double> targets = new ArrayList<>();
-        for (int j : new int[] { first - 1, last + 1 }) {
-            if (j < 0 || j >= colWidths.size())
-                continue;
-            int[] m = mergeContaining(dr.b, j);
-            if (m != null && m[2] != dr.b)
-                continue;
-            targets.add(rectOf(dr.b, j)[3]);
+    private List<SnapTarget> snapTargets(Drag dr) {
+        boolean v = dr.vertical;
+        Set<Integer> movingLines = new TreeSet<>();
+        if (dr.ctrl)
+            for (int i : dr.idx)
+                movingLines.add(i);
+
+        List<CellBox> own = new ArrayList<>();
+        List<CellBox> neigh = new ArrayList<>();
+        List<CellBox> others = new ArrayList<>();
+        List<Double> fixed = new ArrayList<>();
+        for (CellBox x : boxes()) {
+            boolean inLine = !dr.ctrl || movingLines.contains(x.crossLo(v));
+            boolean isOwn = inLine && x.hi(v) == dr.b;
+            boolean isNeigh = dr.ctrl && inLine && x.lo(v) == dr.b + 1;
+            if (isOwn)
+                own.add(x);
+            else if (isNeigh)
+                neigh.add(x);
+            else
+                others.add(x);
+            if (dr.ctrl) {
+                if (!isOwn)
+                    fixed.add(x.end(v));
+                if (!isNeigh)
+                    fixed.add(x.start(v));
+            } else {
+                if (x.hi(v) < dr.b)
+                    fixed.add(x.end(v));
+                if (x.lo(v) <= dr.b)
+                    fixed.add(x.start(v));
+            }
         }
-        double[] out = new double[targets.size() * dr.idx.length];
-        int n = 0;
-        for (double t : targets)
-            for (int col : dr.idx)
-                out[n++] = t - rectOf(dr.b, col)[3];
+
+        double base = dr.ctrl ? 0 : dr.startBase;
+        List<SnapTarget> out = new ArrayList<>();
+        if (dr.lead) {
+            if (snap != null)
+                for (double page : snap.edges(this, v)) {
+                    double f = page - dr.startLayout;
+                    out.add(new SnapTarget(SnapKind.EDGE, base - f, f, null));
+                }
+        } else {
+            for (CellBox o : own)
+                for (double f : fixed)
+                    out.add(new SnapTarget(SnapKind.EDGE, base + f - o.end(v), f, null));
+        }
+
+        CellBox widest = null;
+        double fitDelta = 0;
+        for (CellBox o : own) {
+            double fit = fitSize(o, v);
+            if (fit > 0 && (widest == null || fit - o.size(v) > fitDelta)) {
+                widest = o;
+                fitDelta = fit - o.size(v);
+            }
+        }
+        if (widest != null)
+            out.add(new SnapTarget(SnapKind.FIT, base + fitDelta,
+                    dr.lead ? -fitDelta : widest.end(v) + fitDelta, null));
+
+        if (!dr.ctrl) {
+            double[] sizes = v ? getColumnWidths() : effectiveRowHeights();
+            for (int k = 0; k < sizes.length; k++) {
+                if (k == dr.b)
+                    continue;
+                List<int[]> eq = new ArrayList<>();
+                eq.add(new int[] { -1, dr.b });
+                for (int j = 0; j < sizes.length; j++)
+                    if (j != dr.b && Math.abs(sizes[j] - sizes[k]) < 0.5)
+                        eq.add(new int[] { -1, j });
+                out.add(new SnapTarget(SnapKind.EQUAL, sizes[k], 0, eq));
+            }
+        } else {
+            Map<Long, List<CellBox>> bySize = new HashMap<>();
+            for (CellBox x : others)
+                bySize.computeIfAbsent(Math.round(x.size(v) * 2), k -> new ArrayList<>()).add(x);
+            for (List<CellBox> same : bySize.values()) {
+                double size = same.get(0).size(v);
+                List<int[]> marks = new ArrayList<>();
+                for (CellBox x : same)
+                    marks.add(new int[] { x.r1(), x.c1() });
+                for (CellBox o : own)
+                    out.add(new SnapTarget(SnapKind.EQUAL, size - o.size(v), 0,
+                            withMark(marks, o)));
+                for (CellBox n : neigh)
+                    out.add(new SnapTarget(SnapKind.EQUAL, n.size(v) - size, 0,
+                            withMark(marks, n)));
+            }
+        }
         return out;
     }
 
-    private double snap(double d) {
-        if (drag.lo > drag.hi)
-            return d;
-        double best = d;
-        double bestDist = SNAP;
-        for (double s : drag.snaps) {
-            if (s < drag.lo || s > drag.hi)
+    private static List<int[]> withMark(List<int[]> marks, CellBox x) {
+        List<int[]> out = new ArrayList<>(marks);
+        out.add(new int[] { x.r1(), x.c1() });
+        return out;
+    }
+
+    private double fitSize(CellBox x, boolean vertical) {
+        RichTextArea cell = cells.get(x.r1()).get(x.c1());
+        if (cell.getLength() == 0)
+            return 0;
+        if (!vertical)
+            return need(cell);
+        double w = naturalWidth(cell);
+        return w > 0 ? Math.ceil(w) + 2 * PAD_H + 2 : 0;
+    }
+
+    // Width of the longest paragraph laid out on a single line, measured from the rendered text nodes.
+    private static double naturalWidth(Node n) {
+        if (n instanceof TextFlow flow) {
+            double w = 0;
+            for (Node child : flow.getChildrenUnmodifiable()) {
+                if (child instanceof Text t) {
+                    MEASURE.setFont(t.getFont());
+                    MEASURE.setText(t.getText());
+                    w += MEASURE.getLayoutBounds().getWidth();
+                } else if (child.isManaged() && !(child instanceof Shape)) {
+                    w += child.prefWidth(-1);
+                }
+            }
+            return w;
+        }
+        double max = 0;
+        if (n instanceof Parent p)
+            for (Node child : p.getChildrenUnmodifiable())
+                max = Math.max(max, naturalWidth(child));
+        return max;
+    }
+
+    // Equal-size targets win within a wider radius; otherwise the closest edge/fit target is used.
+    private double applySnap(double raw, boolean disabled) {
+        drag.active = null;
+        if (disabled)
+            return raw;
+        double scale = viewScale();
+        SnapTarget best = closest(raw, true, EQUAL_SNAP_PX / scale);
+        if (best == null)
+            best = closest(raw, false, SNAP_PX / scale);
+        drag.active = best;
+        return best == null ? raw : best.value();
+    }
+
+    private SnapTarget closest(double raw, boolean equal, double threshold) {
+        SnapTarget best = null;
+        double bestDist = threshold;
+        for (SnapTarget t : drag.targets) {
+            if ((t.kind() == SnapKind.EQUAL) != equal || !reachable(t.value()))
                 continue;
-            double dist = Math.abs(s - d);
+            double dist = Math.abs(t.value() - raw);
             if (dist <= bestDist) {
                 bestDist = dist;
-                best = s;
+                best = t;
             }
         }
         return best;
+    }
+
+    private boolean reachable(double value) {
+        if (!drag.ctrl)
+            return value >= drag.minBase;
+        return drag.lo <= drag.hi && value >= drag.lo && value <= drag.hi;
+    }
+
+    private double viewScale() {
+        Point2D a = localToScene(0, 0);
+        Point2D b = localToScene(1, 0);
+        double s = a.distance(b);
+        return s > 0.0001 ? s : 1;
+    }
+
+    private void updateGuides() {
+        List<PathElement> edge = new ArrayList<>();
+        List<PathElement> equal = new ArrayList<>();
+        SnapTarget t = drag == null ? null : drag.active;
+        if (t != null) {
+            double w = 1 / viewScale();
+            edgeGuide.setStrokeWidth(w);
+            equalGuide.setStrokeWidth(2 * w);
+            boolean v = drag.vertical;
+            if (t.kind() != SnapKind.EQUAL) {
+                // Lead-edge lines are recorded in the table's frame at drag start, which has moved since.
+                double at = t.line() - (drag.lead ? (v ? getLayoutX() : getLayoutY()) - drag.startLayout : 0);
+                if (v)
+                    line(edge, at, -GUIDE_EXTEND, at, ys[ys.length - 1] + GUIDE_EXTEND);
+                else
+                    line(edge, -GUIDE_EXTEND, at, xs[xs.length - 1] + GUIDE_EXTEND, at);
+            } else {
+                double[] lines = v ? xs : ys;
+                for (int[] u : t.equal()) {
+                    if (u[0] < 0) {
+                        bar(equal, v, lines[u[1]], lines[u[1] + 1], -EQUAL_BAR);
+                    } else {
+                        double[] rc = rectOf(u[0], u[1]);
+                        bar(equal, v, v ? rc[0] : rc[1], v ? rc[2] : rc[3], (v ? rc[1] : rc[0]) + EQUAL_BAR);
+                    }
+                }
+            }
+        }
+        edgeGuide.getElements().setAll(edge);
+        equalGuide.getElements().setAll(equal);
+    }
+
+    // A dimension bar with end ticks from a to b along the drag axis, placed at `at` across it.
+    private static void bar(List<PathElement> out, boolean vertical, double a, double b, double at) {
+        double tick = EQUAL_BAR / 2;
+        a += 2;
+        b -= 2;
+        if (vertical) {
+            line(out, a, at, b, at);
+            line(out, a, at - tick, a, at + tick);
+            line(out, b, at - tick, b, at + tick);
+        } else {
+            line(out, at, a, at, b);
+            line(out, at - tick, a, at + tick, a);
+            line(out, at - tick, b, at + tick, b);
+        }
+    }
+
+    private static void line(List<PathElement> out, double x1, double y1, double x2, double y2) {
+        out.add(new MoveTo(x1, y1));
+        out.add(new LineTo(x2, y2));
     }
 
     public void setSnap(SnapGuides snap) {

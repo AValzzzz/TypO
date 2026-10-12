@@ -73,6 +73,7 @@ public final class Theme {
         install(scene.getStylesheets());
     }
 
+    @SuppressWarnings("exports")
     public static void apply(DialogPane pane) {
         install(pane.getStylesheets());
     }
@@ -84,23 +85,28 @@ public final class Theme {
             sheets.add(sheets.indexOf(CSS) + 1, themeCss);
     }
 
+    @SuppressWarnings("exports")
     public static ObservableList<AppTheme> themes() {
         return FXCollections.unmodifiableObservableList(THEMES);
     }
 
+    @SuppressWarnings("exports")
     public static ReadOnlyObjectProperty<AppTheme> currentProperty() {
         return CURRENT.getReadOnlyProperty();
     }
 
+    @SuppressWarnings("exports")
     public static AppTheme current() {
         return CURRENT.get();
     }
 
+    @SuppressWarnings("exports")
     public static void select(AppTheme theme) {
         if (theme != null)
             CURRENT.set(theme);
     }
 
+    @SuppressWarnings("exports")
     public static AppTheme importTheme(Path file) throws IOException {
         AppTheme theme = AppTheme.parse(Files.readString(file, StandardCharsets.UTF_8));
         Files.createDirectories(USER_DIR);

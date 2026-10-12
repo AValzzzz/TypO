@@ -504,6 +504,10 @@ final class WordXmlWriter {
                     x.append("<w:gridSpan w:val=\"").append(c2 - c + 1).append("\"/>");
                 if (m != null && m[2] > m[0])
                     x.append(continued ? "<w:vMerge/>" : "<w:vMerge w:val=\"restart\"/>");
+                int fr = continued ? m[0] : r;
+                String fill = fr < t.fills.length && c < t.fills[fr].length ? t.fills[fr][c] : null;
+                if (fill != null)
+                    x.append("<w:shd w:val=\"clear\" w:color=\"auto\" w:fill=\"").append(fill).append("\"/>");
                 x.append("</w:tcPr>");
                 if (continued) {
                     x.append("<w:p/>");

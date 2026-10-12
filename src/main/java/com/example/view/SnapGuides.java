@@ -136,6 +136,10 @@ public class SnapGuides {
         return new double[] { nw, nh };
     }
 
+    public List<Double> edges(Node self, boolean horizontal) {
+        return targets(others.apply(self), horizontal ? pane.getWidth() : pane.getHeight(), horizontal);
+    }
+
     private double scale() {
         var a = pane.localToScene(0, 0);
         var b = pane.localToScene(1, 0);
