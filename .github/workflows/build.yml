@@ -29,6 +29,12 @@ jobs:
       - name: Build Fat JAR with Maven
         run: mvn clean package -DskipTests
 
+      - name: Compute app version
+        shell: bash
+        run: |
+          VER=$(echo "${GITHUB_REF_NAME#v}" | grep -oE '^[0-9]+(\.[0-9]+){0,2}' || true)
+          echo "APP_VERSION=${VER:-1.0.0}" >> "$GITHUB_ENV"
+
       - name: Build Native Executable (Linux)
         if: matrix.os == 'ubuntu-latest'
         run: |
@@ -39,8 +45,31 @@ jobs:
             --main-jar TypO.jar \
             --main-class com.example.Launcher \
             --java-options "-Xmx256m" \
+            --icon src/main/resources/com/example/logo.png \
             --dest output/
+          cp packaging/linux/install.sh output/TypO/install.sh
+          chmod +x output/TypO/install.sh
+          cp src/main/resources/com/example/logo.png output/TypO/typo.png
           tar -czvf TypO-linux.tar.gz -C output TypO
+
+      - name: Build Debian package (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          jpackage \
+            --type deb \
+            --name TypO \
+            --linux-package-name typo \
+            --app-version "$APP_VERSION" \
+            --input target/ \
+            --main-jar TypO.jar \
+            --main-class com.example.Launcher \
+            --java-options "-Xmx256m" \
+            --icon src/main/resources/com/example/logo.png \
+            --linux-shortcut \
+            --linux-app-category Office \
+            --file-associations packaging/docx.properties \
+            --dest deb/
+          mv deb/*.deb TypO-linux.deb
 
       - name: Upload Linux Artifacts to Release
         if: matrix.os == 'ubuntu-latest'
@@ -49,6 +78,7 @@ jobs:
           files: |
             target/TypO.jar
             TypO-linux.tar.gz
+            TypO-linux.deb
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -67,12 +97,43 @@ jobs:
             --dest output/
           Compress-Archive -Path output/TypO -DestinationPath TypO-windows.zip
 
+      - name: Install WiX Toolset (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: powershell
+        run: |
+          dotnet tool install --global wix --version 5.0.2
+          echo "$env:USERPROFILE\.dotnet\tools" >> $env:GITHUB_PATH
+          & "$env:USERPROFILE\.dotnet\tools\wix.exe" extension add --global WixToolset.Util.wixext/5.0.2
+          & "$env:USERPROFILE\.dotnet\tools\wix.exe" extension add --global WixToolset.UI.wixext/5.0.2
+
+      - name: Build Installer (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: powershell
+        run: |
+          jpackage `
+            --type msi `
+            --name TypO `
+            --app-version $env:APP_VERSION `
+            --input target/ `
+            --main-jar TypO.jar `
+            --main-class com.example.Launcher `
+            --java-options "-Xmx256m" `
+            --file-associations packaging/docx.properties `
+            --win-menu `
+            --win-menu-group TypO `
+            --win-shortcut `
+            --win-dir-chooser `
+            --win-upgrade-uuid 8b38dfa3-3c2b-496e-b2e4-91022f5f2d11 `
+            --dest installer/
+          Move-Item installer/*.msi TypO-windows.msi
+
       - name: Upload Windows Artifacts
         if: matrix.os == 'windows-latest'
         uses: softprops/action-gh-release@v2
         with:
           files: |
             TypO-windows.zip
+            TypO-windows.msi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -82,10 +143,12 @@ jobs:
           jpackage \
             --type dmg \
             --name TypO \
+            --app-version "$APP_VERSION" \
             --input target/ \
             --main-jar TypO.jar \
             --main-class com.example.Launcher \
             --java-options "-Xmx256m" \
+            --file-associations packaging/docx.properties \
             --dest output/
           mv output/*.dmg TypO-mac.dmg
 
@@ -153,6 +216,7 @@ jobs:
           Icon=typo
           Terminal=false
           Categories=Office;TextEditor;
+          MimeType=application/vnd.openxmlformats-officedocument.wordprocessingml.document;
           EOF
 
           cat > pkgbuild/PKGBUILD <<'EOF'

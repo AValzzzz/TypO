@@ -254,6 +254,12 @@ public class InputController {
         new OpenFile(stackPane.getScene().getWindow(), this::loadDocument).execute();
     }
 
+    public void openFile(Path file) {
+        if (!unsavedChanges.confirmDiscard())
+            return;
+        new OpenFile(stackPane.getScene().getWindow(), this::loadDocument).open(file);
+    }
+
     private void loadDocument(List<PageContent> loadedPages, Path source) {
         unsavedChanges.expectBaseline();
         loading = true;

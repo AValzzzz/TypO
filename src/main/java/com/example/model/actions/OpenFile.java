@@ -36,10 +36,13 @@ public class OpenFile implements AppAction {
         if (file == null) {
             return;
         }
+        open(file.toPath());
+    }
 
+    public void open(Path file) {
         try {
-            List<PageContent> pages = new DocxDocumentWriter().read(file.toPath());
-            onLoaded.accept(pages, file.toPath());
+            List<PageContent> pages = new DocxDocumentWriter().read(file);
+            onLoaded.accept(pages, file);
         } catch (IOException e) {
             new Alert(AlertType.ERROR, I18n.t("file.error.open", e.getMessage())).showAndWait();
         }

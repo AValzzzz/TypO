@@ -18,6 +18,7 @@ import javafx.stage.Stage;
 public class App extends Application {
 
     public static void main(String[] args) {
+        OpenRequests.collect(args);
         launch(args);
     }
 
@@ -45,5 +46,6 @@ public class App extends Application {
         stage.setScene(scene);
         stage.show();
         controller.install(stage);
+        OpenRequests.setHandler(controller::openFile);
     }
 }
