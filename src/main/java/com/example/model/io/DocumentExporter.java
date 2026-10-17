@@ -1,6 +1,7 @@
 package com.example.model.io;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,10 +17,20 @@ public final class DocumentExporter {
     }
 
     public static void writeDocx(List<Page> pages, Path target) throws IOException {
+        new DocxDocumentWriter().write(capture(pages), target);
+    }
+
+    public static String snapshot(List<Page> pages) {
+        WordXmlWriter w = new WordXmlWriter();
+        String document = w.documentXml(capture(pages));
+        return document + new String(w.sidecar().toXml(), StandardCharsets.UTF_8);
+    }
+
+    private static List<PageContent> capture(List<Page> pages) {
         List<PageContent> content = new ArrayList<>();
         for (Page page : pages)
             content.add(PageContent.capture(page));
-        new DocxDocumentWriter().write(content, target);
+        return content;
     }
 
     public static void writePdf(List<Page> pages, Path target) throws IOException {

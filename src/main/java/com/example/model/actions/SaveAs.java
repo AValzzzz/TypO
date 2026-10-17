@@ -53,6 +53,7 @@ public class SaveAs implements AppAction {
             } else {
                 DocumentExporter.writeDocx(pages, target);
                 session.setCurrentFile(target);
+                session.markSaved(DocumentExporter.snapshot(pages));
                 Toast.success(I18n.t("toast.saved"));
             }
         } catch (IOException e) {

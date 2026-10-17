@@ -68,6 +68,7 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
 import javafx.stage.Window;
 
 public class InputController {
@@ -101,6 +102,7 @@ public class InputController {
     private final Set<Page> pendingReflow = new HashSet<>();
     private boolean loading = false;
     private FloatingShortcuts floatingShortcuts;
+    private final UnsavedChanges unsavedChanges = new UnsavedChanges(pages, session, this::handleSave);
 
     @FXML
     public void initialize() {
@@ -145,6 +147,10 @@ public class InputController {
 
         setupToolbar();
         Toast.install(rootPane);
+    }
+
+    public void install(Stage stage) {
+        unsavedChanges.install(stage);
     }
 
     private void setupToolbar() {
@@ -232,19 +238,24 @@ public class InputController {
     @FXML
     private void handleSave() {
         new Save(pages, stackPane.getScene().getWindow(), session).execute();
+        unsavedChanges.refresh();
     }
 
     @FXML
     private void handleSaveAs() {
         new SaveAs(pages, stackPane.getScene().getWindow(), session).execute();
+        unsavedChanges.refresh();
     }
 
     @FXML
     private void handleOpenFile() {
+        if (!unsavedChanges.confirmDiscard())
+            return;
         new OpenFile(stackPane.getScene().getWindow(), this::loadDocument).execute();
     }
 
     private void loadDocument(List<PageContent> loadedPages, Path source) {
+        unsavedChanges.expectBaseline();
         loading = true;
         Motion.setQuiet(true);
         try {
@@ -300,6 +311,8 @@ public class InputController {
             pendingReflow.remove(page);
             if (pages.contains(page))
                 reflow(page);
+            if (pendingReflow.isEmpty())
+                unsavedChanges.settled();
         });
     }
 

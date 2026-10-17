@@ -1,5 +1,6 @@
 package com.example;
 
+import com.example.controller.InputController;
 import com.example.model.LinkOpener;
 import com.example.view.Backdrop;
 import com.example.view.Motion;
@@ -27,6 +28,7 @@ public class App extends Application {
         
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/view/Main.fxml"), bundle);
         Parent root = loader.load();
+        InputController controller = loader.getController();
         
         Scene scene = new Scene(root);
         
@@ -42,5 +44,6 @@ public class App extends Application {
         Motion.fadeSlideIn(root, 12, 0);
         stage.setScene(scene);
         stage.show();
+        controller.install(stage);
     }
 }

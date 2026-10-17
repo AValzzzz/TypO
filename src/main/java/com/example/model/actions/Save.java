@@ -35,6 +35,7 @@ public class Save implements AppAction {
 
         try {
             DocumentExporter.writeDocx(pages, target);
+            session.markSaved(DocumentExporter.snapshot(pages));
             Toast.success(I18n.t("toast.saved"));
         } catch (IOException e) {
             new Alert(AlertType.ERROR, I18n.t("file.error.save", e.getMessage())).showAndWait();
